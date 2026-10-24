@@ -143,13 +143,13 @@ Every future implementation must be built and made live before completion. Valid
 
 ## Stage 6 verification record
 
-- OR-Tools CP-SAT unit tests, requirement-count tests and selection integration: PASS — 15 backend tests covering variable durations, shared resources, unavailable teachers, incompatible laboratories, existing bookings, exact scheduled/remaining counts, duration/teacher mismatches, and scope filtering.
-- Backend pytest: PASS — 15 tests.
+- OR-Tools CP-SAT unit tests, requirement-count, selection and weekly-distribution integration: PASS — 16 backend tests covering variable durations, shared resources, unavailable teachers, incompatible laboratories, existing bookings, exact scheduled/remaining counts, duration/teacher mismatches, scope filtering, five/six-day restrictions, workload balancing, subject spreading and earlier-clock-time semantics.
+- Backend pytest: PASS — 16 tests.
 - Frontend Vitest: PASS — 26 tests; TypeScript and production build: PASS.
 - Rust validator: PASS — 7 tests; generated candidates are independently validated before proposal staging and approval.
 - Alembic migration `20260303_0004`: PASS — applied against `schedaro_db`, head verified.
 - Docker Compose config, backend image with pinned OR-Tools 9.12.4544, service refresh and health checks: PASS; PostgreSQL named volume preserved.
-- Controlled live API: PASS — lecture-only selection generated no tutorial sessions; tutorial-only selection generated two tutorials and discard left saved sessions unchanged. Existing 180-minute lecture mismatch was reported without resizing or deletion.
+- Controlled live API: PASS — lecture-only selection generated no tutorial sessions; tutorial-only selection generated two tutorials and discard left saved sessions unchanged. Monday–Friday generated no Saturday proposals; the existing 180-minute lecture mismatch was reported without resizing or deletion.
 - Browser UI and Firefox candidate/PDF visual verification: NOT TESTED in Harness; owner review remains required.
 - Known limitations: advanced persisted break/holiday calendars, alternate eligible-teacher sets, authentication/rate limiting, and direct browser automation remain future/deployment work.
 

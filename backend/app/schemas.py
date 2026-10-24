@@ -175,8 +175,18 @@ class GenerateTimetableRequest(BaseModel):
     daily_end_time: str = Field(default="17:00", pattern=r"^\d{2}:\d{2}$")
     quantum_minutes: int = Field(default=30, ge=5, le=60)
     time_limit_seconds: int = Field(default=10, ge=1, le=30)
-    preference: Literal["earlier", "balanced"] = "earlier"
+    preference: Literal["balanced", "earlier", "gaps"] = "balanced"
     preserve_existing: bool = True
+
+    @field_validator("working_days")
+    @classmethod
+    def validate_working_days(cls, value: list[DayOfWeek]) -> list[DayOfWeek]:
+        if len(set(value)) != len(value):
+            raise ValueError("working days must not contain duplicates")
+        allowed = {"monday", "tuesday", "wednesday", "thursday", "friday"}
+        if set(value) not in (allowed, allowed | {"saturday"}):
+            raise ValueError("working days must be Monday-Friday or Monday-Saturday")
+        return value
 
 
 class GeneratedSessionRead(BaseModel):
@@ -210,10 +220,23 @@ class RequirementGenerationSummary(BaseModel):
     warning: str | None = None
 
 
+class DayDistribution(BaseModel):
+    day: DayOfWeek
+    sessions: int
+    minutes: int
+    saved_sessions: int
+    proposed_sessions: int
+    excluded: bool = False
+
+
 class GenerateTimetableResponse(BaseModel):
     proposal_id: str | None = None
     status: Literal["OPTIMAL", "FEASIBLE", "INFEASIBLE", "MODEL_INVALID", "UNKNOWN"]
     message: str
+    working_days: list[DayOfWeek] = []
+    preference: Literal["balanced", "earlier", "gaps"] = "balanced"
+    warnings: list[str] = []
+    distribution: list[DayDistribution] = []
     requirement_summaries: list[RequirementGenerationSummary] = []
     sessions: list[GeneratedSessionRead] = []
     preserved_sessions: list[GeneratedSessionRead] = []

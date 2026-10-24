@@ -109,6 +109,13 @@ def _placement_conflicts(a: dict[str, Any], b: dict[str, Any]) -> bool:
     return a["class_group_id"] == b["class_group_id"] or a["teacher_id"] == b["teacher_id"] or a["room_id"] == b["room_id"]
 
 
+def _gap_cost(group_id: str, day: str, start: int, end: int, existing: list[TimetableSession]) -> int:
+    same_day = [session for session in existing if session.class_group_id == group_id and session.day_of_week == day]
+    if not same_day:
+        return 0
+    return min(min(abs(start - session.end_minute), abs(session.start_minute - end)) for session in same_day)
+
+
 def generate_candidate(db: Session, requirements: list[SchedulingRequirement], existing: list[TimetableSession], availability: list[TeacherAvailability], rooms: list[Room], config: GenerationConfig) -> dict[str, Any]:
     if cp_model is None:
         raise GeneratorUnavailable("OR-Tools is unavailable in the backend image.")
@@ -119,8 +126,10 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
 
     model = cp_model.CpModel()
     choice_groups: list[list[tuple[Any, dict[str, Any]]]] = []
+    requirement_occurrences: list[list[list[tuple[Any, dict[str, Any]]]]] = []
     for requirement in requirements:
         occurrences: list[tuple[Any, dict[str, Any]]] = []
+        occurrence_choices: list[list[tuple[Any, dict[str, Any]]]] = []
         for occurrence in range(requirement.weekly_count):
             placements: list[dict[str, Any]] = []
             for day_index, day in enumerate(config.working_days):
@@ -131,7 +140,7 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
                     for room in rooms:
                         if not compatible_room(room, requirement.room_type):
                             continue
-                        placement = {"id": new_id(), "class_group_id": requirement.class_group_id, "subject_id": requirement.subject_id, "teacher_id": requirement.teacher_id, "room_id": room.id, "session_type": requirement.session_type, "day": day, "day_index": day_index, "start_minute": start, "end_minute": end}
+                        placement = {"id": new_id(), "class_group_id": requirement.class_group_id, "subject_id": requirement.subject_id, "teacher_id": requirement.teacher_id, "room_id": room.id, "session_type": requirement.session_type, "day": day, "day_index": day_index, "start_minute": start, "end_minute": end, "gap_cost": _gap_cost(requirement.class_group_id, day, start, end, existing)}
                         if not _placement_conflicts_existing(placement, existing):
                             placements.append(placement)
             if not placements:
@@ -139,7 +148,9 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
             variables = [(model.NewBoolVar(f"requirement_{requirement.id}_{occurrence}_{index}"), placement) for index, placement in enumerate(placements)]
             model.Add(sum(variable for variable, _ in variables) == 1)
             occurrences.extend(variables)
+            occurrence_choices.append(variables)
         choice_groups.append(occurrences)
+        requirement_occurrences.append(occurrence_choices)
 
     all_choices = [choice for group in choice_groups for choice in group]
     for left_index, (left_var, left) in enumerate(all_choices):
@@ -148,10 +159,36 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
                 model.Add(left_var + right_var <= 1)
 
     objective_terms = []
+    balance_weight = 10000 if config.preference == "balanced" else 100 if config.preference == "gaps" else 0
+    repeat_weight = 1000 if config.preference == "balanced" else 400
     for variable, placement in all_choices:
-        start_weight = placement["start_minute"] - config.daily_start
-        day_weight = placement["day_index"] * 100 if config.preference == "earlier" else placement["day_index"] * 20
-        objective_terms.append((day_weight + start_weight, variable))
+        start_weight = (placement["start_minute"] - config.daily_start) * (10 if config.preference == "earlier" else 1)
+        gap_weight = placement["gap_cost"] * (10 if config.preference == "gaps" else 0)
+        objective_terms.append((start_weight + gap_weight, variable))
+    for occurrences in requirement_occurrences:
+        for left_index, left_choices in enumerate(occurrences):
+            for right_choices in occurrences[left_index + 1:]:
+                for left_var, left in left_choices:
+                    for right_var, right in right_choices:
+                        if left["day"] != right["day"]:
+                            continue
+                        same_day = model.NewBoolVar(f"same_day_{left_var.Name()}_{right_var.Name()}")
+                        model.Add(same_day <= left_var)
+                        model.Add(same_day <= right_var)
+                        model.Add(same_day >= left_var + right_var - 1)
+                        objective_terms.append((repeat_weight, same_day))
+    groups = {requirement.class_group_id for requirement in requirements}
+    for group_id in groups:
+        loads = []
+        for day in config.working_days:
+            existing_minutes = sum(session.end_minute - session.start_minute for session in existing if session.class_group_id == group_id and session.day_of_week == day)
+            load_terms = [duration * variable for variable, placement in all_choices if placement["class_group_id"] == group_id and placement["day"] == day for duration in [placement["end_minute"] - placement["start_minute"]]]
+            load = model.NewIntVar(existing_minutes, existing_minutes + sum(requirement.weekly_count * requirement.duration_minutes for requirement in requirements if requirement.class_group_id == group_id), f"load_{group_id}_{day}")
+            model.Add(load == existing_minutes + sum(load_terms))
+            loads.append(load)
+        maximum = model.NewIntVar(0, 100000, f"max_load_{group_id}")
+        model.AddMaxEquality(maximum, loads)
+        objective_terms.append((balance_weight, maximum))
     model.Minimize(sum(weight * variable for weight, variable in objective_terms))
 
     solver = cp_model.CpSolver()

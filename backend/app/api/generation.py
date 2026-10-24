@@ -12,7 +12,7 @@ from app.api.timetable import _get_group, _read, _validate_resources
 from app.db.models import AcademicTerm, ClassGroup, Institution, Room, SchedulingRequirement, Subject, Teacher, TeacherAvailability, TimetableProposal, TimetableSession, new_id
 from app.db.session import get_db
 from app.schemas import ApproveProposalResponse, GenerateTimetableRequest, GenerateTimetableResponse, GeneratedSessionRead, SchedulingRequirementCreate, SchedulingRequirementRead, SchedulingRequirementUpdate, TeacherAvailabilityCreate, TeacherAvailabilityRead
-from app.services.generator import GenerationConfig, GeneratorUnavailable, clock_minutes, clock_value, generate_candidate, requirement_summary
+from app.services.generator import DAYS, GenerationConfig, GeneratorUnavailable, clock_minutes, clock_value, generate_candidate, requirement_summary
 from app.services.scheduling import SchedulingEngineUnavailable, validate_candidate
 
 router = APIRouter(prefix="/api/v1/scheduling", tags=["scheduling"])
@@ -113,6 +113,15 @@ def create_availability(payload: TeacherAvailabilityCreate, db: Session = Depend
     return _availability_read(value)
 
 
+def _distribution(working_days: list[str], existing: list[TimetableSession], candidates: list[dict], group_ids: list[str]) -> list[dict]:
+    distribution = []
+    for day in DAYS:
+        saved = [session for session in existing if session.class_group_id in group_ids and session.day_of_week == day]
+        proposed = [session for session in candidates if session["class_group_id"] in group_ids and session["day"] == day]
+        distribution.append({"day": day, "sessions": len(saved) + len(proposed), "minutes": sum(session.end_minute - session.start_minute for session in saved) + sum(session["end_minute"] - session["start_minute"] for session in proposed), "saved_sessions": len(saved), "proposed_sessions": len(proposed), "excluded": day not in working_days})
+    return distribution
+
+
 @router.post("/generate", response_model=GenerateTimetableResponse)
 def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(get_db)):
     term = _require_institution_term(db, payload.institution_id, payload.academic_term_id)
@@ -147,8 +156,14 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
             selected_remaining.append(SimpleNamespace(id=requirement.id, class_group_id=requirement.class_group_id, subject_id=requirement.subject_id, teacher_id=requirement.teacher_id, session_type=requirement.session_type, weekly_count=summary["remaining_count"], duration_minutes=requirement.duration_minutes, room_type=requirement.room_type))
     response_summaries = summaries
     preserved = [_candidate_read({"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": session.day_of_week, "start_minute": session.start_minute, "end_minute": session.end_minute, "subject_id": session.subject_id, "teacher_id": session.teacher_id, "room_id": session.room_id, "session_type": session.session_type, "locked": session.locked}, False) for session in existing if session.class_group_id in payload.class_group_ids]
+    excluded_days = [day for day in DAYS if day not in payload.working_days]
+    warnings = []
+    for session in preserved:
+        if session.day in excluded_days:
+            warnings.append(f"Existing {session.session_type} on {session.day} is preserved but outside the selected working days; it was not moved or deleted.")
+    distribution = _distribution(payload.working_days, existing, [], payload.class_group_ids)
     if not selected_remaining:
-        return GenerateTimetableResponse(status="OPTIMAL", message="The selected requirements are already satisfied; no new sessions are needed.", requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=0, solve_time_ms=0)
+        return GenerateTimetableResponse(status="OPTIMAL", message="The selected requirements are already satisfied; no new sessions are needed.", working_days=payload.working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=0, solve_time_ms=0)
     availability = list(db.scalars(select(TeacherAvailability).where(TeacherAvailability.academic_term_id == term.id)))
     rooms = list(db.scalars(select(Room).where(Room.institution_id == payload.institution_id, Room.active.is_(True))))
     try:
@@ -169,11 +184,11 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
         except SchedulingEngineUnavailable as error:
             raise HTTPException(status_code=503, detail={"message": str(error)}) from error
     if result["status"] not in {"OPTIMAL", "FEASIBLE"}:
-        return GenerateTimetableResponse(status=result["status"], message=result["message"], requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+        return GenerateTimetableResponse(status=result["status"], message=result["message"], working_days=payload.working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
     base = datetime.now(timezone.utc)
     proposal = TimetableProposal(institution_id=payload.institution_id, academic_term_id=term.id, class_group_ids=payload.class_group_ids, candidate_sessions=candidates, base_updated_at=base)
     db.add(proposal); db.commit(); db.refresh(proposal)
-    return GenerateTimetableResponse(proposal_id=proposal.id, status=result["status"], message=f"Generated {len(candidates)} remaining session(s) for the selected requirements. Review before approval.", requirement_summaries=response_summaries, sessions=[_candidate_read(candidate) for candidate in candidates], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+    return GenerateTimetableResponse(proposal_id=proposal.id, status=result["status"], message=f"Generated {len(candidates)} remaining session(s) for the selected requirements. Review before approval.", working_days=payload.working_days, preference=payload.preference, warnings=warnings, distribution=_distribution(payload.working_days, existing, candidates, payload.class_group_ids), requirement_summaries=response_summaries, sessions=[_candidate_read(candidate) for candidate in candidates], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
 
 
 @router.post("/proposals/{proposal_id}/approve", response_model=ApproveProposalResponse)

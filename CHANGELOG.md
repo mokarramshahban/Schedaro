@@ -27,3 +27,4 @@
 - Added an unsaved Generate Timetable workflow with requirement setup, candidate preview on the shared weekly grid, regenerate/discard actions, stale-proposal detection, and transactional approval.
 - Clarified generation versus requirement management with explicit persisted-requirement checkboxes, exact required/scheduled/remaining summaries, duration and teacher mismatch warnings, and editing/deactivation controls.
 - Corrected generation to schedule only the remaining sessions for selected requirements; unselected Lecture/Tutorial/Laboratory requirements are excluded from the solver while existing sessions remain preserved constraints.
+- Added Monday–Friday/Monday–Saturday working-week selection, hard excluded-day enforcement, daily minute-load balancing, repeated-subject spreading, clock-time-only earlier preference, and proposal distribution summaries.
