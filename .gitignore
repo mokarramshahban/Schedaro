@@ -1,0 +1,329 @@
+# ==========================================
+# SCHEDARO — GIT IGNORE CONFIGURATION
+# ==========================================
+
+
+# ==========================================
+# 1. PRIVATE UI REFERENCE FILES
+# ==========================================
+
+/UI_REFRENCE_CODES/
+/UI_REFERENCE_CODES/
+
+
+# ==========================================
+# 2. PRIVATE INTERNAL DOCUMENTATION
+# ==========================================
+
+# Preserve locally for development handoffs; never publish.
+/MEMORY.md
+/AGENTS.private.md
+/docs/MASTER_INSTRUCTIONS.md
+/docs/DECISIONS.md
+/docs/DESIGN_REFERENCE_POLICY.md
+/docs/UI_REFERENCE_AUDIT.md
+/docs/REFERENCE_COMPONENT_MAP.md
+/docs/SOURCE_PROVENANCE_REPORT.md
+/docs/PRE_GIT_READINESS_REPORT.md
+/docs/PUBLIC_REPOSITORY_CHECKLIST.md
+/docs/GITIGNORE_CONFIGURATION_REPORT.md
+/docs/STAGE_0_REPORT.md
+/docs/STAGE_1_REPORT.md
+/docs/DOCUMENT_CLASSIFICATION.private.md
+
+
+# ==========================================
+# 3. ENVIRONMENT VARIABLES & SECRETS
+# ==========================================
+
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.crt
+
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+.npmrc
+**/.npmrc
+!.npmrc.example
+!**/.npmrc.example
+
+secrets/
+**/secrets/
+
+
+# ==========================================
+# 3. NODE.JS / REACT / TYPESCRIPT / VITE
+# ==========================================
+
+node_modules/
+**/node_modules/
+
+dist/
+**/dist/
+
+.vite/
+**/.vite/
+
+.turbo/
+.cache/
+**/.cache/
+.parcel-cache/
+
+*.tsbuildinfo
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.pnpm-store/
+.npm/
+
+coverage/
+**/coverage/
+.nyc_output/
+
+
+# ==========================================
+# 4. PYTHON / FASTAPI
+# ==========================================
+
+__pycache__/
+**/__pycache__/
+
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+ENV/
+
+**/.venv/
+**/venv/
+
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+**/.mypy_cache/
+.ruff_cache/
+**/.ruff_cache/
+.pyre/
+.pytype/
+
+.tox/
+.nox/
+
+.coverage
+.coverage.*
+htmlcov/
+
+*.egg-info/
+**/*.egg-info/
+.eggs/
+
+pip-wheel-metadata/
+.pybuilder/
+target/
+
+
+# ==========================================
+# 5. PYTHON BUILD ARTIFACTS
+# ==========================================
+
+*.egg
+*.whl
+
+build/
+**/build/
+
+wheels/
+
+
+# ==========================================
+# 6. POSTGRESQL / LOCAL DATABASES
+# ==========================================
+
+pgdata/
+postgres_data/
+postgres-data/
+
+**/pgdata/
+**/postgres_data/
+
+*.sqlite
+*.sqlite3
+*.db
+
+*.dump
+*.backup
+*.sql.gz
+
+db_backups/
+database_backups/
+backups/
+
+# Docker named volumes are managed separately
+# and must never be exported into the repository.
+
+
+# ==========================================
+# 7. DOCKER DEVELOPMENT ARTIFACTS
+# ==========================================
+
+.docker-data/
+docker-data/
+
+*.pid
+*.pid.lock
+
+# Keep Dockerfiles, compose.yaml,
+# compose override examples and .dockerignore
+# available for the public repository.
+
+
+# ==========================================
+# 8. LOG FILES
+# ==========================================
+
+*.log
+logs/
+**/logs/
+
+log/
+**/log/
+
+
+# ==========================================
+# 9. TEMPORARY FILES
+# ==========================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+tmp/
+temp/
+
+tmp-*/
+temp-*/
+
+*.bak
+*.orig
+*.rej
+
+
+# ==========================================
+# 10. IDE / EDITOR CONFIGURATION
+# ==========================================
+
+.idea/
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+*.sublime-workspace
+
+
+# ==========================================
+# 11. OPERATING SYSTEM FILES
+# ==========================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+.directory
+
+.Trash-*/
+.nfs*
+
+
+# ==========================================
+# 12. TESTING & BROWSER ARTIFACTS
+# ==========================================
+
+test-results/
+playwright-report/
+blob-report/
+
+**/test-results/
+**/playwright-report/
+
+# Do not ignore deliberately maintained
+# documentation screenshots or approved assets.
+
+
+# ==========================================
+# 13. LOCAL DEVELOPMENT DATA
+# ==========================================
+
+.local/
+local-data/
+
+*.local.json
+
+# Add other machine-specific files only
+# after identifying their actual purpose.
+
+
+# ==========================================
+# 14. SECRET-SCAN OUTPUTS
+# ==========================================
+
+.gitleaks-report*
+.trufflehog-report*
+
+# Security reports containing findings
+# must not be published accidentally.
+
+
+# ==========================================
+# 15. IMPORTANT FILES TO KEEP TRACKABLE
+# ==========================================
+
+# Do NOT ignore:
+#
+# README.md
+# LICENSE
+# CONTRIBUTING.md
+# AGENTS.md
+# REQUIREMENTS.md
+# docs/ (public documents only)
+# frontend/src/
+# frontend/public/ (approved assets only)
+# backend/app/
+# backend/alembic/
+# backend/alembic/versions/
+# package.json
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
+# requirements.txt
+# pyproject.toml
+# compose.yaml
+# Dockerfile
+# .dockerignore
+# .gitignore
+# .env.example
+#
+# These files are essential for development,
+# reproducibility and documentation.

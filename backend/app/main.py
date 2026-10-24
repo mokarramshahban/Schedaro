@@ -1,0 +1,35 @@
+from fastapi import FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.core.config import get_settings
+from app.db.session import check_database_connection
+
+settings = get_settings()
+app = FastAPI(title="Schedaro API", version="0.1.0", description="Smart Academic Timetable Builder API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health/live")
+def live() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/health/ready")
+def ready() -> JSONResponse:
+    database_ready = check_database_connection()
+    payload = {"status": "ready" if database_ready else "not_ready", "database": "connected" if database_ready else "unavailable"}
+    return JSONResponse(status_code=200 if database_ready else status.HTTP_503_SERVICE_UNAVAILABLE, content=payload)
+
+
+@app.get("/api/v1/status")
+def service_status() -> dict[str, str | bool]:
+    database_ready = check_database_connection()
+    return {"application": settings.app_name, "environment": settings.app_env, "service": "api", "database_available": database_ready}

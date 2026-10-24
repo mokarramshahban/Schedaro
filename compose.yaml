@@ -1,0 +1,67 @@
+name: ${COMPOSE_PROJECT_NAME:-schedaro}
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - schedaro_pgdata:/var/lib/postgresql
+    networks: [schedaro]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV}
+      DATABASE_URL: ${DATABASE_URL}
+      ALLOWED_CORS_ORIGINS: ${ALLOWED_CORS_ORIGINS}
+    ports:
+      - "${BACKEND_HOST_PORT}:8000"
+    volumes:
+      - ./backend:/app
+    networks: [schedaro]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${FRONTEND_HOST_PORT}:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    networks: [schedaro]
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  schedaro:
+    name: ${COMPOSE_PROJECT_NAME:-schedaro}_network
+
+volumes:
+  schedaro_pgdata:
+    name: ${COMPOSE_PROJECT_NAME:-schedaro}_pgdata
+  frontend_node_modules:
+    name: ${COMPOSE_PROJECT_NAME:-schedaro}_frontend_node_modules

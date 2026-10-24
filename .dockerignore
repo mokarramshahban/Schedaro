@@ -1,0 +1,7 @@
+.env
+.git
+.gitignore
+UI_REFRENCE_CODES
+frontend/node_modules
+__pycache__
+*.pyc
