@@ -1,3 +1,4 @@
+// Test fixture only. The production timetable workspace loads academic records from the API.
 import type { SelectOption, TimetableSession } from '../lib/timetable'
 
 export const institutionOptions: SelectOption[] = [

@@ -33,6 +33,20 @@ Verified from the running Schedaro backend dependency environment and `backend/r
 | SQLAlchemy | 2.0.37 | MIT | Application dependency; preserve upstream notices where applicable. |
 | psycopg | 3.2.3 | LGPL-3.0-only | Installed through `psycopg[binary]`; do not relicense it as MIT. |
 | Alembic | 1.14.1 | MIT | Migration dependency; preserve upstream notices where applicable. |
+| pytest | 8.3.4 | MIT | Test-only dependency. |
+| httpx | 0.28.1 | BSD-3-Clause | Test/API client dependency; preserve BSD notice where applicable. |
+
+## Rust engine direct dependencies
+
+Verified from `rust/schedaro_engine/Cargo.lock`:
+
+| Crate | Locked version | License | Role |
+|---|---:|---|---|
+| PyO3 | 0.23.5 | Apache-2.0 OR MIT | Python extension boundary. |
+| serde | 1.0.229 | Apache-2.0 OR MIT | Scheduling payload serialization. |
+| serde_json | 1.0.154 | Apache-2.0 OR MIT | JSON boundary between FastAPI and Rust. |
+
+Cargo transitive crates retain their upstream licenses; a complete release scan remains required for a distributed wheel or image.
 
 ## Obligations when publishing Schedaro source
 

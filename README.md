@@ -11,14 +11,15 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 - Monday–Saturday weekly timetable workspace.
 - Shared aligned time axis with variable-duration session cards.
 - Institution, department, semester and section selectors.
-- Temporary in-memory session creation, editing and removal.
-- Subject, teacher, room/lab and session-type selection.
-- Client-side time-range, class, teacher and room conflict warnings.
+- PostgreSQL-backed institution, department, semester, section and class-group scope.
+- Persistent session creation, editing and removal.
+- Subject, teacher, room/lab and session-type selection from the active academic scope.
+- Client-side feedback with authoritative server-side conflict validation.
 - Responsive desktop, tablet and mobile timetable layout.
-- FastAPI and PostgreSQL health/status indicators.
+- FastAPI, PostgreSQL and Rust scheduling-engine health indicators.
 - Accessible controls, focus states and keyboard-friendly dialogs.
 
-Timetable edits in the current workspace are demonstration changes held in memory and reset on refresh. Persistent academic data, authoritative validation, printing and automated scheduling require later backend capabilities.
+Timetable persistence is provided by the local FastAPI and PostgreSQL services. Printing and automated scheduling remain future capabilities.
 
 ## Screenshots
 
@@ -29,6 +30,7 @@ Screenshots will be added as approved product captures become available.
 - React, TypeScript and Vite
 - Tailwind CSS and shadcn-compatible UI foundations
 - FastAPI, Pydantic, SQLAlchemy and Alembic
+- Rust scheduling engine with PyO3 and maturin
 - PostgreSQL 18
 - Docker Compose
 
@@ -41,9 +43,11 @@ Screenshots will be added as approved product captures become available.
 
    ```bash
    docker compose -p schedaro up -d --build
+   docker compose -p schedaro exec backend alembic upgrade head
    ```
 
 5. Open [http://localhost:5174](http://localhost:5174).
+6. If the academic scope is empty, use the setup action in the timetable workspace to provision deterministic local development records.
 
 The API is available at [http://localhost:8001](http://localhost:8001). Health endpoints are [liveness](http://localhost:8001/health/live) and [readiness](http://localhost:8001/health/ready).
 

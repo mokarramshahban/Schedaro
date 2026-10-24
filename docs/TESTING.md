@@ -32,5 +32,24 @@ Every future implementation must be built and made live before completion. Valid
 - Backend/database containers: PASS — healthy and untouched.
 - Browser visual/interaction verification: NOT TESTED in Harness; owner manual verification remains required.
 
+## Stage 3 verification record
+- `cargo test` from `rust/schedaro_engine`: PASS — 7 Rust unit tests.
+- `docker compose -p schedaro build backend`: PASS — maturin built the abi3 Rust wheel and installed it into Python 3.13.
+- `docker compose -p schedaro exec -T backend alembic upgrade head`: PASS.
+- Alembic current revision: PASS — `20260301_0001 (head)`.
+- Python Rust extension import and validation call: PASS.
+- `docker compose -p schedaro exec -T backend pytest -q`: PASS — 4 tests.
+- Academic hierarchy/resource/session API smoke tests: PASS.
+- Persisted session create/edit/delete: PASS.
+- Structured 409 conflict response: PASS.
+- Cross-institution resource rejection: PASS — HTTP 422.
+- Idempotent development setup endpoint: PASS.
+- Concurrent teacher/room conflict protection: PASS — one HTTP 201 and one HTTP 409.
+- Backend restart persistence: PASS.
+- PostgreSQL restart persistence: PASS; named volume preserved.
+- Frontend API/timetable tests: PASS — 12 tests.
+- Frontend TypeScript check and production build: PASS.
+- Frontend browser visual/interaction verification: NOT TESTED in Harness; owner manual verification remains required.
+
 ## Later planned tests
-Add unit/API tests for validation and collision rules, integration tests for persistence, accessibility and responsive browser tests, print/PDF tests, security tests, and deployment smoke tests. These remain future coverage beyond the current Stage 2 model tests.
+Add broader browser accessibility coverage, authenticated write-API tests, deployment smoke tests, and Stage 4 management workflows. These remain outside the current Stage 3 scope.

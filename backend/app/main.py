@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
+from app.api.academic import router as academic_router
+from app.api.timetable import router as timetable_router
 from app.db.session import check_database_connection
+from app.services.scheduling import engine_available
 
 settings = get_settings()
 app = FastAPI(title="Schedaro API", version="0.1.0", description="Smart Academic Timetable Builder API")
@@ -12,9 +15,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+app.include_router(academic_router)
+app.include_router(timetable_router)
 
 
 @app.get("/health/live")
@@ -32,4 +38,4 @@ def ready() -> JSONResponse:
 @app.get("/api/v1/status")
 def service_status() -> dict[str, str | bool]:
     database_ready = check_database_connection()
-    return {"application": settings.app_name, "environment": settings.app_env, "service": "api", "database_available": database_ready}
+    return {"application": settings.app_name, "environment": settings.app_env, "service": "api", "database_available": database_ready, "rust_engine_available": engine_available()}

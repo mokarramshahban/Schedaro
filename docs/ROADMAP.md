@@ -14,11 +14,11 @@ Every future implementation must validate Compose, build affected images, refres
 ## Stage 1 — UI Reference Analysis & Design Foundation — COMPLETE
 Define the React design foundation and verify the live Docker preview. Stage 1 did not implement the weekly timetable grid or academic CRUD. Implementation, Docker build/refresh, live HTTP/API verification, and browser verification all passed. Stage 2 follows Stage 1.
 
-## Stage 2 — Timetable Builder UI — IN PROGRESS
-Interactive Monday–Saturday calendar, shared time-axis rendering, temporary session editing, academic selectors, responsive behavior, and client-side conflict warnings. Depends on Stage 1. Persistence and authoritative validation remain Stage 3 scope.
+## Stage 2 — Timetable Builder UI — COMPLETE
+Interactive Monday–Saturday calendar, shared time-axis rendering, responsive behavior, and deterministic frontend scheduling calculations are implemented. Stage 3 replaces temporary session state with persisted data and authoritative validation.
 
-## Stage 3 — Backend & PostgreSQL — NOT STARTED
-Schema, APIs, validation, and persistence for timetable data. Depends on Stage 2.
+## Stage 3 — Backend, PostgreSQL & Rust Validation — IN PROGRESS
+Relational academic scope, versioned FastAPI routes, PostgreSQL persistence, transactional overlap constraints, and the PyO3/maturin Rust validation engine are implemented pending final browser verification and release review.
 
 ## Stage 4 — Supporting Tabs — NOT STARTED
 Subjects, Teachers, Rooms, Classes, and Settings. Depends on Stage 3.

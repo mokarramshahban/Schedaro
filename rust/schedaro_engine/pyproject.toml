@@ -1,0 +1,14 @@
+[build-system]
+requires = ["maturin>=1.8,<2"]
+build-backend = "maturin"
+
+[project]
+name = "schedaro-engine"
+version = "0.1.0"
+description = "Deterministic scheduling conflict validation for Schedaro"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+[tool.maturin]
+bindings = "pyo3"
+manifest-path = "Cargo.toml"
