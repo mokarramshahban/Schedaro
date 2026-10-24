@@ -33,23 +33,23 @@ Every future implementation must be built and made live before completion. Valid
 - Browser visual/interaction verification: NOT TESTED in Harness; owner manual verification remains required.
 
 ## Stage 3 verification record
-- `cargo test` from `rust/schedaro_engine`: PASS — 7 Rust unit tests.
-- `docker compose -p schedaro build backend`: PASS — maturin built the abi3 Rust wheel and installed it into Python 3.13.
-- `docker compose -p schedaro exec -T backend alembic upgrade head`: PASS.
-- Alembic current revision: PASS — `20260301_0001 (head)`.
-- Python Rust extension import and validation call: PASS.
-- `docker compose -p schedaro exec -T backend pytest -q`: PASS — 4 tests.
-- Academic hierarchy/resource/session API smoke tests: PASS.
-- Persisted session create/edit/delete: PASS.
-- Structured 409 conflict response: PASS.
-- Cross-institution resource rejection: PASS — HTTP 422.
-- Idempotent development setup endpoint: PASS.
-- Concurrent teacher/room conflict protection: PASS — one HTTP 201 and one HTTP 409.
-- Backend restart persistence: PASS.
-- PostgreSQL restart persistence: PASS; named volume preserved.
-- Frontend API/timetable tests: PASS — 12 tests.
-- Frontend TypeScript check and production build: PASS.
-- Frontend browser visual/interaction verification: NOT TESTED in Harness; owner manual verification remains required.
+
+### Independent Harness verification
+- Rust: PASS — 7 tests.
+- Backend pytest: PASS — 4 tests.
+- Frontend Vitest: PASS — 12 tests.
+- TypeScript and frontend production build: PASS.
+- Migration and Alembic metadata check: PASS — `20260301_0001 (head)`.
+- Rust Python extension import: PASS.
+- CRUD, conflict, cross-institution, setup idempotency, and concurrent-write checks: PASS.
+- Backend/PostgreSQL restart persistence: PASS; `schedaro_pgdata` preserved.
+- Docker image build, container refresh, service health, frontend HTTP, API status, and readiness: PASS.
+- Harness browser automation: NOT TESTED / unavailable.
+
+### Owner manual verification
+- Firefox Stage 3 interface: PASS — owner confirmed the application working correctly.
+- Database-backed conflict display: PASS — Edit Session displayed the ROOM-201 conflict on Monday from 11:00 to 12:30.
+- Conflict resolution interaction: PASS — changing the room to ROOM-305 removed the displayed conflict.
 
 ## Later planned tests
 Add broader browser accessibility coverage, authenticated write-API tests, deployment smoke tests, and Stage 4 management workflows. These remain outside the current Stage 3 scope.

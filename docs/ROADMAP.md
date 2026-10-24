@@ -17,8 +17,8 @@ Define the React design foundation and verify the live Docker preview. Stage 1 d
 ## Stage 2 — Timetable Builder UI — COMPLETE
 Interactive Monday–Saturday calendar, shared time-axis rendering, responsive behavior, and deterministic frontend scheduling calculations are implemented. Stage 3 replaces temporary session state with persisted data and authoritative validation.
 
-## Stage 3 — Backend, PostgreSQL & Rust Validation — IN PROGRESS
-Relational academic scope, versioned FastAPI routes, PostgreSQL persistence, transactional overlap constraints, and the PyO3/maturin Rust validation engine are implemented pending final browser verification and release review.
+## Stage 3 — Backend, PostgreSQL & Rust Validation — COMPLETE
+Relational academic scope, versioned FastAPI routes, PostgreSQL persistence, transactional overlap constraints, PyO3/maturin Rust validation, and API-backed frontend timetable CRUD are implemented and verified. Harness independently verified the automated tests, migration, live APIs, persistence, Docker refresh, and service health. The owner manually verified the Firefox interface and confirmed that the Edit Session dialog displayed the database-backed ROOM-201 conflict for Monday 11:00–12:30; changing the room to ROOM-305 removed the conflict. Harness browser automation was unavailable and remains recorded separately.
 
 ## Stage 4 — Supporting Tabs — NOT STARTED
 Subjects, Teachers, Rooms, Classes, and Settings. Depends on Stage 3.
