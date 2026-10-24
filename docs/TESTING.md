@@ -124,5 +124,14 @@ Every future implementation must be built and made live before completion. Valid
 4. Choose Firefox Print → Landscape → paper size A4 → Save to PDF; inspect for clipping, overlap, blank pages, and readable lab durations.
 5. Repeat at desktop, tablet, and mobile widths; verify the preview remains usable and the saved PDF remains A4 landscape.
 
+## Interactive timetable session-card spacing hotfix
+
+- Exact session coordinates remain minute-based: PASS — existing timetable coordinate and duration tests remain green.
+- Session cards now render inside exact absolute interval wrappers with 4px visual insets on every side: PASS by source inspection and production build.
+- First-slot 09:00 cards, 10:00 alignment, two-hour durations, overlap lanes, short-session minimum height, and mobile focused-day behavior: covered by preserved timetable model tests and responsive CSS path.
+- Frontend Vitest: PASS — 25 tests.
+- TypeScript and frontend production build: PASS.
+- Browser visual verification: NOT TESTED / unavailable in Harness; owner review remains required.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.

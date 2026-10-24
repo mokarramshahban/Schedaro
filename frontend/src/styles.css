@@ -106,7 +106,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .timetable-day { position: relative; overflow: hidden; border-right: 1px solid #edf0f4; background: #fff; }
 .timetable-day--focused { background: #fdfdff; }
 .timetable-day__grid { position: absolute; inset: 0; background-image: linear-gradient(to bottom, rgba(231, 234, 240, .9) 1px, transparent 1px), linear-gradient(to bottom, transparent 41px, rgba(242, 244, 248, .95) 42px, transparent 43px); background-size: 100% 84px, 100% 84px; pointer-events: none; }
-.timetable-session { position: absolute; z-index: 2; display: flex; min-height: 38px; flex-direction: column; align-items: flex-start; gap: 3px; padding: 9px 9px 8px; overflow: hidden; color: #303b53; border: 1px solid transparent; border-radius: 9px; box-shadow: 0 4px 11px rgba(44, 55, 90, .08); font-size: 10px; text-align: left; transition: transform .16s ease, box-shadow .16s ease; }
+.timetable-session-slot { position: absolute; z-index: 2; min-width: 0; padding: 4px; }
+.timetable-session-slot:hover, .timetable-session-slot:has(.timetable-session:focus-visible) { z-index: 4; }
+.timetable-session { position: relative; z-index: 1; display: flex; width: 100%; height: 100%; min-height: 0; flex-direction: column; align-items: flex-start; gap: 3px; padding: 9px 9px 8px; overflow: hidden; color: #303b53; border: 1px solid transparent; border-radius: 9px; background-clip: padding-box; box-shadow: 0 4px 11px rgba(44, 55, 90, .08); font-size: 10px; text-align: left; transition: transform .16s ease, box-shadow .16s ease; }
 .timetable-session:hover, .timetable-session:focus-visible { z-index: 4; transform: translateY(-1px); box-shadow: 0 8px 18px rgba(44, 55, 90, .15); outline: 3px solid rgba(79, 70, 229, .2); outline-offset: 1px; }
 .timetable-session strong { width: 100%; overflow: hidden; color: #273247; font-size: 11px; line-height: 1.25; text-overflow: ellipsis; white-space: normal; }
 .timetable-session span:not(.timetable-session__type) { color: #667289; font-variant-numeric: tabular-nums; }
