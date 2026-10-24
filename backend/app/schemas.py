@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 DayOfWeek = Literal["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 SessionType = Literal["Lecture", "Laboratory", "Tutorial"]
+RoomType = Literal["classroom", "laboratory", "tutorial", "other"]
 
 
 class ORMModel(BaseModel):
@@ -14,12 +15,18 @@ class ORMModel(BaseModel):
 class InstitutionRead(ORMModel):
     id: str
     name: str
+    short_name: str | None = None
+    institution_type: str | None = None
+    address: str | None = None
+    active: bool = True
 
 
 class DepartmentRead(ORMModel):
     id: str
     institution_id: str
+    code: str | None = None
     name: str
+    active: bool = True
 
 
 class AcademicTermRead(ORMModel):
@@ -37,6 +44,7 @@ class SemesterRead(ORMModel):
     department_id: str
     number: int
     label: str
+    active: bool = True
 
 
 class ClassGroupRead(ORMModel):
@@ -46,6 +54,7 @@ class ClassGroupRead(ORMModel):
     academic_term_id: str
     section_name: str
     label: str
+    active: bool = True
 
 
 class ResourceRead(BaseModel):
@@ -53,6 +62,13 @@ class ResourceRead(BaseModel):
     code: str | None = None
     name: str
     room_type: str | None = None
+    active: bool = True
+    department_id: str | None = None
+    semester_id: str | None = None
+    description: str | None = None
+    building: str | None = None
+    capacity: int | None = None
+    email: str | None = None
 
 
 class AcademicResourcesRead(BaseModel):
@@ -101,3 +117,158 @@ class SetupResponse(BaseModel):
     institution_id: str
     message: str
     counts: dict[str, int]
+
+
+class InstitutionCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    short_name: str | None = Field(default=None, max_length=32)
+    institution_type: str | None = Field(default=None, max_length=80)
+    address: str | None = Field(default=None, max_length=240)
+    active: bool = True
+
+
+class InstitutionUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=160)
+    short_name: str | None = Field(default=None, max_length=32)
+    institution_type: str | None = Field(default=None, max_length=80)
+    address: str | None = Field(default=None, max_length=240)
+    active: bool | None = None
+
+
+class DepartmentCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    code: str | None = Field(default=None, max_length=32)
+    active: bool = True
+
+
+class DepartmentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=160)
+    code: str | None = Field(default=None, max_length=32)
+    active: bool | None = None
+
+
+class AcademicTermCreate(BaseModel):
+    academic_year: str = Field(min_length=4, max_length=32)
+    term: str = Field(min_length=2, max_length=64)
+    start_date: date | None = None
+    end_date: date | None = None
+    active: bool = True
+
+
+class AcademicTermUpdate(BaseModel):
+    academic_year: str | None = Field(default=None, min_length=4, max_length=32)
+    term: str | None = Field(default=None, min_length=2, max_length=64)
+    start_date: date | None = None
+    end_date: date | None = None
+    active: bool | None = None
+
+
+class SemesterCreate(BaseModel):
+    number: int = Field(ge=1, le=20)
+    label: str = Field(min_length=2, max_length=80)
+    active: bool = True
+
+
+class SemesterUpdate(BaseModel):
+    number: int | None = Field(default=None, ge=1, le=20)
+    label: str | None = Field(default=None, min_length=2, max_length=80)
+    active: bool | None = None
+
+
+class ClassGroupCreate(BaseModel):
+    department_id: str
+    academic_term_id: str
+    section_name: str = Field(min_length=1, max_length=32)
+    active: bool = True
+
+
+class ClassGroupUpdate(BaseModel):
+    department_id: str | None = None
+    semester_id: str | None = None
+    academic_term_id: str | None = None
+    section_name: str | None = Field(default=None, min_length=1, max_length=32)
+    active: bool | None = None
+
+
+class SubjectCreate(BaseModel):
+    department_id: str | None = None
+    semester_id: str | None = None
+    code: str = Field(min_length=2, max_length=32)
+    name: str = Field(min_length=2, max_length=160)
+    description: str | None = Field(default=None, max_length=2000)
+    active: bool = True
+
+
+class SubjectUpdate(BaseModel):
+    department_id: str | None = None
+    semester_id: str | None = None
+    code: str | None = Field(default=None, min_length=2, max_length=32)
+    name: str | None = Field(default=None, min_length=2, max_length=160)
+    description: str | None = Field(default=None, max_length=2000)
+    active: bool | None = None
+
+
+class SubjectRead(ORMModel):
+    id: str
+    institution_id: str
+    department_id: str | None = None
+    semester_id: str | None = None
+    code: str
+    name: str
+    description: str | None = None
+    active: bool
+
+
+class TeacherCreate(BaseModel):
+    department_id: str | None = None
+    code: str | None = Field(default=None, max_length=32)
+    name: str = Field(min_length=2, max_length=160)
+    email: str | None = Field(default=None, max_length=180)
+    active: bool = True
+
+
+class TeacherUpdate(BaseModel):
+    department_id: str | None = None
+    code: str | None = Field(default=None, max_length=32)
+    name: str | None = Field(default=None, min_length=2, max_length=160)
+    email: str | None = Field(default=None, max_length=180)
+    active: bool | None = None
+
+
+class TeacherRead(ORMModel):
+    id: str
+    institution_id: str
+    department_id: str | None = None
+    code: str | None = None
+    name: str
+    email: str | None = None
+    active: bool
+
+
+class RoomCreate(BaseModel):
+    code: str = Field(min_length=2, max_length=32)
+    name: str = Field(min_length=2, max_length=160)
+    building: str | None = Field(default=None, max_length=100)
+    capacity: int | None = Field(default=None, ge=1, le=100000)
+    room_type: RoomType = "classroom"
+    active: bool = True
+
+
+class RoomUpdate(BaseModel):
+    code: str | None = Field(default=None, min_length=2, max_length=32)
+    name: str | None = Field(default=None, min_length=2, max_length=160)
+    building: str | None = Field(default=None, max_length=100)
+    capacity: int | None = Field(default=None, ge=1, le=100000)
+    room_type: RoomType | None = None
+    active: bool | None = None
+
+
+class RoomRead(ORMModel):
+    id: str
+    institution_id: str
+    code: str
+    name: str
+    building: str | None = None
+    capacity: int | None = None
+    room_type: str
+    active: bool

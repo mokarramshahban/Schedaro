@@ -17,6 +17,10 @@ class Institution(Base):
     __tablename__ = "institutions"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(160), nullable=False, unique=True)
+    short_name: Mapped[str | None] = mapped_column(String(32), unique=True)
+    institution_type: Mapped[str | None] = mapped_column(String(80))
+    address: Mapped[str | None] = mapped_column(String(240))
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     departments: Mapped[list["Department"]] = relationship(back_populates="institution", cascade="all, delete-orphan")
     terms: Mapped[list["AcademicTerm"]] = relationship(back_populates="institution", cascade="all, delete-orphan")
@@ -24,10 +28,15 @@ class Institution(Base):
 
 class Department(Base):
     __tablename__ = "departments"
-    __table_args__ = (UniqueConstraint("institution_id", "name", name="uq_department_institution_name"),)
+    __table_args__ = (
+        UniqueConstraint("institution_id", "name", name="uq_department_institution_name"),
+        UniqueConstraint("institution_id", "code", name="uq_department_institution_code"),
+    )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    code: Mapped[str | None] = mapped_column(String(32))
     name: Mapped[str] = mapped_column(String(160), nullable=False)
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     institution: Mapped[Institution] = relationship(back_populates="departments")
     semesters: Mapped[list["Semester"]] = relationship(back_populates="department", cascade="all, delete-orphan")
     subjects: Mapped[list["Subject"]] = relationship(back_populates="department")
@@ -57,6 +66,7 @@ class Semester(Base):
     department_id: Mapped[str] = mapped_column(ForeignKey("departments.id", ondelete="CASCADE"), nullable=False, index=True)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     label: Mapped[str] = mapped_column(String(80), nullable=False)
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     department: Mapped[Department] = relationship(back_populates="semesters")
     class_groups: Mapped[list["ClassGroup"]] = relationship(back_populates="semester")
 
@@ -72,6 +82,7 @@ class ClassGroup(Base):
     semester_id: Mapped[str] = mapped_column(ForeignKey("semesters.id", ondelete="CASCADE"), nullable=False, index=True)
     academic_term_id: Mapped[str] = mapped_column(ForeignKey("academic_terms.id", ondelete="CASCADE"), nullable=False, index=True)
     section_name: Mapped[str] = mapped_column(String(32), nullable=False)
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     department: Mapped[Department] = relationship(back_populates="class_groups")
     semester: Mapped[Semester] = relationship(back_populates="class_groups")
     academic_term: Mapped[AcademicTerm] = relationship(back_populates="class_groups")
@@ -84,20 +95,29 @@ class Subject(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
     department_id: Mapped[str | None] = mapped_column(ForeignKey("departments.id", ondelete="SET NULL"), index=True)
+    semester_id: Mapped[str | None] = mapped_column(ForeignKey("semesters.id", ondelete="SET NULL"), index=True)
     code: Mapped[str] = mapped_column(String(32), nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     department: Mapped[Department | None] = relationship(back_populates="subjects")
+    semester: Mapped[Semester | None] = relationship()
     sessions: Mapped[list["TimetableSession"]] = relationship(back_populates="subject")
 
 
 class Teacher(Base):
     __tablename__ = "teachers"
-    __table_args__ = (UniqueConstraint("institution_id", "email", name="uq_teacher_institution_email"),)
+    __table_args__ = (
+        UniqueConstraint("institution_id", "email", name="uq_teacher_institution_email"),
+        UniqueConstraint("institution_id", "code", name="uq_teacher_institution_code"),
+    )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
     department_id: Mapped[str | None] = mapped_column(ForeignKey("departments.id", ondelete="SET NULL"), index=True)
+    code: Mapped[str | None] = mapped_column(String(32))
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     email: Mapped[str | None] = mapped_column(String(180))
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     department: Mapped[Department | None] = relationship(back_populates="teachers")
     sessions: Mapped[list["TimetableSession"]] = relationship(back_populates="teacher")
 
@@ -109,7 +129,10 @@ class Room(Base):
     institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(32), nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
+    building: Mapped[str | None] = mapped_column(String(100))
+    capacity: Mapped[int | None] = mapped_column(Integer)
     room_type: Mapped[str] = mapped_column(String(32), nullable=False, default="classroom")
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
     sessions: Mapped[list["TimetableSession"]] = relationship(back_populates="room")
 
 

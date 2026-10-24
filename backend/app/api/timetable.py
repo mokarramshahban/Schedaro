@@ -58,17 +58,23 @@ def _resource(db: Session, model, record_id: str, label: str):
     return record
 
 
-def _validate_resources(db: Session, group: ClassGroup, subject_id: str, teacher_id: str, room_id: str):
+def _validate_resources(db: Session, group: ClassGroup, subject_id: str, teacher_id: str, room_id: str, allow_inactive: set[str] | None = None):
+    allow_inactive = allow_inactive or set()
     subject = _resource(db, Subject, subject_id, "Subject")
     teacher = _resource(db, Teacher, teacher_id, "Teacher")
     room = _resource(db, Room, room_id, "Room")
     institution_id = group.department.institution_id
-    if subject.institution_id != institution_id or subject.department_id not in {None, group.department_id}:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "Subject does not belong to the selected institution and department.", "field": "subject_id"})
+    if not group.active or not group.department.active or not group.semester.active or not group.academic_term.active or not group.department.institution.active:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "The selected academic scope is inactive."})
+    if subject.institution_id != institution_id or subject.department_id not in {None, group.department_id} or (subject.semester_id not in {None, group.semester_id}):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "Subject does not belong to the selected institution and academic scope.", "field": "subject_id"})
     if teacher.institution_id != institution_id or teacher.department_id not in {None, group.department_id}:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "Teacher does not belong to the selected institution and department.", "field": "teacher_id"})
     if room.institution_id != institution_id:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "Room does not belong to the selected institution.", "field": "room_id"})
+    for resource, field, label in ((subject, "subject_id", "Subject"), (teacher, "teacher_id", "Teacher"), (room, "room_id", "Room")):
+        if not resource.active and resource.id not in allow_inactive:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": f"{label} is inactive and cannot be assigned to a new session.", "field": field})
 
 
 def _validate_with_engine(db: Session, group: ClassGroup, candidate: dict) -> None:
@@ -132,7 +138,7 @@ def update_session(session_id: str, payload: SessionUpdate, db: Session = Depend
     if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"message": "Timetable session not found", "id": session_id})
     group = _get_group(db, session.class_group_id)
-    _validate_resources(db, group, payload.subject_id, payload.teacher_id, payload.room_id)
+    _validate_resources(db, group, payload.subject_id, payload.teacher_id, payload.room_id, {session.subject_id, session.teacher_id, session.room_id})
     candidate = {"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": payload.day, "start_minute": _minutes(payload.start_time), "end_minute": _minutes(payload.end_time), "teacher_id": payload.teacher_id, "room_id": payload.room_id}
     _validate_with_engine(db, group, candidate)
     session.subject_id = payload.subject_id

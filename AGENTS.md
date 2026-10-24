@@ -1,7 +1,7 @@
 # Schedaro Agent Guide
 
 ## Project and current stage
-Schedaro is the Smart Academic Timetable Builder. **Stage 3 — Backend Integration and Scheduling Engine — is implemented pending final browser verification and release review.** Do not implement Stage 4 or later-stage functionality without explicit authorization.
+Schedaro is the Smart Academic Timetable Builder. **Stage 4 — Academic Resource Management — is implemented pending owner browser verification and release review.** Do not implement Stage 5 or later-stage functionality without explicit authorization.
 
 ## Product scope
 Keep the product focused on institution settings, classes, subjects, teachers, rooms, weekly timetables, validation, persistence, accessibility, and printing. Do not expand it into an unrelated institutional ERP.

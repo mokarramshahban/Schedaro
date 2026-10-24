@@ -14,3 +14,6 @@
 - Added the Rust/PyO3/maturin scheduling engine with deterministic class, teacher, room, interval, weekday, and academic-term conflict validation.
 - Added transactional PostgreSQL exclusion constraints and structured API conflict responses.
 - Replaced frontend demo records with typed API loading, dependent selectors, persistence states, and API error handling.
+- Added PostgreSQL-backed management pages for subjects, teachers, rooms/laboratories, departments, semesters, terms, class groups, and institution settings.
+- Added additive lifecycle fields, scoped resource codes, room metadata, subject semester scope, and safe inactive-resource behavior that preserves existing timetable references.
+- Added management API and frontend tests covering real CRUD payloads, duplicate validation, invalid associations, lifecycle updates, and Stage 3 scheduling regressions.

@@ -51,5 +51,22 @@ Every future implementation must be built and made live before completion. Valid
 - Database-backed conflict display: PASS — Edit Session displayed the ROOM-201 conflict on Monday from 11:00 to 12:30.
 - Conflict resolution interaction: PASS — changing the room to ROOM-305 removed the displayed conflict.
 
+## Stage 4 verification record
+
+### Independent Harness verification
+- Additive migrations `20260302_0002` and `20260302_0003`: PASS; Alembic head and metadata check passed.
+- Backend management API tests: PASS — 5 tests, including create/edit, duplicate code, invalid association, lifecycle rejection, and regression engine coverage.
+- Frontend Vitest: PASS — 14 tests, including management API payload/lifecycle checks and Stage 3 regression tests.
+- TypeScript and frontend production build: PASS.
+- Subjects, teachers, rooms, departments, semesters, terms, and class-group API CRUD smoke checks: PASS.
+- Timetable session creation with a new teacher/room and cleanup: PASS.
+- Inactive subject rejected for new timetable assignment: PASS — HTTP 422.
+- Existing sessions and Stage 3 resource counts remained intact after migration.
+- Docker frontend/backend image build, targeted refresh, health, readiness, status, and frontend HTTP checks: PASS.
+- Harness browser automation: NOT TESTED / unavailable.
+
+### Owner manual verification
+- Pending owner Firefox verification of Subjects, Teachers, Rooms, Classes, Settings, responsive behavior, and refresh persistence.
+
 ## Later planned tests
-Add broader browser accessibility coverage, authenticated write-API tests, deployment smoke tests, and Stage 4 management workflows. These remain outside the current Stage 3 scope.
+Add authenticated write-API tests, deployment smoke tests, and Stage 5 printing workflows. Browser verification remains a release prerequisite for Stage 4.

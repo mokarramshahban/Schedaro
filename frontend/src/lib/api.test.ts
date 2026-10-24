@@ -9,7 +9,7 @@ afterEach(() => fetchMock.mockReset())
 describe('typed API client', () => {
   it('maps academic identifiers from API responses', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'dept-1', institution_id: 'inst-1', name: 'Computer Science' }]), { status: 200 }))
-    await expect(getDepartments('inst-1')).resolves.toEqual([{ id: 'dept-1', institutionId: 'inst-1', name: 'Computer Science' }])
+    await expect(getDepartments('inst-1')).resolves.toEqual([{ id: 'dept-1', institutionId: 'inst-1', code: '', name: 'Computer Science', active: true }])
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/v1/academic/institutions/inst-1/departments'), expect.objectContaining({ headers: expect.any(Object) }))
   })
 

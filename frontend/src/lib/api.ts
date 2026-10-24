@@ -2,11 +2,15 @@ import type { DayOfWeek, SessionType, TimetableSession } from './timetable'
 
 export const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
-export type Institution = { id: string; name: string }
-export type Department = { id: string; institutionId: string; name: string }
-export type Semester = { id: string; departmentId: string; number: number; label: string }
-export type ClassGroup = { id: string; departmentId: string; semesterId: string; academicTermId: string; sectionName: string; label: string }
-export type Resource = { id: string; code?: string; name: string; roomType?: string }
+export type Institution = { id: string; name: string; shortName?: string; institutionType?: string; address?: string; active: boolean }
+export type Department = { id: string; institutionId: string; code?: string; name: string; active: boolean }
+export type AcademicTerm = { id: string; institutionId: string; academicYear: string; term: string; startDate?: string; endDate?: string; active: boolean }
+export type Semester = { id: string; departmentId: string; number: number; label: string; active: boolean }
+export type ClassGroup = { id: string; departmentId: string; semesterId: string; academicTermId: string; sectionName: string; label: string; active: boolean }
+export type Resource = { id: string; code?: string; name: string; roomType?: string; active: boolean; departmentId?: string; semesterId?: string; description?: string; building?: string; capacity?: number; email?: string }
+export type Subject = { id: string; institutionId: string; departmentId?: string; semesterId?: string; code: string; name: string; description?: string; active: boolean }
+export type Teacher = { id: string; institutionId: string; departmentId?: string; code?: string; name: string; email?: string; active: boolean }
+export type Room = { id: string; institutionId: string; code: string; name: string; building?: string; capacity?: number; roomType: string; active: boolean }
 export type AcademicResources = { subjects: Resource[]; teachers: Resource[]; rooms: Resource[] }
 export type SessionPayload = { day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; notes?: string }
 
@@ -34,43 +38,66 @@ async function request<T>(path: string, init: RequestInit = {}, signal?: AbortSi
   return body as T
 }
 
-function mapDepartment(value: { id: string; institution_id: string; name: string }): Department {
-  return { id: value.id, institutionId: value.institution_id, name: value.name }
+function mapInstitution(value: { id: string; name: string; short_name?: string; institution_type?: string; address?: string; active?: boolean }): Institution {
+  return { id: value.id, name: value.name, shortName: value.short_name ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', active: value.active ?? true }
 }
 
-function mapSemester(value: { id: string; department_id: string; number: number; label: string }): Semester {
-  return { id: value.id, departmentId: value.department_id, number: value.number, label: value.label }
+function mapDepartment(value: { id: string; institution_id: string; code?: string; name: string; active?: boolean }): Department {
+  return { id: value.id, institutionId: value.institution_id, code: value.code ?? '', name: value.name, active: value.active ?? true }
 }
 
-function mapClassGroup(value: { id: string; department_id: string; semester_id: string; academic_term_id: string; section_name: string; label: string }): ClassGroup {
-  return { id: value.id, departmentId: value.department_id, semesterId: value.semester_id, academicTermId: value.academic_term_id, sectionName: value.section_name, label: value.label }
+function mapTerm(value: { id: string; institution_id: string; academic_year: string; term: string; start_date?: string; end_date?: string; active: boolean }): AcademicTerm {
+  return { id: value.id, institutionId: value.institution_id, academicYear: value.academic_year, term: value.term, startDate: value.start_date, endDate: value.end_date, active: value.active }
+}
+
+function mapSemester(value: { id: string; department_id: string; number: number; label: string; active?: boolean }): Semester {
+  return { id: value.id, departmentId: value.department_id, number: value.number, label: value.label, active: value.active ?? true }
+}
+
+function mapClassGroup(value: { id: string; department_id: string; semester_id: string; academic_term_id: string; section_name: string; label: string; active?: boolean }): ClassGroup {
+  return { id: value.id, departmentId: value.department_id, semesterId: value.semester_id, academicTermId: value.academic_term_id, sectionName: value.section_name, label: value.label, active: value.active ?? true }
 }
 
 function mapSession(value: { id: string; academic_term_id: string; class_group_id: string; day: DayOfWeek; start_time: string; end_time: string; subject_id: string; teacher_id: string; room_id: string; session_type: SessionType; notes?: string }): TimetableSession {
   return { id: value.id, classGroupId: value.class_group_id, day: value.day, startTime: value.start_time, endTime: value.end_time, subjectId: value.subject_id, teacherId: value.teacher_id, roomId: value.room_id, type: value.session_type, notes: value.notes ?? '' }
 }
 
-export async function getInstitutions(signal?: AbortSignal): Promise<Institution[]> {
-  return request<Institution[]>('/api/v1/academic/institutions', {}, signal)
+export async function getInstitutions(signal?: AbortSignal, includeInactive = true): Promise<Institution[]> {
+  const values = await request<Parameters<typeof mapInstitution>[0][]>(`/api/v1/academic/institutions?include_inactive=${includeInactive}`, {}, signal)
+  return values.map(mapInstitution)
 }
 
-export async function getDepartments(institutionId: string, signal?: AbortSignal): Promise<Department[]> {
-  const values = await request<{ id: string; institution_id: string; name: string }[]>(`/api/v1/academic/institutions/${institutionId}/departments`, {}, signal)
+export async function getDepartments(institutionId: string, signal?: AbortSignal, includeInactive = true): Promise<Department[]> {
+  const values = await request<Parameters<typeof mapDepartment>[0][]>(`/api/v1/academic/institutions/${institutionId}/departments?include_inactive=${includeInactive}`, {}, signal)
   return values.map(mapDepartment)
 }
 
-export async function getSemesters(departmentId: string, signal?: AbortSignal): Promise<Semester[]> {
-  const values = await request<{ id: string; department_id: string; number: number; label: string }[]>(`/api/v1/academic/departments/${departmentId}/semesters`, {}, signal)
+export async function getTerms(institutionId: string, signal?: AbortSignal, includeInactive = true): Promise<AcademicTerm[]> {
+  const values = await request<Parameters<typeof mapTerm>[0][]>(`/api/v1/academic/institutions/${institutionId}/terms?include_inactive=${includeInactive}`, {}, signal)
+  return values.map(mapTerm)
+}
+
+export async function getSemesters(departmentId: string, signal?: AbortSignal, includeInactive = true): Promise<Semester[]> {
+  const values = await request<Parameters<typeof mapSemester>[0][]>(`/api/v1/academic/departments/${departmentId}/semesters?include_inactive=${includeInactive}`, {}, signal)
   return values.map(mapSemester)
 }
 
-export async function getClassGroups(semesterId: string, signal?: AbortSignal): Promise<ClassGroup[]> {
-  const values = await request<{ id: string; department_id: string; semester_id: string; academic_term_id: string; section_name: string; label: string }[]>(`/api/v1/academic/semesters/${semesterId}/class-groups`, {}, signal)
+export async function getClassGroups(semesterId: string, signal?: AbortSignal, includeInactive = true): Promise<ClassGroup[]> {
+  const values = await request<Parameters<typeof mapClassGroup>[0][]>(`/api/v1/academic/semesters/${semesterId}/class-groups?include_inactive=${includeInactive}`, {}, signal)
   return values.map(mapClassGroup)
 }
 
-export async function getResources(institutionId: string, departmentId: string, signal?: AbortSignal): Promise<AcademicResources> {
-  const value = await request<{ subjects: Resource[]; teachers: Resource[]; rooms: Array<Resource & { room_type?: string }> }>(`/api/v1/academic/resources?institution_id=${encodeURIComponent(institutionId)}&department_id=${encodeURIComponent(departmentId)}`, {}, signal)
+export async function getAllClassGroups(institutionId: string, departmentId?: string, signal?: AbortSignal, includeInactive = true): Promise<ClassGroup[]> {
+  const query = new URLSearchParams({ institution_id: institutionId, include_inactive: String(includeInactive) })
+  if (departmentId) query.set('department_id', departmentId)
+  const values = await request<Parameters<typeof mapClassGroup>[0][]>(`/api/v1/academic/class-groups?${query}`, {}, signal)
+  return values.map(mapClassGroup)
+}
+
+export async function getResources(institutionId: string, departmentId: string, signal?: AbortSignal, semesterId?: string): Promise<AcademicResources> {
+  const query = new URLSearchParams({ institution_id: institutionId, department_id: departmentId })
+  if (semesterId) query.set('semester_id', semesterId)
+  const value = await request<{ subjects: Resource[]; teachers: Resource[]; rooms: Array<Resource & { room_type?: string }> }>(`/api/v1/academic/resources?${query}`, {}, signal)
   return { subjects: value.subjects, teachers: value.teachers, rooms: value.rooms.map((room) => ({ ...room, roomType: room.room_type })) }
 }
 

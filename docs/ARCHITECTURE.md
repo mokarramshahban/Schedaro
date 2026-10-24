@@ -10,7 +10,7 @@ PostgreSQL persistent volume: schedaro_pgdata
 
 ## Implemented
 
-`frontend` is a React/TypeScript/Vite timetable workspace. It loads the academic hierarchy and scheduling resources through a typed API client, preserves the shared minute-based time axis, and performs persistent session CRUD through FastAPI.
+`frontend` is a React/TypeScript/Vite timetable workspace. It loads the academic hierarchy and scheduling resources through typed API clients, provides PostgreSQL-backed Subjects, Teachers, Rooms, Classes, and Institution Settings management pages, preserves the shared minute-based time axis, and performs persistent session CRUD through FastAPI.
 
 `backend` is FastAPI with versioned academic and timetable routes, Pydantic request/response schemas, SQLAlchemy sessions, Alembic migrations, PostgreSQL-backed readiness checks, and structured conflict responses. The backend invokes the compiled `schedaro_engine` PyO3 extension for deterministic interval validation before writes.
 
@@ -20,7 +20,7 @@ PostgreSQL persistent volume: schedaro_pgdata
 
 ## Academic scope
 
-Institutions own departments and academic terms. Departments define semester records and class groups. Class groups combine a department, semester, academic term and section. Subjects, teachers and rooms are institution-scoped; optional department links restrict them to compatible scheduling scopes. Sessions reference all required academic resources through foreign keys.
+Institutions own departments and academic terms. Departments define semester records and class groups. Class groups combine a department, semester, academic term and section. Subjects, teachers and rooms are institution-scoped; optional department links restrict them to compatible scheduling scopes. Stage 4 management pages create, edit, search, filter, and deactivate these records through the API. Sessions reference all required academic resources through foreign keys; inactive records remain readable for historical sessions but are rejected for new assignments.
 
 ## Boundaries
 
