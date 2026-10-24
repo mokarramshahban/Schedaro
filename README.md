@@ -21,7 +21,7 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 - Responsive desktop, tablet and mobile timetable layout.
 - FastAPI, PostgreSQL and Rust scheduling-engine health indicators.
 - Accessible controls, focus states and keyboard-friendly dialogs.
-- Institution-branded A4 landscape print preview using the browser's Print / Save as PDF workflow.
+- Institution-branded A4 landscape print preview with an optional saved header/signature layout editor, using the browser's Print / Save as PDF workflow.
 - Deterministic OR-Tools timetable generation from persisted weekly requirements, teacher availability, room suitability and existing bookings.
 - Monday–Friday or Monday–Saturday working-week selection with balanced daily workload and repeated-subject distribution.
 - Clearly marked unsaved proposals with regenerate, discard and explicit transactional approval actions.

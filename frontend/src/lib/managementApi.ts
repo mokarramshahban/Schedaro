@@ -1,3 +1,4 @@
+import type { PrintLayout, PrintElement, SignatureElement } from './printLayout'
 import {
   apiUrl,
   type AcademicTerm,
@@ -55,6 +56,13 @@ export async function createInstitution(payload: InstitutionPayload) { return to
 export async function updateInstitution(id: string, payload: Partial<InstitutionPayload>) { return toInstitution(await request(`/api/v1/academic/institutions/${id}`, { method: 'PATCH', body: JSON.stringify(snake(payload)) })) }
 export async function getWorkingWeek(id: string) { return toWorkingWeek(await request(`/api/v1/academic/institutions/${id}/working-week`)) }
 export async function updateWorkingWeek(id: string, workingWeek: WorkingWeek) { return toWorkingWeek(await request(`/api/v1/academic/institutions/${id}/working-week`, { method: 'PATCH', body: JSON.stringify({ working_week: workingWeek }) })) }
+
+function toPrintLayout(value: any): PrintLayout {
+  return { id: value.id, institutionId: value.institution_id, version: value.version, updatedAt: value.updated_at, logoDataUrl: value.logo_data_url ?? null, headerElements: (value.header_elements ?? []).map((item: any): PrintElement => ({ id: item.id, kind: item.kind, field: item.field, text: item.text, x: item.x, y: item.y, width: item.width, height: item.height, align: item.align, fontSize: item.font_size, bold: item.bold, visible: item.visible })), footerElements: (value.footer_elements ?? []).map((item: any): SignatureElement => ({ id: item.id, label: item.label, secondaryText: item.secondary_text, x: item.x, y: item.y, width: item.width, height: item.height, align: item.align, showLine: item.show_line })) }
+}
+export async function getPrintLayout(institutionId: string) { const value = await request<any>(`/api/v1/academic/institutions/${institutionId}/print-template`); return value ? toPrintLayout(value) : null }
+export async function savePrintLayout(institutionId: string, layout: PrintLayout) { const value = await request<any>(`/api/v1/academic/institutions/${institutionId}/print-template`, { method: 'PUT', body: JSON.stringify({ header_elements: layout.headerElements.map((item) => ({ id: item.id, kind: item.kind, field: item.field, text: item.text, x: item.x, y: item.y, width: item.width, height: item.height, align: item.align, font_size: item.fontSize, bold: item.bold, visible: item.visible })), footer_elements: layout.footerElements.map((item) => ({ id: item.id, label: item.label, secondary_text: item.secondaryText, x: item.x, y: item.y, width: item.width, height: item.height, align: item.align, show_line: item.showLine })), logo_data_url: layout.logoDataUrl ?? null }) }); return toPrintLayout(value) }
+export async function resetPrintLayout(institutionId: string) { return request<void>(`/api/v1/academic/institutions/${institutionId}/print-template`, { method: 'DELETE' }) }
 export async function createDepartment(institutionId: string, payload: DepartmentPayload) { return toDepartment(await request(`/api/v1/academic/institutions/${institutionId}/departments`, { method: 'POST', body: JSON.stringify(snake(payload)) })) }
 export async function updateDepartment(id: string, payload: Partial<DepartmentPayload>) { return toDepartment(await request(`/api/v1/academic/departments/${id}`, { method: 'PATCH', body: JSON.stringify(snake(payload)) })) }
 export async function createTerm(institutionId: string, payload: TermPayload) { return toTerm(await request(`/api/v1/academic/institutions/${institutionId}/terms`, { method: 'POST', body: JSON.stringify(snake(payload)) })) }

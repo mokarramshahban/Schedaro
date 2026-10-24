@@ -198,6 +198,17 @@ class TeacherAvailability(Base):
     academic_term: Mapped[AcademicTerm] = relationship()
 
 
+class PrintLayoutTemplate(Base):
+    __tablename__ = "print_layout_templates"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    layout: Mapped[dict] = mapped_column(JSON, nullable=False)
+    logo_data_url: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    institution: Mapped[Institution] = relationship()
+
+
 class TimetableProposal(Base):
     __tablename__ = "timetable_proposals"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)

@@ -1,7 +1,9 @@
+import base64
+import re
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 DayOfWeek = Literal["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 WorkingWeek = Literal["monday-friday", "monday-saturday"]
@@ -276,6 +278,101 @@ class WorkingWeekRead(BaseModel):
     working_days: list[DayOfWeek]
     saturday_exception_count: int = 0
     warning: str | None = None
+
+
+LayoutElementKind = Literal["dynamic", "custom", "logo", "divider"]
+LayoutField = Literal["institution_name", "institution_type", "address", "department_name", "timetable_title", "semester_section", "academic_term"]
+TextAlign = Literal["left", "center", "right"]
+
+
+class PrintLayoutElement(BaseModel):
+    id: str = Field(min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    kind: LayoutElementKind
+    field: LayoutField | None = None
+    text: str | None = Field(default=None, max_length=240)
+    x: float = Field(ge=0, le=100)
+    y: float = Field(ge=0, le=100)
+    width: float = Field(gt=0, le=100)
+    height: float = Field(gt=0, le=100)
+    align: TextAlign = "left"
+    font_size: float = Field(default=10, ge=6, le=28)
+    bold: bool = False
+    visible: bool = True
+
+    @model_validator(mode="after")
+    def validate_element(self):
+        if self.x + self.width > 100 or self.y + self.height > 100:
+            raise ValueError("layout elements must remain within their region")
+        if self.kind == "dynamic" and self.field is None:
+            raise ValueError("dynamic elements require a safe predefined field")
+        if self.kind == "custom" and not self.text:
+            raise ValueError("custom elements require text")
+        if self.kind in {"logo", "divider"} and (self.field is not None or self.text is not None):
+            raise ValueError("logo and divider elements cannot contain text fields")
+        return self
+
+
+class PrintSignatureElement(BaseModel):
+    id: str = Field(min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    label: str = Field(min_length=1, max_length=80)
+    secondary_text: str | None = Field(default=None, max_length=120)
+    x: float = Field(ge=0, le=100)
+    y: float = Field(ge=0, le=100)
+    width: float = Field(gt=0, le=100)
+    height: float = Field(gt=0, le=100)
+    align: TextAlign = "center"
+    show_line: bool = True
+
+    @model_validator(mode="after")
+    def validate_bounds(self):
+        if self.x + self.width > 100 or self.y + self.height > 100:
+            raise ValueError("signature elements must remain within the footer region")
+        return self
+
+
+class PrintLayoutPayload(BaseModel):
+    header_elements: list[PrintLayoutElement] = Field(default_factory=list, max_length=20)
+    footer_elements: list[PrintSignatureElement] = Field(default_factory=list, max_length=5)
+    logo_data_url: str | None = Field(default=None, max_length=1_500_000)
+
+    @field_validator("logo_data_url")
+    @classmethod
+    def validate_logo(cls, value: str | None):
+        if value is None:
+            return value
+        match = re.fullmatch(r"data:image/(png|jpeg);base64,([A-Za-z0-9+/=]+)", value)
+        if not match:
+            raise ValueError("logo must be a PNG or JPEG data URL")
+        try:
+            decoded = base64.b64decode(match.group(2), validate=True)
+        except ValueError as error:
+            raise ValueError("logo data is not valid base64") from error
+        if len(decoded) > 1_000_000:
+            raise ValueError("logo must be 1 MB or smaller")
+        if match.group(1) == "png" and not decoded.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise ValueError("logo PNG signature is invalid")
+        if match.group(1) == "jpeg" and not decoded.startswith(b"\xff\xd8\xff"):
+            raise ValueError("logo JPEG signature is invalid")
+        return value
+
+    @model_validator(mode="after")
+    def validate_ids(self):
+        ids = [item.id for item in self.header_elements] + [item.id for item in self.footer_elements]
+        if len(ids) != len(set(ids)):
+            raise ValueError("layout element IDs must be unique")
+        for elements, region in ((self.header_elements, "header"), (self.footer_elements, "footer")):
+            for index, first in enumerate(elements):
+                for second in elements[index + 1:]:
+                    if first.x < second.x + second.width and first.x + first.width > second.x and first.y < second.y + second.height and first.y + first.height > second.y:
+                        raise ValueError(f"{region} elements cannot overlap")
+        return self
+
+
+class PrintLayoutTemplateRead(PrintLayoutPayload):
+    id: str
+    institution_id: str
+    version: int
+    updated_at: datetime
 
 
 class DepartmentCreate(BaseModel):

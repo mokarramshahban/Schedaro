@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.api.academic import router as academic_router
 from app.api.timetable import router as timetable_router
 from app.api.generation import router as generation_router
+from app.api.print_layout import router as print_layout_router
 from app.db.session import check_database_connection
 from app.services.scheduling import engine_available
 
@@ -16,13 +17,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
 app.include_router(academic_router)
 app.include_router(timetable_router)
 app.include_router(generation_router)
+app.include_router(print_layout_router)
 
 
 @app.get("/health/live")

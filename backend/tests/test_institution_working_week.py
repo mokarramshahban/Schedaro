@@ -11,6 +11,8 @@ LAKESIDE = "inst-lakeside"
 
 
 def test_institutions_keep_independent_working_weeks_and_generation_uses_saved_setting():
+    client.patch(f"/api/v1/academic/institutions/{NORTH}/working-week", json={"working_week": "monday-saturday"})
+    client.patch(f"/api/v1/academic/institutions/{LAKESIDE}/working-week", json={"working_week": "monday-saturday"})
     north = client.get(f"/api/v1/academic/institutions/{NORTH}/working-week").json()
     lake = client.get(f"/api/v1/academic/institutions/{LAKESIDE}/working-week").json()
     assert north["working_week"] == "monday-saturday"
