@@ -18,6 +18,7 @@ Verified from the running Schedaro frontend dependency environment and lockfile:
 | lucide-react | 0.468.0 | ISC | Runtime icon dependency; preserve ISC notice/terms where applicable. |
 | Tailwind CSS | 4.3.3 | MIT | Build-time dependency. |
 | `@tailwindcss/vite` | 4.3.3 | MIT | Build-time dependency. |
+| Vitest | 5.0.5 | MIT | Test-time dependency; patched release used for deterministic tests. |
 
 ## Installed backend dependencies
 

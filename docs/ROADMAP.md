@@ -12,10 +12,10 @@
 Every future implementation must validate Compose, build affected images, refresh required Schedaro containers, verify health/API/UI/database behavior, and report the real preview URL. Documentation-only changes do not require a rebuild. Preserve `schedaro_pgdata` and never use destructive volume commands.
 
 ## Stage 1 — UI Reference Analysis & Design Foundation — COMPLETE
-Define the React design foundation and verify the live Docker preview. Stage 1 does not implement the weekly timetable grid or academic CRUD. Implementation, Docker build/refresh, live HTTP/API verification, and browser verification all passed. Stage 2 remains NOT STARTED.
+Define the React design foundation and verify the live Docker preview. Stage 1 did not implement the weekly timetable grid or academic CRUD. Implementation, Docker build/refresh, live HTTP/API verification, and browser verification all passed. Stage 2 follows Stage 1.
 
-## Stage 2 — Timetable Builder UI — NOT STARTED
-Interactive weekly calendar and editing controls. Depends on Stage 1.
+## Stage 2 — Timetable Builder UI — IN PROGRESS
+Interactive Monday–Saturday calendar, shared time-axis rendering, temporary session editing, academic selectors, responsive behavior, and client-side conflict warnings. Depends on Stage 1. Persistence and authoritative validation remain Stage 3 scope.
 
 ## Stage 3 — Backend & PostgreSQL — NOT STARTED
 Schema, APIs, validation, and persistence for timetable data. Depends on Stage 2.

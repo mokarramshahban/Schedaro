@@ -17,5 +17,20 @@ Every future implementation must be built and made live before completion. Valid
 - Docker service status: PASS; frontend running, backend/database healthy.
 - Browser verification: PASS — Stage 1 visual rendering and interaction checks passed.
 
+## Stage 2 verification record
+- `docker compose -p schedaro exec -T frontend npm test -- --run`: PASS — 9 deterministic timetable model tests.
+- `docker compose -p schedaro exec -T frontend npx tsc -b --pretty false`: PASS.
+- `docker compose -p schedaro exec -T frontend npm run build`: PASS.
+- Shared-axis calculations: PASS — equal starts align, gaps preserve position, and duration controls height.
+- Interval validation: PASS — invalid bounds/reversed intervals rejected; boundary-touching sessions are consecutive.
+- Session operations: PASS — class-group filtering and add/edit/remove model operations covered.
+- `docker compose -p schedaro config --quiet`: PASS.
+- `docker compose -p schedaro build frontend`: PASS.
+- `docker compose -p schedaro up -d --no-deps --force-recreate frontend`: PASS.
+- Frontend `http://localhost:5174`: PASS — HTTP 200.
+- Backend liveness/readiness/status after refresh: PASS.
+- Backend/database containers: PASS — healthy and untouched.
+- Browser visual/interaction verification: NOT TESTED in Harness; owner manual verification remains required.
+
 ## Later planned tests
-Add unit/API tests for validation and collision rules, integration tests for persistence, accessibility and responsive browser tests, print/PDF tests, security tests, and deployment smoke tests. These are not Stage 1 results.
+Add unit/API tests for validation and collision rules, integration tests for persistence, accessibility and responsive browser tests, print/PDF tests, security tests, and deployment smoke tests. These remain future coverage beyond the current Stage 2 model tests.

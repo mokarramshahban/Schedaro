@@ -1,7 +1,7 @@
 # Schedaro Agent Guide
 
 ## Project and current stage
-Schedaro is the Smart Academic Timetable Builder. The current stage is **Stage 1 — UI Design Foundation (complete)**. Stage 2 — Timetable Builder UI — is **not started**. Do not implement later-stage functionality without explicit authorization.
+Schedaro is the Smart Academic Timetable Builder. **Stage 2 — Timetable Builder UI — is implemented pending owner browser verification.** Do not implement Stage 3 persistence or later-stage functionality without explicit authorization.
 
 ## Product scope
 Keep the product focused on institution settings, classes, subjects, teachers, rooms, weekly timetables, validation, persistence, accessibility, and printing. Do not expand it into an unrelated institutional ERP.
@@ -10,9 +10,9 @@ Keep the product focused on institution settings, classes, subjects, teachers, r
 React + TypeScript + Vite frontend, FastAPI + Pydantic + SQLAlchemy + Alembic backend, PostgreSQL 18, and Docker Compose. Local development is Docker-first.
 
 ## Public development workflow
-The owner has removed the local Git metadata for fresh republication. Until the owner manually initializes and publishes the replacement repository, do not run `git init`, `git pull`, create commits, configure remotes, or push.
+The owner has initialized the replacement repository and authorized safe pull and local commits. Never run `git push` or configure/change remotes.
 
-After the owner verifies the new branch and upstream, before implementation:
+Before implementation:
 
 1. Inspect the current branch, upstream, and working-tree status.
 2. Confirm the intended branch and do not overwrite uncommitted work.
