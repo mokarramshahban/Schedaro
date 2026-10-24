@@ -99,8 +99,8 @@ Every future implementation must be built and made live before completion. Valid
 ### Independent Harness verification
 - Print action is guarded by valid persisted institution/department/semester/section scope and loaded sessions: PASS by source inspection and TypeScript/build checks.
 - Institution-branded `TimetablePrintView` uses the selected institution, department, semester, section, academic term, resources, and saved sessions: PASS by source inspection and live API scope checks.
-- Shared-axis and duration positioning tests: PASS — equal starts, gaps, and variable-duration sessions remain minute-based.
-- Frontend Vitest: PASS — 24 tests.
+- Shared-axis, duration, and boundary-safe time-label positioning tests: PASS — equal starts, gaps, variable-duration sessions, and 09:00/17:00 boundaries remain minute-based.
+- Frontend Vitest: PASS — 25 tests.
 - TypeScript and frontend production build: PASS.
 - Backend pytest: PASS — 5 tests.
 - Rust scheduling tests: PASS — 7 tests.
@@ -108,6 +108,14 @@ Every future implementation must be built and made live before completion. Valid
 - Compose validation, frontend image build, targeted frontend refresh, backend readiness, API status, and frontend HTTP 200: PASS.
 - Chromium/Playwright PDF rendering: NOT TESTED — no Chromium or Playwright executable is available in Harness.
 - Harness browser visual/interaction verification: NOT TESTED / unavailable.
+
+### Stage 5 print layout hotfix verification
+- Root cause identified: `visibility:hidden` left the application tree in the paged layout, while fixed preview dimensions and `min-height` exceeded the A4 content box; this produced unexplained extra pages.
+- Print isolation: PASS by source inspection — only the timetable print root remains `display:block`; sidebar, header, page controls, modal chrome, and background app content are `display:none` during print.
+- A4 geometry: PASS by source inspection — preview paper is 297×210mm; print content is 277×190mm under `@page { size: A4 landscape; margin: 10mm; }`.
+- Time-axis boundaries: PASS — 09:00 uses top alignment, 17:00 uses bottom alignment, and intermediate labels use centered alignment on the shared minute scale.
+- Automatic footer: PASS removed; a clean 22mm signature/stamp area is reserved on the document.
+- Actual Firefox PDF page count and visual rendering: NOT TESTED / pending owner Firefox verification because Harness has no Firefox or PDF renderer.
 
 ### Owner manual Firefox verification required
 1. Select an active institution, department, semester, and section with saved sessions.

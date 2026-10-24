@@ -21,3 +21,4 @@
 - Moved the Active Institution selector into the compact top header and restored the sidebar to navigation-focused spacing across desktop and mobile layouts.
 - Replaced the shrinking native header select with a single visible institution trigger/menu that renders the selected name, chevron, institution options, and management action.
 - Added an institution-branded A4 landscape timetable preview and browser Print / Save as PDF workflow using the selected persisted class group and PostgreSQL-backed resources.
+- Corrected print-only pagination isolation, A4 content geometry, time-axis boundary labels, session readability, and automatic footer output; reserved clean space for handwritten signatures or institutional stamps.

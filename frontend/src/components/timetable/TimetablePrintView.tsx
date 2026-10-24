@@ -14,6 +14,7 @@ type Props = {
 }
 
 export type PrintSessionPosition = { topPercent: number; heightPercent: number }
+export type PrintTimeLabelPosition = { topPercent: number; transform: string }
 
 export function printSessionPosition(session: Pick<TimetableSession, 'startTime' | 'endTime'>): PrintSessionPosition {
   const start = timeToMinutes(session.startTime) ?? SCHEDULE_START_MINUTES
@@ -22,12 +23,16 @@ export function printSessionPosition(session: Pick<TimetableSession, 'startTime'
   return { topPercent: ((start - SCHEDULE_START_MINUTES) / range) * 100, heightPercent: ((end - start) / range) * 100 }
 }
 
-function resourceName(resources: Resource[], id: string, missingLabel: string) {
-  return resources.find((item) => item.id === id)?.name ?? missingLabel
+export function printTimeLabelPosition(minutes: number): PrintTimeLabelPosition {
+  const range = SCHEDULE_END_MINUTES - SCHEDULE_START_MINUTES
+  const topPercent = ((minutes - SCHEDULE_START_MINUTES) / range) * 100
+  if (minutes <= SCHEDULE_START_MINUTES) return { topPercent: 0, transform: 'translateY(0)' }
+  if (minutes >= SCHEDULE_END_MINUTES) return { topPercent: 100, transform: 'translateY(-100%)' }
+  return { topPercent, transform: 'translateY(-50%)' }
 }
 
-function printDate() {
-  return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
+function resourceName(resources: Resource[], id: string, missingLabel: string) {
+  return resources.find((item) => item.id === id)?.name ?? missingLabel
 }
 
 export function TimetablePrintView({ institution, department, semester, group, term, resources, sessions, onClose }: Props) {
@@ -43,10 +48,10 @@ export function TimetablePrintView({ institution, department, semester, group, t
         <div className="print-document__rule" />
         <section className="print-grid" aria-label="Monday through Saturday timetable">
           <div className="print-grid__time-header">Time</div>{DAYS.map((day) => <div className="print-grid__day-header" key={day}>{DAY_LABELS[day]}</div>)}
-          <div className="print-grid__body"><div className="print-grid__time-axis">{Array.from({ length: 9 }, (_, index) => { const minutes = SCHEDULE_START_MINUTES + index * 60; return <span key={minutes} style={{ top: `${((minutes - SCHEDULE_START_MINUTES) / (SCHEDULE_END_MINUTES - SCHEDULE_START_MINUTES)) * 100}%` }}>{`${String(Math.floor(minutes / 60)).padStart(2, '0')}:00`}</span> })}</div>{DAYS.map((day) => <div className="print-grid__day" key={day}>{sessions.filter((session) => session.day === day).map((session) => { const position = printSessionPosition(session); return <div className={`print-session print-session--${session.type.toLowerCase()}`} key={session.id} style={{ top: `${position.topPercent}%`, height: `${position.heightPercent}%` }}><strong>{subjectName(session.subjectId)}</strong><span>{session.startTime}–{session.endTime} · {session.type}</span><small>{teacherName(session.teacherId)} · {roomName(session.roomId)}</small></div> })}</div>)}</div>
+          <div className="print-grid__body"><div className="print-grid__time-axis">{Array.from({ length: 9 }, (_, index) => { const minutes = SCHEDULE_START_MINUTES + index * 60; const labelPosition = printTimeLabelPosition(minutes); return <span key={minutes} style={{ top: `${labelPosition.topPercent}%`, transform: labelPosition.transform }}>{`${String(Math.floor(minutes / 60)).padStart(2, '0')}:00`}</span> })}</div>{DAYS.map((day) => <div className="print-grid__day" key={day}>{sessions.filter((session) => session.day === day).map((session) => { const position = printSessionPosition(session); return <div className={`print-session print-session--${session.type.toLowerCase()}`} key={session.id} style={{ top: `${position.topPercent}%`, height: `${position.heightPercent}%` }}><strong>{subjectName(session.subjectId)}</strong><span>{session.startTime}–{session.endTime} · {session.type}</span><small>{teacherName(session.teacherId)} · {roomName(session.roomId)}</small></div> })}</div>)}</div>
         </section>
         {sessions.length === 0 && <p className="print-document__empty">No saved sessions are currently assigned to this section.</p>}
-        <footer className="print-document__footer"><span>{institution.name}</span><span>Generated {printDate()}</span><span>{academicContext}</span></footer>
+        <div className="print-document__signature-space" aria-label="Reserved space for handwritten signatures and institutional stamp" />
       </article></div>
     </div>
   </div>

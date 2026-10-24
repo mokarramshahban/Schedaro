@@ -278,7 +278,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .print-preview-toolbar h2 { margin: 0; color: #273247; font-size: 18px; }
 .print-preview-actions { display: flex; align-items: center; gap: 9px; }
 .print-preview-scroll { overflow: auto; padding: 28px; }
-.print-document { width: 277mm; min-height: 190mm; margin: 0 auto; padding: 10mm; color: #172033; background: #fff; box-shadow: 0 8px 30px rgba(31, 41, 55, .12); }
+.print-document { width: 297mm; height: 210mm; margin: 0 auto; padding: 10mm; color: #172033; background: #fff; box-shadow: 0 8px 30px rgba(31, 41, 55, .12); }
 .print-document__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14mm; min-height: 25mm; }
 .print-document__identity { min-width: 0; flex: 1; }
 .print-document__eyebrow { margin: 0 0 2mm; color: #5c55c4; font-size: 8pt; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
@@ -294,26 +294,30 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .print-grid__body { display: grid; grid-column: 1 / -1; grid-template-columns: 18mm repeat(6, minmax(0, 1fr)); height: 112mm; }
 .print-grid__time-axis, .print-grid__day { position: relative; min-width: 0; border-right: .3mm solid #aeb6c2; border-bottom: .3mm solid #aeb6c2; background-image: linear-gradient(to bottom, #dfe3ea .25mm, transparent .25mm); background-size: 100% 12.5%; }
 .print-grid__time-axis { background-color: #fbfcfe; }
-.print-grid__time-axis span { position: absolute; right: 2mm; color: #667085; font-size: 6.5pt; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.print-grid__time-axis span { position: absolute; right: 1.5mm; z-index: 1; padding: 0 .6mm; color: #4b5563; background: #fbfcfe; font-size: 7pt; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .print-grid__day { overflow: hidden; }
-.print-session { position: absolute; right: 1mm; left: 1mm; display: flex; min-height: 8mm; flex-direction: column; gap: .7mm; overflow: hidden; padding: 1.5mm; border: .3mm solid #b9b6f6; border-radius: 1.2mm; background: #eeedff; color: #273247; font-size: 6.4pt; line-height: 1.15; page-break-inside: avoid; }
-.print-session strong { overflow-wrap: anywhere; font-size: 7pt; }
+.print-session { position: absolute; right: 1mm; left: 1mm; display: flex; min-height: 8mm; flex-direction: column; gap: .8mm; overflow: hidden; padding: 1.7mm; border: .3mm solid #b9b6f6; border-radius: 1.2mm; background: #eeedff; color: #273247; font-size: 7pt; line-height: 1.2; page-break-inside: avoid; }
+.print-session strong { overflow-wrap: anywhere; font-size: 7.4pt; }
 .print-session span { color: #4b5563; font-variant-numeric: tabular-nums; }
-.print-session small { overflow-wrap: anywhere; color: #667085; font-size: 6pt; }
+.print-session small { overflow-wrap: anywhere; color: #667085; font-size: 6.6pt; }
 .print-session--laboratory { border-color: #9dd8cb; background: #e9fbf6; }
 .print-session--tutorial { border-color: #e8c18d; background: #fff5e8; }
 .print-document__empty { margin: 4mm 0 0; color: #667085; font-size: 8pt; font-style: italic; }
-.print-document__footer { display: flex; justify-content: space-between; gap: 8mm; margin-top: 5mm; padding-top: 2mm; color: #667085; border-top: .3mm solid #dfe3ea; font-size: 6.5pt; }
+.print-document__signature-space { height: 22mm; margin-top: 3mm; }
 @media (max-width: 620px) { .page-heading__actions { width: 100%; flex-direction: column; } .page-heading__actions .button { width: 100%; } .print-preview-backdrop { padding: 8px; } .print-preview-scroll { padding: 12px; } .print-preview-toolbar { padding: 13px; } }
 @page { size: A4 landscape; margin: 10mm; }
 @media print {
-  html, body { width: 297mm; min-width: 0; background: #fff; }
-  body * { visibility: hidden !important; }
-  .print-preview-backdrop, .print-preview-backdrop * { visibility: visible !important; }
+  html, body { width: auto; min-width: 0; background: #fff; }
+  body > #root > .app-shell { display: block; min-height: 0; background: #fff; }
+  body > #root > .app-shell > .app-sidebar, body > #root > .app-shell > .app-main > .app-header { display: none !important; }
+  body > #root > .app-shell > .app-main { display: block; min-height: 0; padding: 0; }
+  body > #root > .app-shell > .app-main > main { display: block; margin: 0; padding: 0; }
+  body > #root > .app-shell > .app-main > main > .timetable-page { display: block; max-width: none; margin: 0; padding: 0; }
+  body > #root > .app-shell > .app-main > main > .timetable-page > :not(.print-preview-backdrop) { display: none !important; }
   .print-preview-backdrop { position: static; display: block; padding: 0; background: #fff; }
-  .print-preview-dialog { display: block; width: auto; max-height: none; overflow: visible; border: 0; border-radius: 0; background: #fff; box-shadow: none; }
+  .print-preview-dialog { display: block; width: auto; height: 190mm; max-height: none; overflow: visible; border: 0; border-radius: 0; background: #fff; box-shadow: none; }
   .print-preview-toolbar { display: none !important; }
   .print-preview-scroll { overflow: visible; padding: 0; }
-  .print-document { width: 277mm; min-height: 190mm; margin: 0; padding: 0; box-shadow: none; }
+  .print-document { width: 100%; height: 190mm; min-height: 190mm; max-height: 190mm; margin: 0; padding: 0; box-shadow: none; break-after: avoid; page-break-after: avoid; }
   .print-document__empty { page-break-inside: avoid; }
 }
