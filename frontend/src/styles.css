@@ -239,3 +239,33 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 @media (max-width: 1120px) { .active-institution--header { flex-basis: 270px; } .active-institution--header .active-institution__heading span { display: none; } .active-institution--header .active-institution__action { width: 34px; padding: 0; justify-content: center; overflow: hidden; font-size: 0; } }
 @media (max-width: 900px) { .app-header { gap: 10px; } .active-institution--header { flex: 1 1 210px; max-width: 280px; } .active-institution--header .active-institution__heading span { display: inline; } .active-institution--header .active-institution__action { width: 34px; font-size: 0; } }
 @media (max-width: 620px) { .active-institution--header { flex: 1 1 150px; max-width: none; gap: 5px; } .active-institution--header .active-institution__heading span { display: none; } .active-institution--header .active-institution__heading svg { width: 16px; height: 16px; } .active-institution--header .active-institution__control select, .active-institution--header .active-institution__control input { min-height: 34px; font-size: 10px; } }
+
+/* P0 selector regression fix: the trigger owns the visible institution value and menu. */
+.active-institution--header { position: relative; flex: 0 1 330px; min-width: 230px; }
+.active-institution__trigger { display: flex; width: 100%; min-width: 0; min-height: 38px; align-items: center; gap: 8px; padding: 5px 9px; color: #4f46e5; border: 1px solid #dfe3ea; border-radius: 10px; background: #fff; text-align: left; }
+.active-institution__trigger:hover:not(:disabled) { border-color: #bdbaf6; background: #fafaff; }
+.active-institution__trigger:disabled { color: #8b91ab; cursor: wait; }
+.active-institution__trigger > svg:first-child { flex: 0 0 auto; }
+.active-institution__trigger-text { display: flex; min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 1px; overflow: hidden; }
+.active-institution__trigger-text small { color: #8584b1; font-size: 8px; font-weight: 800; letter-spacing: .08em; line-height: 1.1; text-transform: uppercase; }
+.active-institution__trigger-text strong { overflow: hidden; color: #303b53; font-size: 11px; font-weight: 700; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.active-institution__trigger-chevron { flex: 0 0 auto; color: #6c63d9; transition: transform .15s ease; }
+.active-institution__trigger-chevron--open { transform: rotate(180deg); }
+.active-institution__menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 60; display: flex; width: min(330px, calc(100vw - 24px)); max-height: min(430px, calc(100vh - 100px)); flex-direction: column; overflow: auto; padding: 8px; border: 1px solid #e1e4ed; border-radius: 12px; background: #fff; box-shadow: 0 16px 40px rgba(31, 41, 55, .16); }
+.active-institution__search { display: flex; align-items: center; gap: 7px; margin: 2px 2px 7px; padding: 8px 9px; color: #9aa3b2; border: 1px solid #e1e4ed; border-radius: 8px; }
+.active-institution__search input { width: 100%; min-width: 0; color: #303b53; border: 0; outline: 0; background: transparent; font-size: 11px; }
+.active-institution__options { display: flex; flex-direction: column; gap: 2px; }
+.active-institution__option, .active-institution__manage { display: flex; width: 100%; align-items: center; gap: 8px; min-height: 36px; padding: 0 9px; color: #667085; border: 0; border-radius: 8px; background: transparent; font-size: 11px; font-weight: 600; text-align: left; }
+.active-institution__option span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.active-institution__option:hover, .active-institution__option--selected { color: #4f46e5; background: #f3f4ff; }
+.active-institution__option--selected { font-weight: 750; }
+.active-institution__option--selected svg:last-child { margin-left: auto; flex: 0 0 auto; }
+.active-institution__menu-divider { height: 1px; margin: 7px 2px; background: #edf0f4; }
+.active-institution__manage { color: #5c55c4; font-weight: 750; }
+.active-institution__manage:hover { background: #f3f4ff; }
+.active-institution__message { display: flex; flex-direction: column; gap: 5px; padding: 12px 9px; color: #7d8797; font-size: 10px; line-height: 1.4; }
+.active-institution__message strong { color: #4b5563; font-size: 11px; }
+.active-institution__message button { display: inline-flex; width: fit-content; align-items: center; gap: 5px; margin-top: 3px; padding: 0; color: #5c55c4; border: 0; background: transparent; font-size: 10px; font-weight: 750; }
+@media (max-width: 1120px) { .active-institution--header { flex-basis: 280px; min-width: 210px; } }
+@media (max-width: 900px) { .active-institution--header { flex: 1 1 210px; min-width: 170px; max-width: 280px; } }
+@media (max-width: 620px) { .active-institution--header { flex: 1 1 150px; min-width: 0; max-width: none; } .active-institution__trigger { min-height: 36px; padding-inline: 7px; } .active-institution__trigger-text small { display: none; } .active-institution__trigger-text strong { font-size: 10px; } .active-institution__menu { right: -4px; width: min(330px, calc(100vw - 20px)); } }

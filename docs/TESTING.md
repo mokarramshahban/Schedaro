@@ -84,7 +84,8 @@ Every future implementation must be built and made live before completion. Valid
 
 ### Independent Harness verification
 - Active Institution selector removed from `AppSidebar` and mounted once in `AppHeader`: PASS by source inspection and TypeScript/build checks.
-- Frontend Vitest: PASS — 18 tests.
+- Header selector behavior tests: PASS — selected name/code, option filtering, loading/error/empty labels, and menu model behavior.
+- Frontend Vitest: PASS — 21 tests.
 - TypeScript and frontend production build: PASS.
 - Docker Compose validation, frontend image build, targeted frontend refresh, service health, backend readiness, API status, and frontend HTTP 200: PASS.
 - Existing backend/Rust regression checks remain passing.
