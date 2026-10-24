@@ -169,6 +169,7 @@ class GenerateTimetableRequest(BaseModel):
     institution_id: str
     academic_term_id: str
     class_group_ids: list[str] = Field(min_length=1, max_length=12)
+    selected_requirement_ids: list[str] = Field(min_length=1, max_length=100)
     working_days: list[DayOfWeek] = Field(default_factory=lambda: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], min_length=1)
     daily_start_time: str = Field(default="09:00", pattern=r"^\d{2}:\d{2}$")
     daily_end_time: str = Field(default="17:00", pattern=r"^\d{2}:\d{2}$")
@@ -193,10 +194,27 @@ class GeneratedSessionRead(BaseModel):
     generated: bool = True
 
 
+class RequirementGenerationSummary(BaseModel):
+    requirement_id: str
+    subject_id: str
+    teacher_id: str
+    session_type: SessionType
+    duration_minutes: int
+    room_type: str
+    required_count: int
+    scheduled_count: int
+    remaining_count: int
+    selected: bool
+    duration_mismatch_count: int = 0
+    teacher_mismatch_count: int = 0
+    warning: str | None = None
+
+
 class GenerateTimetableResponse(BaseModel):
     proposal_id: str | None = None
     status: Literal["OPTIMAL", "FEASIBLE", "INFEASIBLE", "MODEL_INVALID", "UNKNOWN"]
     message: str
+    requirement_summaries: list[RequirementGenerationSummary] = []
     sessions: list[GeneratedSessionRead] = []
     preserved_sessions: list[GeneratedSessionRead] = []
     objective_value: float | None = None

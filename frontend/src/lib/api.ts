@@ -14,9 +14,10 @@ export type Room = { id: string; institutionId: string; code: string; name: stri
 export type AcademicResources = { subjects: Resource[]; teachers: Resource[]; rooms: Resource[] }
 export type SessionPayload = { day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; notes?: string; locked?: boolean }
 export type SchedulingRequirement = { id: string; classGroupId: string; subjectId: string; teacherId: string; sessionType: SessionType; weeklyCount: number; durationMinutes: number; roomType: string; active: boolean }
-export type GenerateRequest = { institutionId: string; academicTermId: string; classGroupIds: string[]; workingDays?: DayOfWeek[]; dailyStartTime?: string; dailyEndTime?: string; quantumMinutes?: number; timeLimitSeconds?: number; preference?: 'earlier' | 'balanced'; preserveExisting?: boolean }
+export type GenerateRequest = { institutionId: string; academicTermId: string; classGroupIds: string[]; selectedRequirementIds: string[]; workingDays?: DayOfWeek[]; dailyStartTime?: string; dailyEndTime?: string; quantumMinutes?: number; timeLimitSeconds?: number; preference?: 'earlier' | 'balanced'; preserveExisting?: boolean }
 export type GeneratedSession = { id: string; academicTermId: string; classGroupId: string; day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; locked: boolean; generated: boolean }
-export type GenerateResponse = { proposal_id: string | null; status: 'OPTIMAL' | 'FEASIBLE' | 'INFEASIBLE' | 'MODEL_INVALID' | 'UNKNOWN'; message: string; sessions: GeneratedSession[]; preserved_sessions: GeneratedSession[]; objective_value?: number | null; solve_time_ms: number }
+export type RequirementSummary = { requirement_id: string; subject_id: string; teacher_id: string; session_type: SessionType; duration_minutes: number; room_type: string; required_count: number; scheduled_count: number; remaining_count: number; selected: boolean; duration_mismatch_count: number; teacher_mismatch_count: number; warning?: string | null }
+export type GenerateResponse = { proposal_id: string | null; status: 'OPTIMAL' | 'FEASIBLE' | 'INFEASIBLE' | 'MODEL_INVALID' | 'UNKNOWN'; message: string; requirement_summaries: RequirementSummary[]; sessions: GeneratedSession[]; preserved_sessions: GeneratedSession[]; objective_value?: number | null; solve_time_ms: number }
 
 export class ApiError extends Error {
   status: number

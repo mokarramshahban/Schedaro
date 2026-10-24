@@ -62,6 +62,31 @@ def teacher_permitted(teacher_id: str, day: str, start: int, end: int, availabil
     return not permitted or any(row.start_minute <= start and end <= row.end_minute for row in permitted)
 
 
+def requirement_summary(requirement: SchedulingRequirement, sessions: list[TimetableSession]) -> dict[str, Any]:
+    related = [session for session in sessions if session.class_group_id == requirement.class_group_id and session.subject_id == requirement.subject_id and session.session_type == requirement.session_type]
+    matching_ids: set[str] = set()
+    mismatched_durations = 0
+    mismatched_teachers = 0
+    for session in related:
+        duration = session.end_minute - session.start_minute
+        if session.teacher_id == requirement.teacher_id and duration == requirement.duration_minutes:
+            matching_ids.add(session.id)
+        else:
+            if duration != requirement.duration_minutes:
+                mismatched_durations += 1
+            if session.teacher_id != requirement.teacher_id:
+                mismatched_teachers += 1
+    scheduled = len(matching_ids)
+    warning = None
+    if mismatched_durations:
+        warning = f"{mismatched_durations} existing {requirement.session_type} session(s) have a different duration; they are not counted."
+    if mismatched_teachers:
+        warning = (warning + " " if warning else "") + f"{mismatched_teachers} existing {requirement.session_type} session(s) use a different teacher; they are not counted."
+    if scheduled > requirement.weekly_count:
+        warning = (warning + " " if warning else "") + "Existing matching sessions exceed this requirement."
+    return {"requirement_id": requirement.id, "subject_id": requirement.subject_id, "teacher_id": requirement.teacher_id, "session_type": requirement.session_type, "duration_minutes": requirement.duration_minutes, "room_type": requirement.room_type, "required_count": requirement.weekly_count, "scheduled_count": scheduled, "remaining_count": max(requirement.weekly_count - scheduled, 0), "duration_mismatch_count": mismatched_durations, "teacher_mismatch_count": mismatched_teachers, "warning": warning}
+
+
 def _placement_conflicts_existing(placement: dict[str, Any], existing: list[TimetableSession]) -> bool:
     return any(
         overlaps(placement["day"], placement["start_minute"], placement["end_minute"], session)

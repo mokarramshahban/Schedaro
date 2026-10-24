@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.services.generator import GenerationConfig, generate_candidate
+from app.services.generator import GenerationConfig, generate_candidate, requirement_summary
 
 
 def requirement(identifier="r1", group="g1", teacher="t1", subject="s1", duration=60, count=1, room_type="classroom"):

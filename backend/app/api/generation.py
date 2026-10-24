@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -11,7 +12,7 @@ from app.api.timetable import _get_group, _read, _validate_resources
 from app.db.models import AcademicTerm, ClassGroup, Institution, Room, SchedulingRequirement, Subject, Teacher, TeacherAvailability, TimetableProposal, TimetableSession, new_id
 from app.db.session import get_db
 from app.schemas import ApproveProposalResponse, GenerateTimetableRequest, GenerateTimetableResponse, GeneratedSessionRead, SchedulingRequirementCreate, SchedulingRequirementRead, SchedulingRequirementUpdate, TeacherAvailabilityCreate, TeacherAvailabilityRead
-from app.services.generator import GenerationConfig, GeneratorUnavailable, clock_minutes, clock_value, generate_candidate
+from app.services.generator import GenerationConfig, GeneratorUnavailable, clock_minutes, clock_value, generate_candidate, requirement_summary
 from app.services.scheduling import SchedulingEngineUnavailable, validate_candidate
 
 router = APIRouter(prefix="/api/v1/scheduling", tags=["scheduling"])
@@ -118,12 +119,40 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
     groups = list(db.scalars(select(ClassGroup).options(selectinload(ClassGroup.department), selectinload(ClassGroup.semester), selectinload(ClassGroup.academic_term)).where(ClassGroup.id.in_(payload.class_group_ids))))
     if len(groups) != len(set(payload.class_group_ids)) or any(group.department.institution_id != payload.institution_id or group.academic_term_id != term.id or not group.active for group in groups):
         raise HTTPException(status_code=422, detail={"message": "Every selected class group must belong to the active institution and academic term."})
-    requirements = list(db.scalars(select(SchedulingRequirement).where(SchedulingRequirement.class_group_id.in_(payload.class_group_ids), SchedulingRequirement.active.is_(True))))
+    all_requirements = list(db.scalars(select(SchedulingRequirement).where(SchedulingRequirement.class_group_id.in_(payload.class_group_ids))))
+    active_requirements = [requirement for requirement in all_requirements if requirement.active]
+    selected_ids = set(payload.selected_requirement_ids)
+    if len(selected_ids) != len(payload.selected_requirement_ids):
+        raise HTTPException(status_code=422, detail={"message": "Each scheduling requirement may be selected only once."})
+    active_by_id = {requirement.id: requirement for requirement in active_requirements}
+    group_by_id = {group.id: group for group in groups}
+    if not selected_ids.issubset(active_by_id):
+        raise HTTPException(status_code=422, detail={"message": "One or more selected requirements are inactive, missing, or outside the selected academic scope."})
+    for requirement in active_requirements:
+        if requirement.id in selected_ids:
+            _validate_requirement_scope(db, group_by_id[requirement.class_group_id], requirement.subject_id, requirement.teacher_id)
     existing = list(db.scalars(select(TimetableSession).where(TimetableSession.academic_term_id == term.id))) if payload.preserve_existing else []
+    scoped_existing = [session for session in existing if session.class_group_id in payload.class_group_ids]
+    summaries = []
+    for requirement in active_requirements:
+        summary = requirement_summary(requirement, scoped_existing)
+        summary["selected"] = requirement.id in selected_ids
+        summaries.append(summary)
+    selected_remaining = []
+    for requirement in active_requirements:
+        if requirement.id not in selected_ids:
+            continue
+        summary = next(item for item in summaries if item["requirement_id"] == requirement.id)
+        if summary["remaining_count"]:
+            selected_remaining.append(SimpleNamespace(id=requirement.id, class_group_id=requirement.class_group_id, subject_id=requirement.subject_id, teacher_id=requirement.teacher_id, session_type=requirement.session_type, weekly_count=summary["remaining_count"], duration_minutes=requirement.duration_minutes, room_type=requirement.room_type))
+    response_summaries = summaries
+    preserved = [_candidate_read({"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": session.day_of_week, "start_minute": session.start_minute, "end_minute": session.end_minute, "subject_id": session.subject_id, "teacher_id": session.teacher_id, "room_id": session.room_id, "session_type": session.session_type, "locked": session.locked}, False) for session in existing if session.class_group_id in payload.class_group_ids]
+    if not selected_remaining:
+        return GenerateTimetableResponse(status="OPTIMAL", message="The selected requirements are already satisfied; no new sessions are needed.", requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=0, solve_time_ms=0)
     availability = list(db.scalars(select(TeacherAvailability).where(TeacherAvailability.academic_term_id == term.id)))
     rooms = list(db.scalars(select(Room).where(Room.institution_id == payload.institution_id, Room.active.is_(True))))
     try:
-        result = generate_candidate(db, requirements, existing, availability, rooms, GenerationConfig(working_days=payload.working_days, daily_start=clock_minutes(payload.daily_start_time), daily_end=clock_minutes(payload.daily_end_time), quantum=payload.quantum_minutes, time_limit_seconds=payload.time_limit_seconds, preference=payload.preference))
+        result = generate_candidate(db, selected_remaining, existing, availability, rooms, GenerationConfig(working_days=payload.working_days, daily_start=clock_minutes(payload.daily_start_time), daily_end=clock_minutes(payload.daily_end_time), quantum=payload.quantum_minutes, time_limit_seconds=payload.time_limit_seconds, preference=payload.preference))
     except GeneratorUnavailable as error:
         raise HTTPException(status_code=503, detail={"message": str(error)}) from error
     candidates = []
@@ -135,17 +164,16 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
                 conflicts = validate_candidate(candidate, validation_existing)
                 if conflicts:
                     raise HTTPException(status_code=422, detail={"message": "Rust validation rejected the generated proposal.", "conflicts": conflicts})
-                validation_existing.append(_model_candidate({**candidate, "academic_term_id": term.id}))
+                validation_existing.append(_model_candidate(candidate))
                 candidates.append({**candidate, "academic_term_id": term.id})
         except SchedulingEngineUnavailable as error:
             raise HTTPException(status_code=503, detail={"message": str(error)}) from error
     if result["status"] not in {"OPTIMAL", "FEASIBLE"}:
-        return GenerateTimetableResponse(status=result["status"], message=result["message"], sessions=[], preserved_sessions=[], objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+        return GenerateTimetableResponse(status=result["status"], message=result["message"], requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
     base = datetime.now(timezone.utc)
     proposal = TimetableProposal(institution_id=payload.institution_id, academic_term_id=term.id, class_group_ids=payload.class_group_ids, candidate_sessions=candidates, base_updated_at=base)
     db.add(proposal); db.commit(); db.refresh(proposal)
-    preserved = [_candidate_read({"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": session.day_of_week, "start_minute": session.start_minute, "end_minute": session.end_minute, "subject_id": session.subject_id, "teacher_id": session.teacher_id, "room_id": session.room_id, "session_type": session.session_type, "locked": session.locked}, False) for session in existing if session.class_group_id in payload.class_group_ids]
-    return GenerateTimetableResponse(proposal_id=proposal.id, status=result["status"], message=result["message"], sessions=[_candidate_read(candidate) for candidate in candidates], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+    return GenerateTimetableResponse(proposal_id=proposal.id, status=result["status"], message=f"Generated {len(candidates)} remaining session(s) for the selected requirements. Review before approval.", requirement_summaries=response_summaries, sessions=[_candidate_read(candidate) for candidate in candidates], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
 
 
 @router.post("/proposals/{proposal_id}/approve", response_model=ApproveProposalResponse)
