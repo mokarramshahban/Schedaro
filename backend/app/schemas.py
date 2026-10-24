@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 DayOfWeek = Literal["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+WorkingWeek = Literal["monday-friday", "monday-saturday"]
 SessionType = Literal["Lecture", "Laboratory", "Tutorial"]
 RoomType = Literal["classroom", "laboratory", "tutorial", "other"]
 
@@ -18,6 +19,7 @@ class InstitutionRead(ORMModel):
     short_name: str | None = None
     institution_type: str | None = None
     address: str | None = None
+    working_week: WorkingWeek = "monday-saturday"
     active: bool = True
 
 
@@ -170,23 +172,12 @@ class GenerateTimetableRequest(BaseModel):
     academic_term_id: str
     class_group_ids: list[str] = Field(min_length=1, max_length=12)
     selected_requirement_ids: list[str] = Field(min_length=1, max_length=100)
-    working_days: list[DayOfWeek] = Field(default_factory=lambda: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], min_length=1)
     daily_start_time: str = Field(default="09:00", pattern=r"^\d{2}:\d{2}$")
     daily_end_time: str = Field(default="17:00", pattern=r"^\d{2}:\d{2}$")
     quantum_minutes: int = Field(default=30, ge=5, le=60)
     time_limit_seconds: int = Field(default=10, ge=1, le=30)
     preference: Literal["balanced", "earlier", "gaps"] = "balanced"
     preserve_existing: bool = True
-
-    @field_validator("working_days")
-    @classmethod
-    def validate_working_days(cls, value: list[DayOfWeek]) -> list[DayOfWeek]:
-        if len(set(value)) != len(value):
-            raise ValueError("working days must not contain duplicates")
-        allowed = {"monday", "tuesday", "wednesday", "thursday", "friday"}
-        if set(value) not in (allowed, allowed | {"saturday"}):
-            raise ValueError("working days must be Monday-Friday or Monday-Saturday")
-        return value
 
 
 class GeneratedSessionRead(BaseModel):
@@ -263,6 +254,7 @@ class InstitutionCreate(BaseModel):
     short_name: str | None = Field(default=None, max_length=32)
     institution_type: str | None = Field(default=None, max_length=80)
     address: str | None = Field(default=None, max_length=240)
+    working_week: WorkingWeek = "monday-saturday"
     active: bool = True
 
 
@@ -272,6 +264,18 @@ class InstitutionUpdate(BaseModel):
     institution_type: str | None = Field(default=None, max_length=80)
     address: str | None = Field(default=None, max_length=240)
     active: bool | None = None
+
+
+class WorkingWeekUpdate(BaseModel):
+    working_week: WorkingWeek
+
+
+class WorkingWeekRead(BaseModel):
+    institution_id: str
+    working_week: WorkingWeek
+    working_days: list[DayOfWeek]
+    saturday_exception_count: int = 0
+    warning: str | None = None
 
 
 class DepartmentCreate(BaseModel):

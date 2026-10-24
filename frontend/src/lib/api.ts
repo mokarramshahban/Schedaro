@@ -2,7 +2,9 @@ import type { DayOfWeek, SessionType, TimetableSession } from './timetable'
 
 export const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
-export type Institution = { id: string; name: string; shortName?: string; institutionType?: string; address?: string; active: boolean }
+export type WorkingWeek = 'monday-friday' | 'monday-saturday'
+export type Institution = { id: string; name: string; shortName?: string; institutionType?: string; address?: string; workingWeek?: WorkingWeek; active: boolean }
+export type WorkingWeekSettings = { institutionId: string; workingWeek: WorkingWeek; workingDays: DayOfWeek[]; saturdayExceptionCount: number; warning?: string | null }
 export type Department = { id: string; institutionId: string; code?: string; name: string; active: boolean }
 export type AcademicTerm = { id: string; institutionId: string; academicYear: string; term: string; startDate?: string; endDate?: string; active: boolean }
 export type Semester = { id: string; departmentId: string; number: number; label: string; active: boolean }
@@ -14,7 +16,7 @@ export type Room = { id: string; institutionId: string; code: string; name: stri
 export type AcademicResources = { subjects: Resource[]; teachers: Resource[]; rooms: Resource[] }
 export type SessionPayload = { day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; notes?: string; locked?: boolean }
 export type SchedulingRequirement = { id: string; classGroupId: string; subjectId: string; teacherId: string; sessionType: SessionType; weeklyCount: number; durationMinutes: number; roomType: string; active: boolean }
-export type GenerateRequest = { institutionId: string; academicTermId: string; classGroupIds: string[]; selectedRequirementIds: string[]; workingDays?: DayOfWeek[]; dailyStartTime?: string; dailyEndTime?: string; quantumMinutes?: number; timeLimitSeconds?: number; preference?: 'balanced' | 'earlier' | 'gaps'; preserveExisting?: boolean }
+export type GenerateRequest = { institutionId: string; academicTermId: string; classGroupIds: string[]; selectedRequirementIds: string[]; dailyStartTime?: string; dailyEndTime?: string; quantumMinutes?: number; timeLimitSeconds?: number; preference?: 'balanced' | 'earlier' | 'gaps'; preserveExisting?: boolean }
 export type GeneratedSession = { id: string; academicTermId: string; classGroupId: string; day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; locked: boolean; generated: boolean }
 export type RequirementSummary = { requirement_id: string; subject_id: string; teacher_id: string; session_type: SessionType; duration_minutes: number; room_type: string; required_count: number; scheduled_count: number; remaining_count: number; selected: boolean; duration_mismatch_count: number; teacher_mismatch_count: number; warning?: string | null }
 export type DayDistribution = { day: DayOfWeek; sessions: number; minutes: number; saved_sessions: number; proposed_sessions: number; excluded: boolean }
@@ -44,8 +46,8 @@ async function request<T>(path: string, init: RequestInit = {}, signal?: AbortSi
   return body as T
 }
 
-function mapInstitution(value: { id: string; name: string; short_name?: string; institution_type?: string; address?: string; active?: boolean }): Institution {
-  return { id: value.id, name: value.name, shortName: value.short_name ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', active: value.active ?? true }
+function mapInstitution(value: { id: string; name: string; short_name?: string; institution_type?: string; address?: string; working_week?: WorkingWeek; active?: boolean }): Institution {
+  return { id: value.id, name: value.name, shortName: value.short_name ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active ?? true }
 }
 
 function mapDepartment(value: { id: string; institution_id: string; code?: string; name: string; active?: boolean }): Department {

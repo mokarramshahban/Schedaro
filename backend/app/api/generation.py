@@ -14,6 +14,7 @@ from app.db.session import get_db
 from app.schemas import ApproveProposalResponse, GenerateTimetableRequest, GenerateTimetableResponse, GeneratedSessionRead, SchedulingRequirementCreate, SchedulingRequirementRead, SchedulingRequirementUpdate, TeacherAvailabilityCreate, TeacherAvailabilityRead
 from app.services.generator import DAYS, GenerationConfig, GeneratorUnavailable, clock_minutes, clock_value, generate_candidate, requirement_summary
 from app.services.scheduling import SchedulingEngineUnavailable, validate_candidate
+from app.services.working_week import working_days_for_week
 
 router = APIRouter(prefix="/api/v1/scheduling", tags=["scheduling"])
 
@@ -125,6 +126,8 @@ def _distribution(working_days: list[str], existing: list[TimetableSession], can
 @router.post("/generate", response_model=GenerateTimetableResponse)
 def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(get_db)):
     term = _require_institution_term(db, payload.institution_id, payload.academic_term_id)
+    institution = db.get(Institution, payload.institution_id)
+    working_days = working_days_for_week(institution.working_week)
     groups = list(db.scalars(select(ClassGroup).options(selectinload(ClassGroup.department), selectinload(ClassGroup.semester), selectinload(ClassGroup.academic_term)).where(ClassGroup.id.in_(payload.class_group_ids))))
     if len(groups) != len(set(payload.class_group_ids)) or any(group.department.institution_id != payload.institution_id or group.academic_term_id != term.id or not group.active for group in groups):
         raise HTTPException(status_code=422, detail={"message": "Every selected class group must belong to the active institution and academic term."})
@@ -156,18 +159,18 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
             selected_remaining.append(SimpleNamespace(id=requirement.id, class_group_id=requirement.class_group_id, subject_id=requirement.subject_id, teacher_id=requirement.teacher_id, session_type=requirement.session_type, weekly_count=summary["remaining_count"], duration_minutes=requirement.duration_minutes, room_type=requirement.room_type))
     response_summaries = summaries
     preserved = [_candidate_read({"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": session.day_of_week, "start_minute": session.start_minute, "end_minute": session.end_minute, "subject_id": session.subject_id, "teacher_id": session.teacher_id, "room_id": session.room_id, "session_type": session.session_type, "locked": session.locked}, False) for session in existing if session.class_group_id in payload.class_group_ids]
-    excluded_days = [day for day in DAYS if day not in payload.working_days]
+    excluded_days = [day for day in DAYS if day not in working_days]
     warnings = []
     for session in preserved:
         if session.day in excluded_days:
             warnings.append(f"Existing {session.session_type} on {session.day} is preserved but outside the selected working days; it was not moved or deleted.")
-    distribution = _distribution(payload.working_days, existing, [], payload.class_group_ids)
+    distribution = _distribution(working_days, existing, [], payload.class_group_ids)
     if not selected_remaining:
-        return GenerateTimetableResponse(status="OPTIMAL", message="The selected requirements are already satisfied; no new sessions are needed.", working_days=payload.working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=0, solve_time_ms=0)
+        return GenerateTimetableResponse(status="OPTIMAL", message="The selected requirements are already satisfied; no new sessions are needed.", working_days=working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=0, solve_time_ms=0)
     availability = list(db.scalars(select(TeacherAvailability).where(TeacherAvailability.academic_term_id == term.id)))
     rooms = list(db.scalars(select(Room).where(Room.institution_id == payload.institution_id, Room.active.is_(True))))
     try:
-        result = generate_candidate(db, selected_remaining, existing, availability, rooms, GenerationConfig(working_days=payload.working_days, daily_start=clock_minutes(payload.daily_start_time), daily_end=clock_minutes(payload.daily_end_time), quantum=payload.quantum_minutes, time_limit_seconds=payload.time_limit_seconds, preference=payload.preference))
+        result = generate_candidate(db, selected_remaining, existing, availability, rooms, GenerationConfig(working_days=working_days, daily_start=clock_minutes(payload.daily_start_time), daily_end=clock_minutes(payload.daily_end_time), quantum=payload.quantum_minutes, time_limit_seconds=payload.time_limit_seconds, preference=payload.preference))
     except GeneratorUnavailable as error:
         raise HTTPException(status_code=503, detail={"message": str(error)}) from error
     candidates = []
@@ -184,11 +187,11 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
         except SchedulingEngineUnavailable as error:
             raise HTTPException(status_code=503, detail={"message": str(error)}) from error
     if result["status"] not in {"OPTIMAL", "FEASIBLE"}:
-        return GenerateTimetableResponse(status=result["status"], message=result["message"], working_days=payload.working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+        return GenerateTimetableResponse(status=result["status"], message=result["message"], working_days=working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
     base = datetime.now(timezone.utc)
     proposal = TimetableProposal(institution_id=payload.institution_id, academic_term_id=term.id, class_group_ids=payload.class_group_ids, candidate_sessions=candidates, base_updated_at=base)
     db.add(proposal); db.commit(); db.refresh(proposal)
-    return GenerateTimetableResponse(proposal_id=proposal.id, status=result["status"], message=f"Generated {len(candidates)} remaining session(s) for the selected requirements. Review before approval.", working_days=payload.working_days, preference=payload.preference, warnings=warnings, distribution=_distribution(payload.working_days, existing, candidates, payload.class_group_ids), requirement_summaries=response_summaries, sessions=[_candidate_read(candidate) for candidate in candidates], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+    return GenerateTimetableResponse(proposal_id=proposal.id, status=result["status"], message=f"Generated {len(candidates)} remaining session(s) for the selected requirements. Review before approval.", working_days=working_days, preference=payload.preference, warnings=warnings, distribution=_distribution(working_days, existing, candidates, payload.class_group_ids), requirement_summaries=response_summaries, sessions=[_candidate_read(candidate) for candidate in candidates], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
 
 
 @router.post("/proposals/{proposal_id}/approve", response_model=ApproveProposalResponse)
@@ -200,9 +203,13 @@ def approve_proposal(proposal_id: str, db: Session = Depends(get_db)):
     if proposal.base_updated_at and any(session.updated_at and session.updated_at > proposal.base_updated_at for session in current):
         raise HTTPException(status_code=409, detail={"message": "The timetable changed after this proposal was generated. Regenerate before approving."})
     added: list[TimetableSession] = []
+    institution = db.get(Institution, proposal.institution_id)
+    allowed_days = working_days_for_week(institution.working_week) if institution else []
     try:
         for candidate in proposal.candidate_sessions:
             group = _get_group(db, candidate["class_group_id"])
+            if candidate["day"] not in allowed_days:
+                raise HTTPException(status_code=409, detail={"message": f"Proposal contains {candidate['day']} outside the institution's current working week. Regenerate after resolving the institution setting."})
             _validate_resources(db, group, candidate["subject_id"], candidate["teacher_id"], candidate["room_id"])
             candidate_with_term = {**candidate, "academic_term_id": proposal.academic_term_id}
             if validate_candidate(candidate_with_term, current + added):

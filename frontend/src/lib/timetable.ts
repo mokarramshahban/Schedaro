@@ -1,5 +1,7 @@
 export const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 export type DayOfWeek = typeof DAYS[number]
+export type WorkingWeek = 'monday-friday' | 'monday-saturday'
+export function workingDaysForWeek(workingWeek: WorkingWeek): DayOfWeek[] { return workingWeek === 'monday-friday' ? [...DAYS].slice(0, 5) : [...DAYS] }
 
 export const DAY_LABELS: Record<DayOfWeek, string> = {
   monday: 'Monday',

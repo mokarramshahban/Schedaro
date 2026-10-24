@@ -7,6 +7,7 @@ from app.db.models import ClassGroup, Department, Room, Semester, Subject, Teach
 from app.db.session import get_db
 from app.schemas import SessionCreate, SessionUpdate, TimetableSessionRead
 from app.services.scheduling import SchedulingEngineUnavailable, validate_candidate
+from app.services.working_week import working_days_for_week
 
 router = APIRouter(prefix="/api/v1", tags=["timetable"])
 
@@ -78,6 +79,15 @@ def _validate_resources(db: Session, group: ClassGroup, subject_id: str, teacher
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": f"{label} is inactive and cannot be assigned to a new session.", "field": field})
 
 
+def _validate_working_day(group: ClassGroup, day: str, allow_existing_exception_day: str | None = None) -> None:
+    if day in working_days_for_week(group.department.institution.working_week):
+        return
+    if allow_existing_exception_day == day:
+        return
+    label = "Monday–Friday" if group.department.institution.working_week == "monday-friday" else "Monday–Saturday"
+    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": f"{day.title()} is outside this institution's {label} working week. Change Institution Settings or choose an allowed day.", "field": "day"})
+
+
 def _validate_with_engine(db: Session, group: ClassGroup, candidate: dict) -> None:
     existing = list(db.scalars(select(TimetableSession).where(TimetableSession.academic_term_id == group.academic_term_id)))
     try:
@@ -119,6 +129,7 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
 @router.post("/timetables/{class_group_id}/sessions", response_model=TimetableSessionRead, status_code=status.HTTP_201_CREATED)
 def create_session(class_group_id: str, payload: SessionCreate, db: Session = Depends(get_db)):
     group = _get_group(db, class_group_id)
+    _validate_working_day(group, payload.day)
     _validate_resources(db, group, payload.subject_id, payload.teacher_id, payload.room_id)
     candidate = {"id": new_id(), "academic_term_id": group.academic_term_id, "class_group_id": group.id, "day": payload.day, "start_minute": _minutes(payload.start_time), "end_minute": _minutes(payload.end_time), "teacher_id": payload.teacher_id, "room_id": payload.room_id}
     _validate_with_engine(db, group, candidate)
@@ -141,6 +152,7 @@ def update_session(session_id: str, payload: SessionUpdate, db: Session = Depend
     if session.locked:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "Locked sessions must be unlocked before editing."})
     group = _get_group(db, session.class_group_id)
+    _validate_working_day(group, payload.day, session.day_of_week if session.day_of_week not in working_days_for_week(group.department.institution.working_week) else None)
     _validate_resources(db, group, payload.subject_id, payload.teacher_id, payload.room_id, {session.subject_id, session.teacher_id, session.room_id})
     candidate = {"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": payload.day, "start_minute": _minutes(payload.start_time), "end_minute": _minutes(payload.end_time), "teacher_id": payload.teacher_id, "room_id": payload.room_id}
     _validate_with_engine(db, group, candidate)

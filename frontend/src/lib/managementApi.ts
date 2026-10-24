@@ -8,6 +8,8 @@ import {
   type Semester,
   type Subject,
   type Teacher,
+  type WorkingWeek,
+  type WorkingWeekSettings,
   ApiError,
 } from './api'
 
@@ -28,7 +30,7 @@ const query = (values: Record<string, string | undefined>) => {
   return params.toString()
 }
 
-export type InstitutionPayload = { name: string; shortName?: string; institutionType?: string; address?: string; active?: boolean }
+export type InstitutionPayload = { name: string; shortName?: string; institutionType?: string; address?: string; workingWeek?: WorkingWeek; active?: boolean }
 export type DepartmentPayload = { name: string; code?: string; active?: boolean }
 export type TermPayload = { academicYear: string; term: string; startDate?: string; endDate?: string; active?: boolean }
 export type SemesterPayload = { number: number; label: string; active?: boolean }
@@ -37,7 +39,8 @@ export type SubjectPayload = { departmentId?: string; semesterId?: string; code:
 export type TeacherPayload = { departmentId?: string; code?: string; name: string; email?: string; active?: boolean }
 export type RoomPayload = { code: string; name: string; building?: string; capacity?: number; roomType: string; active?: boolean }
 
-const toInstitution = (value: any): Institution => ({ id: value.id, name: value.name, shortName: value.short_name ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', active: value.active ?? true })
+const toInstitution = (value: any): Institution => ({ id: value.id, name: value.name, shortName: value.short_name ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active ?? true })
+const toWorkingWeek = (value: any): WorkingWeekSettings => ({ institutionId: value.institution_id, workingWeek: value.working_week, workingDays: value.working_days, saturdayExceptionCount: value.saturday_exception_count ?? 0, warning: value.warning ?? null })
 const toDepartment = (value: any): Department => ({ id: value.id, institutionId: value.institution_id, code: value.code ?? '', name: value.name, active: value.active ?? true })
 const toTerm = (value: any): AcademicTerm => ({ id: value.id, institutionId: value.institution_id, academicYear: value.academic_year, term: value.term, startDate: value.start_date, endDate: value.end_date, active: value.active })
 const toSemester = (value: any): Semester => ({ id: value.id, departmentId: value.department_id, number: value.number, label: value.label, active: value.active ?? true })
@@ -50,6 +53,8 @@ const snake = (payload: Record<string, unknown>) => Object.fromEntries(Object.en
 
 export async function createInstitution(payload: InstitutionPayload) { return toInstitution(await request('/api/v1/academic/institutions', { method: 'POST', body: JSON.stringify(snake(payload)) })) }
 export async function updateInstitution(id: string, payload: Partial<InstitutionPayload>) { return toInstitution(await request(`/api/v1/academic/institutions/${id}`, { method: 'PATCH', body: JSON.stringify(snake(payload)) })) }
+export async function getWorkingWeek(id: string) { return toWorkingWeek(await request(`/api/v1/academic/institutions/${id}/working-week`)) }
+export async function updateWorkingWeek(id: string, workingWeek: WorkingWeek) { return toWorkingWeek(await request(`/api/v1/academic/institutions/${id}/working-week`, { method: 'PATCH', body: JSON.stringify({ working_week: workingWeek }) })) }
 export async function createDepartment(institutionId: string, payload: DepartmentPayload) { return toDepartment(await request(`/api/v1/academic/institutions/${institutionId}/departments`, { method: 'POST', body: JSON.stringify(snake(payload)) })) }
 export async function updateDepartment(id: string, payload: Partial<DepartmentPayload>) { return toDepartment(await request(`/api/v1/academic/departments/${id}`, { method: 'PATCH', body: JSON.stringify(snake(payload)) })) }
 export async function createTerm(institutionId: string, payload: TermPayload) { return toTerm(await request(`/api/v1/academic/institutions/${institutionId}/terms`, { method: 'POST', body: JSON.stringify(snake(payload)) })) }

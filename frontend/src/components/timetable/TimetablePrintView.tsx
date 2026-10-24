@@ -10,6 +10,7 @@ type Props = {
   term?: AcademicTerm
   resources: { subjects: Resource[]; teachers: Resource[]; rooms: Resource[] }
   sessions: TimetableSession[]
+  workingDays: Array<TimetableSession['day']>
   onClose: () => void
 }
 
@@ -31,7 +32,9 @@ function resourceName(resources: Resource[], id: string, missingLabel: string) {
   return resources.find((item) => item.id === id)?.name ?? missingLabel
 }
 
-export function TimetablePrintView({ institution, department, semester, group, term, resources, sessions, onClose }: Props) {
+export function TimetablePrintView({ institution, department, semester, group, term, resources, sessions, workingDays, onClose }: Props) {
+  const displayDays = [...workingDays, ...DAYS.filter((day) => !workingDays.includes(day) && sessions.some((session) => session.day === day))]
+  const exceptionDays = DAYS.filter((day) => !workingDays.includes(day) && sessions.some((session) => session.day === day))
   const subjectName = (id: string) => resourceName(resources.subjects, id, 'Subject unavailable')
   const teacherName = (id: string) => resourceName(resources.teachers, id, 'Teacher unavailable')
   const roomName = (id: string) => resourceName(resources.rooms, id, 'Room unavailable')
@@ -42,9 +45,9 @@ export function TimetablePrintView({ institution, department, semester, group, t
       <div className="print-preview-scroll"><article className="print-document" aria-label={`${institution.name} timetable`}>
         <header className="print-document__header"><div className="print-document__identity"><p className="print-document__eyebrow">{institution.institutionType || 'Academic institution'}</p><h1>{institution.name}</h1>{institution.address && <p className="print-document__address">{institution.address}</p>}</div><div className="print-document__scope"><p>Weekly Academic Timetable</p><strong>{department.name}</strong><span>{semester.label} — {group.sectionName}</span><span>{academicContext}</span></div></header>
         <div className="print-document__rule" />
-        <section className="print-grid" aria-label="Monday through Saturday timetable">
-          <div className="print-grid__time-header">Time</div>{DAYS.map((day) => <div className="print-grid__day-header" key={day}>{DAY_LABELS[day]}</div>)}
-          <div className="print-grid__body"><div className="print-grid__time-axis">{Array.from({ length: 9 }, (_, index) => { const minutes = SCHEDULE_START_MINUTES + index * 60; const labelPosition = printTimeLabelPosition(minutes); return <span key={minutes} style={{ top: `${labelPosition.topPercent}%`, transform: labelPosition.transform }}>{`${String(Math.floor(minutes / 60)).padStart(2, '0')}:00`}</span> })}</div>{DAYS.map((day) => <div className="print-grid__day" key={day}>{sessions.filter((session) => session.day === day).map((session) => { const position = printSessionPosition(session); return <div className={`print-session print-session--${session.type.toLowerCase()}`} key={session.id} style={{ top: `${position.topPercent}%`, height: `${position.heightPercent}%` }}><strong>{subjectName(session.subjectId)}</strong><span>{session.startTime}–{session.endTime} · {session.type}</span><small>{teacherName(session.teacherId)} · {roomName(session.roomId)}</small></div> })}</div>)}</div>
+        <section className="print-grid" aria-label={`${displayDays.map((day) => DAY_LABELS[day]).join(', ')} timetable`} style={{ gridTemplateColumns: `18mm repeat(${displayDays.length}, minmax(0, 1fr))` }}>
+          <div className="print-grid__time-header">Time</div>{displayDays.map((day) => <div className={`print-grid__day-header ${exceptionDays.includes(day) ? 'print-grid__day-header--exception' : ''}`} key={day}>{DAY_LABELS[day]}{exceptionDays.includes(day) ? ' · exception' : ''}</div>)}
+          <div className="print-grid__body" style={{ gridTemplateColumns: `18mm repeat(${displayDays.length}, minmax(0, 1fr))` }}><div className="print-grid__time-axis">{Array.from({ length: 9 }, (_, index) => { const minutes = SCHEDULE_START_MINUTES + index * 60; const labelPosition = printTimeLabelPosition(minutes); return <span key={minutes} style={{ top: `${labelPosition.topPercent}%`, transform: labelPosition.transform }}>{`${String(Math.floor(minutes / 60)).padStart(2, '0')}:00`}</span> })}</div>{displayDays.map((day) => <div className="print-grid__day" key={day}>{sessions.filter((session) => session.day === day).map((session) => { const position = printSessionPosition(session); return <div className={`print-session print-session--${session.type.toLowerCase()}`} key={session.id} style={{ top: `${position.topPercent}%`, height: `${position.heightPercent}%` }}><strong>{subjectName(session.subjectId)}</strong><span>{session.startTime}–{session.endTime} · {session.type}</span><small>{teacherName(session.teacherId)} · {roomName(session.roomId)}</small></div> })}</div>)}</div>
         </section>
         {sessions.length === 0 && <p className="print-document__empty">No saved sessions are currently assigned to this section.</p>}
         <div className="print-document__signature-space" aria-label="Reserved space for handwritten signatures and institutional stamp" />

@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Building2, Check, Edit3, GraduationCap, Plus, Search, UsersRound, DoorOpen, BookOpen, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card'
-import { ApiError, getDepartments, getSemesters, getTerms, type AcademicTerm, type ClassGroup, type Department, type Institution, type Room, type Semester, type Subject, type Teacher } from '../lib/api'
+import { ApiError, getDepartments, getSemesters, getTerms, type AcademicTerm, type ClassGroup, type Department, type Institution, type Room, type Semester, type Subject, type Teacher, type WorkingWeek, type WorkingWeekSettings } from '../lib/api'
 import { useInstitution } from '../lib/InstitutionContext'
-import { createClassGroup, createDepartment, createInstitution, createRoom, createSemester, createSubject, createTeacher, createTerm, listManagementGroups, listRooms, listSubjects, listTeachers, updateClassGroup, updateDepartment, updateInstitution, updateRoom, updateSemester, updateSubject, updateTeacher, updateTerm, type ClassGroupPayload, type DepartmentPayload, type InstitutionPayload, type RoomPayload, type SemesterPayload, type SubjectPayload, type TeacherPayload, type TermPayload } from '../lib/managementApi'
+import { createClassGroup, createDepartment, createInstitution, createRoom, createSemester, createSubject, createTeacher, createTerm, getWorkingWeek, listManagementGroups, listRooms, listSubjects, listTeachers, updateClassGroup, updateDepartment, updateInstitution, updateRoom, updateWorkingWeek, updateSemester, updateSubject, updateTeacher, updateTerm, type ClassGroupPayload, type DepartmentPayload, type InstitutionPayload, type RoomPayload, type SemesterPayload, type SubjectPayload, type TeacherPayload, type TermPayload } from '../lib/managementApi'
 
 type ManagementMode = 'subjects' | 'teachers' | 'rooms' | 'classes' | 'settings'
 type Props = { mode: ManagementMode; connected: boolean }
@@ -48,11 +48,20 @@ export function ResourceManagementPage({ mode, connected }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [form, setForm] = useState<{ kind: FormKind; id?: string; values: FormState } | null>(null)
+  const [workingWeekSettings, setWorkingWeekSettings] = useState<WorkingWeekSettings | null>(null)
+  const [workingWeekSaving, setWorkingWeekSaving] = useState(false)
   const meta = modeMeta[mode]
 
   useEffect(() => {
     if (institutionError) setError(institutionError)
   }, [institutionError])
+  useEffect(() => {
+    setWorkingWeekSettings(null)
+    if (mode !== 'settings' || !institutionId) return
+    const controller = new AbortController()
+    void getWorkingWeek(institutionId).then(setWorkingWeekSettings).catch((reason) => { if ((reason as Error).name !== 'AbortError') setError(errorMessage(reason)) })
+    return () => controller.abort()
+  }, [institutionId, mode])
   useEffect(() => {
     setDepartments([]); setSemesters([]); setTerms([]); setGroups([]); setSubjects([]); setTeachers([]); setRooms([]); setDepartmentId(''); setLoadedInstitutionId('')
     if (!institutionId) return
@@ -106,6 +115,13 @@ export function ResourceManagementPage({ mode, connected }: Props) {
     } catch (reason) { setError(errorMessage(reason)) } finally { setSaving(false) }
   }
 
+  async function changeWorkingWeek(value: WorkingWeek) {
+    if (!institutionId || !workingWeekSettings || value === workingWeekSettings.workingWeek) return
+    if (value === 'monday-friday' && workingWeekSettings.saturdayExceptionCount > 0 && !window.confirm(`${workingWeekSettings.saturdayExceptionCount} saved Saturday session(s) exist for ${activeInstitution?.name ?? 'this institution'}. They will not be deleted or moved, but will remain visible as non-working-day exceptions. Review and reschedule them before using a strict five-day timetable. Continue?`)) return
+    setWorkingWeekSaving(true); setError(null)
+    try { const updated = await updateWorkingWeek(institutionId, value); setWorkingWeekSettings(updated); await refreshInstitutions(institutionId); setNotice(updated.warning ?? 'Working week saved to PostgreSQL.') } catch (reason) { setError(errorMessage(reason)) } finally { setWorkingWeekSaving(false) }
+  }
+
   function openDefaultForm() {
     if (mode === 'subjects') openForm('subject', { active: true, departmentId, semesterId: semesters[0]?.id ?? '' })
     else if (mode === 'teachers') openForm('teacher', { active: true, departmentId })
@@ -133,7 +149,8 @@ export function ResourceManagementPage({ mode, connected }: Props) {
     <div className="institution-context-banner"><Building2 size={17} /><div><span>Managing institution</span><strong>{institutionContext}</strong></div>{mode !== 'settings' && <small>All records on this page are scoped to the active institution.</small>}</div>
     <div className="status-banner management-status"><div className="status-banner__icon"><Icon size={18} /></div><div><strong>{connected ? 'PostgreSQL-backed management' : 'API connection unavailable'}</strong><p>{notice ?? 'Changes are validated and persisted through the Schedaro API.'}</p></div><span className={connected ? 'status-chip status-chip--success' : 'status-chip status-chip--error'}><i />{connected ? 'API connected' : 'API unavailable'}</span></div>
     {error && <div className="form-errors management-error" role="alert"><strong>Request failed</strong><p>{error}</p><Button size="sm" variant="secondary" type="button" onClick={() => void refresh()}>Retry</Button></div>}
-    <Card className="management-card"><CardHeader><div><p className="section-kicker">Records</p><CardTitle>{mode === 'settings' ? 'Institutions' : mode === 'classes' ? 'Academic structure' : `Saved ${title.toLowerCase()}`}</CardTitle></div><div className="management-filters"><label className="management-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search records" aria-label="Search records" /></label>{mode !== 'settings' && mode !== 'classes' && <select value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} aria-label="Filter department"><option value="">All departments</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>}</div></CardHeader><CardBody>{pageLoading ? <div className="management-empty">Loading records…</div> : mode === 'subjects' ? <SubjectList rows={filteredSubjects} departments={departments} semesters={semesters} onEdit={(row) => openForm('subject', rowToForm(row), row.id)} /> : mode === 'teachers' ? <TeacherList rows={filteredTeachers} departments={departments} onEdit={(row) => openForm('teacher', rowToForm(row), row.id)} /> : mode === 'rooms' ? <RoomList rows={filteredRooms} onEdit={(row) => openForm('room', rowToForm(row), row.id)} /> : mode === 'classes' ? <ClassStructure departments={filteredDepartments} semesters={semesters} terms={terms} groups={groups} selectedDepartment={departmentId} onDepartmentChange={setDepartmentId} tab={classTab} setTab={setClassTab} onEdit={openForm} onAdd={openDefaultForm} /> : <InstitutionList rows={institutions.filter((item) => `${item.name} ${item.shortName ?? ''}`.toLowerCase().includes(search.toLowerCase()))} onEdit={(row) => openForm('institution', rowToForm(row), row.id)} />}</CardBody></Card>
+    {mode === 'settings' && activeInstitution && <Card className="working-week-settings-card"><CardHeader><div><p className="section-kicker">Academic schedule</p><CardTitle>Working week</CardTitle></div><span className="institution-settings-name">{activeInstitution.name}</span></CardHeader><CardBody>{workingWeekSettings ? <><p className="muted-copy">This institution setting controls the timetable calendar, manual session creation, automatic generation and A4 print layout.</p><div className="working-week-options"><label><input type="radio" name="institution-working-week" checked={workingWeekSettings.workingWeek === 'monday-friday'} onChange={() => void changeWorkingWeek('monday-friday')} disabled={workingWeekSaving} /><span><strong>Monday–Friday</strong><small>Five normal working days</small></span></label><label><input type="radio" name="institution-working-week" checked={workingWeekSettings.workingWeek === 'monday-saturday'} onChange={() => void changeWorkingWeek('monday-saturday')} disabled={workingWeekSaving} /><span><strong>Monday–Saturday</strong><small>Six normal working days</small></span></label></div>{workingWeekSettings.saturdayExceptionCount > 0 && <div className="partial-warning" role="status">{workingWeekSettings.saturdayExceptionCount} saved Saturday session(s) are preserved as non-working-day exceptions when Monday–Friday is active. Review them from the timetable before rescheduling.</div>}{workingWeekSettings.warning && <p className="muted-copy">{workingWeekSettings.warning}</p>}</> : <div className="management-empty">Loading working-week settings…</div>}</CardBody></Card>}
+     <Card className="management-card"><CardHeader><div><p className="section-kicker">Records</p><CardTitle>{mode === 'settings' ? 'Institutions' : mode === 'classes' ? 'Academic structure' : `Saved ${title.toLowerCase()}`}</CardTitle></div><div className="management-filters"><label className="management-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search records" aria-label="Search records" /></label>{mode !== 'settings' && mode !== 'classes' && <select value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} aria-label="Filter department"><option value="">All departments</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>}</div></CardHeader><CardBody>{pageLoading ? <div className="management-empty">Loading records…</div> : mode === 'subjects' ? <SubjectList rows={filteredSubjects} departments={departments} semesters={semesters} onEdit={(row) => openForm('subject', rowToForm(row), row.id)} /> : mode === 'teachers' ? <TeacherList rows={filteredTeachers} departments={departments} onEdit={(row) => openForm('teacher', rowToForm(row), row.id)} /> : mode === 'rooms' ? <RoomList rows={filteredRooms} onEdit={(row) => openForm('room', rowToForm(row), row.id)} /> : mode === 'classes' ? <ClassStructure departments={filteredDepartments} semesters={semesters} terms={terms} groups={groups} selectedDepartment={departmentId} onDepartmentChange={setDepartmentId} tab={classTab} setTab={setClassTab} onEdit={openForm} onAdd={openDefaultForm} /> : <InstitutionList rows={institutions.filter((item) => `${item.name} ${item.shortName ?? ''}`.toLowerCase().includes(search.toLowerCase()))} onEdit={(row) => openForm('institution', rowToForm(row), row.id)} />}</CardBody></Card>
     {form && <ManagementDialog form={form} institution={activeInstitution} departments={departments} semesters={semesters} terms={terms} saving={saving} onChange={updateField} onCancel={() => setForm(null)} onSubmit={submit} />}
   </div>
 }

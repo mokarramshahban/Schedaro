@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoSessions } from '../data/timetableDemo'
-import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
+import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, workingDaysForWeek, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
 
 const baseSession: TimetableSession = {
   id: 'test-session',
@@ -13,6 +13,13 @@ const baseSession: TimetableSession = {
   roomId: 'room-201',
   type: 'Lecture',
 }
+
+describe('institution working-week layout', () => {
+  it('returns five or six normal columns from the persisted working week', () => {
+    expect(workingDaysForWeek('monday-friday')).toHaveLength(5)
+    expect(workingDaysForWeek('monday-saturday')).toHaveLength(6)
+  })
+})
 
 describe('shared timetable coordinate model', () => {
   it('aligns equal start times across every day', () => {

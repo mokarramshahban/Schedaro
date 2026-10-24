@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.db.models import AcademicTerm, ClassGroup, Department, Institution, Room, Semester, Subject, Teacher
+from app.db.models import AcademicTerm, ClassGroup, Department, Institution, Room, Semester, Subject, Teacher, TimetableSession
 from app.db.session import get_db
 from app.schemas import (
     AcademicResourcesRead,
@@ -21,6 +21,8 @@ from app.schemas import (
     InstitutionRead,
     InstitutionUpdate,
     ResourceRead,
+    WorkingWeekRead,
+    WorkingWeekUpdate,
     RoomCreate,
     RoomRead,
     RoomUpdate,
@@ -36,6 +38,7 @@ from app.schemas import (
     TeacherUpdate,
 )
 from app.seed import seed_demo_data
+from app.services.working_week import working_days_for_week
 
 router = APIRouter(prefix="/api/v1/academic", tags=["academic"])
 
@@ -104,6 +107,32 @@ def list_institutions(include_inactive: bool = True, db: Session = Depends(get_d
 @router.get("/institutions/{institution_id}", response_model=InstitutionRead)
 def get_institution(institution_id: str, db: Session = Depends(get_db)):
     return _require(db, Institution, institution_id, "Institution")
+
+
+def _saturday_exception_count(db: Session, institution_id: str) -> int:
+    return len(list(db.scalars(select(TimetableSession).join(AcademicTerm, TimetableSession.academic_term_id == AcademicTerm.id).where(AcademicTerm.institution_id == institution_id, TimetableSession.day_of_week == "saturday"))))
+
+
+@router.get("/institutions/{institution_id}/working-week", response_model=WorkingWeekRead)
+def get_working_week(institution_id: str, db: Session = Depends(get_db)):
+    institution = _require(db, Institution, institution_id, "Institution")
+    count = _saturday_exception_count(db, institution_id)
+    return WorkingWeekRead(institution_id=institution.id, working_week=institution.working_week, working_days=working_days_for_week(institution.working_week), saturday_exception_count=count, warning=(f"{count} saved Saturday session(s) will remain visible as non-working-day exceptions." if institution.working_week == "monday-friday" and count else None))
+
+
+@router.patch("/institutions/{institution_id}/working-week", response_model=WorkingWeekRead)
+def update_working_week(institution_id: str, payload: WorkingWeekUpdate, db: Session = Depends(get_db)):
+    institution = _require(db, Institution, institution_id, "Institution")
+    previous = institution.working_week
+    institution.working_week = payload.working_week
+    institution = _commit(db, institution, "Institution working week")
+    count = _saturday_exception_count(db, institution_id)
+    warning = None
+    if payload.working_week == "monday-friday" and count:
+        warning = f"{count} saved Saturday session(s) remain preserved as non-working-day exceptions. Review and reschedule them; no new Saturday sessions are allowed."
+    elif previous != payload.working_week:
+        warning = "Working week updated. Existing sessions were not moved or deleted."
+    return WorkingWeekRead(institution_id=institution.id, working_week=institution.working_week, working_days=working_days_for_week(institution.working_week), saturday_exception_count=count, warning=warning)
 
 
 @router.post("/institutions", response_model=InstitutionRead, status_code=status.HTTP_201_CREATED)

@@ -15,11 +15,13 @@ def new_id() -> str:
 
 class Institution(Base):
     __tablename__ = "institutions"
+    __table_args__ = (CheckConstraint("working_week IN ('monday-friday','monday-saturday')", name="ck_institution_working_week"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(160), nullable=False, unique=True)
     short_name: Mapped[str | None] = mapped_column(String(32), unique=True)
     institution_type: Mapped[str | None] = mapped_column(String(80))
     address: Mapped[str | None] = mapped_column(String(240))
+    working_week: Mapped[str] = mapped_column(String(20), nullable=False, default="monday-saturday", server_default="monday-saturday")
     active: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     departments: Mapped[list["Department"]] = relationship(back_populates="institution", cascade="all, delete-orphan")
