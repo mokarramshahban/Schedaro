@@ -20,12 +20,15 @@ The Alembic revision `20260301_0001` creates the base tables. Additive Stage 4 r
 - `teachers`
 - `rooms`
 - `timetable_sessions`
+- `scheduling_requirements`
+- `teacher_availability`
+- `timetable_proposals`
 
 Foreign keys enforce ownership and resource references. Unique constraints scope department names/codes, institution short names, academic terms, semester numbers, class-group sections, subject codes, teacher emails/codes, and room codes to their parent institution or academic scope. Institution, department, semester, class-group, subject, teacher, and room records carry active lifecycle flags. Subjects may optionally target a department semester; rooms carry building, capacity, and supported room type metadata.
 
 The frontend stores only the last selected institution ID as a convenience preference. PostgreSQL remains authoritative. Every institution-scoped list and create/update relationship is validated by FastAPI, and switching the active institution clears dependent frontend state before loading the new hierarchy.
 
-Sessions store weekday names and integer minutes from midnight. PostgreSQL check constraints enforce valid days, session types, and positive intervals. `btree_gist` exclusion constraints enforce half-open overlap protection for class groups, teachers, and rooms within the same academic term and weekday. Adjacent intervals such as 09:00–10:00 and 10:00–11:00 are allowed.
+Sessions store weekday names and integer minutes from midnight. PostgreSQL check constraints enforce valid days, session types, and positive intervals. Sessions may be locked; locked records cannot be edited or removed through the timetable API. Scheduling requirements store per-class-group subject teaching counts, exact durations, assigned teachers, session types and room types. Teacher availability stores permitted or unavailable half-open windows for a term. Proposal JSON is an audit-safe staging record and is never treated as a live session until the approval transaction succeeds. `btree_gist` exclusion constraints enforce half-open overlap protection for class groups, teachers, and rooms within the same academic term and weekday. Adjacent intervals such as 09:00–10:00 and 10:00–11:00 are allowed.
 
 ## Migrations and development data
 

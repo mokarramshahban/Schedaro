@@ -12,11 +12,11 @@ PostgreSQL persistent volume: schedaro_pgdata
 
 `frontend` is a React/TypeScript/Vite timetable workspace. It loads the academic hierarchy and scheduling resources through typed API clients, provides a shared PostgreSQL-backed active-institution context across the shell, timetable, Subjects, Teachers, Rooms, Classes, and Institution Settings management pages, preserves the shared minute-based time axis, performs persistent session CRUD through FastAPI, and renders a dedicated institution-branded A4 print preview from the selected persisted class-group data. Browser printing/Save as PDF is used instead of a separate PDF service.
 
-`backend` is FastAPI with versioned academic and timetable routes, Pydantic request/response schemas, SQLAlchemy sessions, Alembic migrations, PostgreSQL-backed readiness checks, and structured conflict responses. The backend invokes the compiled `schedaro_engine` PyO3 extension for deterministic interval validation before writes.
+`backend` is FastAPI with versioned academic, timetable and scheduling routes, Pydantic request/response schemas, SQLAlchemy sessions, Alembic migrations, PostgreSQL-backed readiness checks, and structured conflict responses. The backend invokes OR-Tools CP-SAT with bounded single-process execution to create unsaved proposals, then invokes the compiled `schedaro_engine` PyO3 extension for independent interval validation before proposal approval.
 
 `rust/schedaro_engine` is an independent Rust library exposed to Python through maturin. It validates half-open intervals, class-group conflicts, teacher conflicts, room conflicts, weekday scope, academic-term scope, and update self-exclusion without database access.
 
-`db` is the official PostgreSQL 18 image, private to the Compose network, with a project-scoped persistent volume. Database exclusion constraints provide transactional protection for class-group, teacher, and room overlaps by academic term and weekday.
+`db` is the official PostgreSQL 18 image, private to the Compose network, with a project-scoped persistent volume. Database exclusion constraints provide transactional protection for class-group, teacher, and room overlaps by academic term and weekday. Stage 6 adds additive requirement, teacher-availability, locked-session and proposal tables; proposals are separate from live sessions until explicit approval.
 
 ## Academic scope
 

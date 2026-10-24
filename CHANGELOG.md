@@ -22,3 +22,6 @@
 - Replaced the shrinking native header select with a single visible institution trigger/menu that renders the selected name, chevron, institution options, and management action.
 - Added an institution-branded A4 landscape timetable preview and browser Print / Save as PDF workflow using the selected persisted class group and PostgreSQL-backed resources.
 - Corrected print-only pagination isolation, A4 content geometry, time-axis boundary labels, session readability, and automatic footer output; reserved clean space for handwritten signatures or institutional stamps.
+- Added persisted scheduling requirements, teacher availability windows, locked sessions, and separate timetable proposal records.
+- Added bounded OR-Tools CP-SAT generation with hard resource/time constraints, explicit solver statuses, Rust independent validation, and earlier-period optimization.
+- Added an unsaved Generate Timetable workflow with requirement setup, candidate preview on the shared weekly grid, regenerate/discard actions, stale-proposal detection, and transactional approval.

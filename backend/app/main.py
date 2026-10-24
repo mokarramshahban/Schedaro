@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import get_settings
 from app.api.academic import router as academic_router
 from app.api.timetable import router as timetable_router
+from app.api.generation import router as generation_router
 from app.db.session import check_database_connection
 from app.services.scheduling import engine_available
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 app.include_router(academic_router)
 app.include_router(timetable_router)
+app.include_router(generation_router)
 
 
 @app.get("/health/live")

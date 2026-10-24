@@ -13,4 +13,4 @@ Responsive and accessible UI, maintainable code, reliable persistence, Docker de
 Large role-based dashboards, complex institutional hierarchies, faculty leave, substitute allocation, faculty activity monitoring, complex approval workflows, and unrelated academic ERP modules.
 
 ## Status
-These are product requirements, not claims that every listed capability is complete. The current implementation includes persisted academic scope, timetable session CRUD, shared-axis scheduling UI, and deterministic Rust/API conflict validation. Printing, authentication for deployed write APIs, and AI remain future capabilities.
+These are product requirements, not claims that every listed capability is complete. The current implementation includes persisted academic scope, timetable session CRUD, shared-axis scheduling UI, deterministic Rust/API conflict validation, institution-branded browser printing, and bounded OR-Tools generation with explicit proposal approval. Printing uses browser output; authentication for deployed write APIs and optional natural-language AI remain future capabilities.

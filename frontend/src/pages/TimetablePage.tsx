@@ -6,6 +6,8 @@ import { StatusDot } from '../components/ui/StatusDot'
 import { ApiError, createSession, deleteSession, getClassGroups, getDepartments, getResources, getSemesters, getSessions, getTerms, provisionDevelopmentSetup, updateSession, type AcademicResources, type AcademicTerm, type ClassGroup, type Department, type Resource, type Semester, type SessionPayload } from '../lib/api'
 import { useInstitution } from '../lib/InstitutionContext'
 import { TimetablePrintView } from '../components/timetable/TimetablePrintView'
+import { approveProposal, createRequirement, discardProposal, generateTimetable, getRequirements } from '../lib/generationApi'
+import type { GenerateResponse, SchedulingRequirement } from '../lib/api'
 import { DAY_LABELS, DAYS, PIXELS_PER_HOUR, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, SESSION_TYPES, durationToHeight, layoutDaySessions, minutesToPosition, minutesToTime, removeSession, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type DayOfWeek, type SessionType, type TimetableSession } from '../lib/timetable'
 
 type TimetablePageProps = { connected: boolean; environment?: string; error?: string | null }
@@ -13,7 +15,7 @@ type SessionDraft = Omit<TimetableSession, 'id' | 'classGroupId'>
 type DialogState = { mode: 'add' | 'edit'; sessionId?: string }
 
 const emptyResources: AcademicResources = { subjects: [], teachers: [], rooms: [] }
-const emptyDraft = (day: DayOfWeek = 'monday'): SessionDraft => ({ day, startTime: '09:00', endTime: '10:00', subjectId: '', teacherId: '', roomId: '', type: 'Lecture', notes: '' })
+const emptyDraft = (day: DayOfWeek = 'monday'): SessionDraft => ({ day, startTime: '09:00', endTime: '10:00', subjectId: '', teacherId: '', roomId: '', type: 'Lecture', notes: '', locked: false })
 
 function apiErrorMessages(error: unknown): string[] {
   if (!(error instanceof ApiError)) return [error instanceof Error ? error.message : 'The request could not be completed.']
@@ -48,6 +50,11 @@ export function TimetablePage({ connected, environment = 'development', error }:
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<TimetableSession | null>(null)
   const [printOpen, setPrintOpen] = useState(false)
+  const [generatorOpen, setGeneratorOpen] = useState(false)
+  const [requirements, setRequirements] = useState<SchedulingRequirement[]>([])
+  const [generatorLoading, setGeneratorLoading] = useState(false)
+  const [generatorError, setGeneratorError] = useState<string | null>(null)
+  const [proposal, setProposal] = useState<GenerateResponse | null>(null)
   const [focusedDay, setFocusedDay] = useState<DayOfWeek>('monday')
   const [sessionReload, setSessionReload] = useState(0)
   const firstFieldRef = useRef<HTMLSelectElement>(null)
@@ -133,7 +140,13 @@ export function TimetablePage({ connected, environment = 'development', error }:
     if (dialog) window.setTimeout(() => firstFieldRef.current?.focus(), 0)
   }, [dialog])
 
-  useEffect(() => { setPrintOpen(false) }, [activeInstitutionId, selectedClassGroup])
+  useEffect(() => {
+    setProposal(null); setGeneratorError(null); setRequirements([])
+    if (!selectedClassGroup) return
+    void getRequirements(selectedClassGroup).then(setRequirements).catch((reason) => setGeneratorError(reason instanceof Error ? reason.message : 'Scheduling requirements could not be loaded.'))
+  }, [selectedClassGroup])
+
+  useEffect(() => { setPrintOpen(false); setGeneratorOpen(false); setProposal(null) }, [activeInstitutionId, selectedClassGroup])
 
   const subjectName = (id: string) => { const option = resources.subjects.find((item) => item.id === id); return option ? `${option.name}${option.active ? '' : ' · inactive'}` : 'Unknown subject' }
   const teacherName = (id: string) => { const option = resources.teachers.find((item) => item.id === id); return option ? `${option.name}${option.active ? '' : ' · inactive'}` : 'Unknown teacher' }
@@ -155,7 +168,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
     const candidate: TimetableSession = { ...draft, id: dialog.sessionId ?? 'pending', classGroupId: selectedClassGroup }
     const validation = validateSession(candidate, sessions)
     if (validation.length > 0) { setFormErrors(validation); return }
-    const payload: SessionPayload = { day: draft.day, startTime: draft.startTime, endTime: draft.endTime, subjectId: draft.subjectId, teacherId: draft.teacherId, roomId: draft.roomId, sessionType: draft.type, notes: draft.notes }
+    const payload: SessionPayload = { day: draft.day, startTime: draft.startTime, endTime: draft.endTime, subjectId: draft.subjectId, teacherId: draft.teacherId, roomId: draft.roomId, sessionType: draft.type, notes: draft.notes, locked: draft.locked }
     setSaving(true); setFormErrors([])
     try {
       const saved = dialog.mode === 'edit' && dialog.sessionId ? await updateSession(dialog.sessionId, payload) : await createSession(selectedClassGroup, payload)
@@ -180,14 +193,41 @@ export function TimetablePage({ connected, environment = 'development', error }:
 
   const canAdd = Boolean(selectedClassGroup && resources.subjects.some((item) => item.active) && resources.teachers.some((item) => item.active) && resources.rooms.some((item) => item.active) && !resourcesLoading)
   const noInstitutions = !institutionLoading && activeInstitutions.length === 0 && !scopeError
+  const proposalSessions: TimetableSession[] = proposal?.sessions.map((session) => ({ id: session.id, classGroupId: session.classGroupId, day: session.day, startTime: session.startTime, endTime: session.endTime, subjectId: session.subjectId, teacherId: session.teacherId, roomId: session.roomId, type: session.sessionType, generated: true })) ?? []
+  const calendarSessions = proposal ? [...sessions, ...proposalSessions] : sessions
+
+  async function addSchedulingRequirement(payload: Omit<SchedulingRequirement, 'id' | 'classGroupId' | 'active'>) {
+    if (!selectedClassGroup) return
+    setGeneratorLoading(true); setGeneratorError(null)
+    try { const created = await createRequirement(selectedClassGroup, payload); setRequirements((current) => [...current, created]) } catch (reason) { setGeneratorError(reason instanceof Error ? reason.message : 'Requirement could not be saved.') } finally { setGeneratorLoading(false) }
+  }
+
+  async function runGeneration(options: { workingDays: DayOfWeek[]; dailyStartTime: string; dailyEndTime: string; quantumMinutes: number; timeLimitSeconds: number; preference: 'earlier' | 'balanced' }) {
+    if (!activeInstitutionId || !selectedTermRecord || !selectedClassGroup) return
+    setGeneratorLoading(true); setGeneratorError(null)
+    try { const result = await generateTimetable({ institutionId: activeInstitutionId, academicTermId: selectedTermRecord.id, classGroupIds: [selectedClassGroup], ...options, preserveExisting: true }); setProposal(result); if (result.status === 'OPTIMAL' || result.status === 'FEASIBLE') setGeneratorOpen(false); else setGeneratorError(result.message) } catch (reason) { setGeneratorError(reason instanceof Error ? reason.message : 'Timetable generation failed.') } finally { setGeneratorLoading(false) }
+  }
+
+  async function approveGeneratedProposal() {
+    if (!proposal?.proposal_id) return
+    setGeneratorLoading(true); setGeneratorError(null)
+    try { await approveProposal(proposal.proposal_id); setProposal(null); setNotice('Generated proposal approved and saved.'); setSessionReload((value) => value + 1) } catch (reason) { setGeneratorError(reason instanceof Error ? reason.message : 'Proposal approval failed.') } finally { setGeneratorLoading(false) }
+  }
+
+  async function discardGeneratedProposal() {
+    if (proposal?.proposal_id) await discardProposal(proposal.proposal_id).catch(() => undefined)
+    setProposal(null); setNotice('Generated proposal discarded; saved sessions were not changed.')
+  }
 
   return <div className="page-content timetable-page">
     <div className="page-heading">
       <div><p className="eyebrow">Workspace / Timetable</p><h1>Build your academic week.</h1><p className="page-description">Arrange persisted sessions on one shared timeline across Monday through Saturday.</p></div>
-      <div className="page-heading__actions"><Button variant="secondary" disabled={!scopeReady || !selectedGroupRecord || scopeLoading || termsLoading || resourcesLoading || sessionsLoading || Boolean(sessionError)} onClick={() => setPrintOpen(true)} title={!selectedGroupRecord ? 'Select a section before printing' : undefined}><Printer size={16} />Print / Save as PDF</Button><Button disabled={!canAdd} onClick={() => openAdd()} title={!canAdd ? 'Select a class group with scheduling resources first' : undefined}><Plus size={17} />Add session</Button></div>
+      <div className="page-heading__actions"><Button variant="secondary" disabled={!scopeReady || !selectedGroupRecord || scopeLoading || termsLoading || resourcesLoading || sessionsLoading || Boolean(sessionError)} onClick={() => setPrintOpen(true)} title={!selectedGroupRecord ? 'Select a section before printing' : undefined}><Printer size={16} />Print / Save as PDF</Button><Button variant="secondary" disabled={!scopeReady || !selectedGroupRecord || resourcesLoading || termsLoading || generatorLoading} onClick={() => setGeneratorOpen(true)} title={!selectedGroupRecord ? 'Select a class group before generating' : undefined}>Generate Timetable</Button><Button disabled={!canAdd} onClick={() => openAdd()} title={!canAdd ? 'Select a class group with scheduling resources first' : undefined}><Plus size={17} />Add session</Button></div>
     </div>
 
-    <div className="status-banner timetable-status" role="status">
+    {proposal && (proposal.status === 'OPTIMAL' || proposal.status === 'FEASIBLE') && <div className="proposal-banner" role="status"><div><strong>Unsaved timetable proposal</strong><p>{proposal.message} {proposal.sessions.length} new session{proposal.sessions.length === 1 ? '' : 's'} · {proposal.solve_time_ms}ms.</p></div><div className="proposal-banner__actions"><Button type="button" size="sm" variant="secondary" onClick={() => void discardGeneratedProposal()} disabled={generatorLoading}>Discard</Button><Button type="button" size="sm" variant="secondary" onClick={() => setGeneratorOpen(true)} disabled={generatorLoading}>Regenerate</Button><Button type="button" size="sm" onClick={() => void approveGeneratedProposal()} disabled={generatorLoading}>{generatorLoading ? 'Approving…' : 'Approve proposal'}</Button></div></div>}
+
+     <div className="status-banner timetable-status" role="status">
       <div className="status-banner__icon"><Info size={18} /></div>
       <div><strong>{connected ? 'PostgreSQL-backed timetable' : 'API connection unavailable'}</strong><p>{notice ?? (connected ? 'Academic scope and timetable changes are saved through the Schedaro API.' : 'Reconnect to the API to load academic data.')}</p></div>
       <StatusDot label={connected ? 'API connected' : 'API unavailable'} state={connected ? 'success' : 'error'} />
@@ -219,8 +259,8 @@ export function TimetablePage({ connected, environment = 'development', error }:
       {scopeReady && selectedClassGroup && !sessionError && <div className="timetable-scroll">
         {sessionsLoading ? <div className="calendar-empty"><p>Loading saved sessions…</p></div> : <div className="timetable-calendar" style={{ '--timeline-height': `${timelineHeight}px` } as CSSProperties}>
           <div className="timetable-day-header timetable-day-header--time">Time</div>
-          {DAYS.map((day) => <div key={day} className={`timetable-day-header ${focusedDay === day ? 'timetable-day-header--focused' : ''}`}><strong>{DAY_LABELS[day]}</strong><span>{sessions.filter((session) => session.day === day).length} sessions</span></div>)}
-          <div className="timetable-body"><div className="time-axis" aria-hidden="true">{timeLabels.map((minutes) => { const labelPosition = timeLabelPosition(minutes); return <span key={minutes} className="time-axis__label" style={{ top: minutesToPosition(minutes), transform: labelPosition.transform }}>{minutesToTime(minutes)}</span> })}</div>{DAYS.map((day) => <DayColumn key={day} day={day} sessions={sessions.filter((session) => session.day === day)} timelineHeight={timelineHeight} subjectName={subjectName} teacherName={teacherName} roomName={roomName} onEdit={openEdit} onAdd={() => openAdd(day)} focused={focusedDay === day} />)}</div>
+          {DAYS.map((day) => <div key={day} className={`timetable-day-header ${focusedDay === day ? 'timetable-day-header--focused' : ''}`}><strong>{DAY_LABELS[day]}</strong><span>{calendarSessions.filter((session) => session.day === day).length} sessions</span></div>)}
+          <div className="timetable-body"><div className="time-axis" aria-hidden="true">{timeLabels.map((minutes) => { const labelPosition = timeLabelPosition(minutes); return <span key={minutes} className="time-axis__label" style={{ top: minutesToPosition(minutes), transform: labelPosition.transform }}>{minutesToTime(minutes)}</span> })}</div>{DAYS.map((day) => <DayColumn key={day} day={day} sessions={calendarSessions.filter((session) => session.day === day)} timelineHeight={timelineHeight} subjectName={subjectName} teacherName={teacherName} roomName={roomName} onEdit={openEdit} onAdd={() => openAdd(day)} focused={focusedDay === day} />)}</div>
         </div>}
       </div>}
     </Card>
@@ -229,7 +269,8 @@ export function TimetablePage({ connected, environment = 'development', error }:
 
      {printOpen && activeInstitution && selectedDepartmentRecord && selectedSemesterRecord && selectedGroupRecord && <TimetablePrintView institution={activeInstitution} department={selectedDepartmentRecord} semester={selectedSemesterRecord} group={selectedGroupRecord} term={selectedTermRecord} resources={resources} sessions={sessions} onClose={() => setPrintOpen(false)} />}
 
-    {dialog && <SessionDialog mode={dialog.mode} draft={draft} resources={resources} errors={formErrors} firstFieldRef={firstFieldRef} saving={saving} onChange={updateDraft} onSubmit={submitSession} onCancel={() => setDialog(null)} onRequestDelete={dialog.sessionId ? () => { const target = sessions.find((session) => session.id === dialog.sessionId); setDialog(null); if (target) setDeleteTarget(target) } : undefined} />}
+    {generatorOpen && selectedTermRecord && <GeneratorDialog term={selectedTermRecord} group={selectedGroupRecord ?? null} resources={resources} requirements={requirements} loading={generatorLoading} error={generatorError} onAddRequirement={addSchedulingRequirement} onGenerate={runGeneration} onCancel={() => setGeneratorOpen(false)} />}
+     {dialog && <SessionDialog mode={dialog.mode} draft={draft} resources={resources} errors={formErrors} firstFieldRef={firstFieldRef} saving={saving} onChange={updateDraft} onSubmit={submitSession} onCancel={() => setDialog(null)} onRequestDelete={dialog.sessionId ? () => { const target = sessions.find((session) => session.id === dialog.sessionId); setDialog(null); if (target) setDeleteTarget(target) } : undefined} />}
     {deleteTarget && <ConfirmDialog session={deleteTarget} subjectName={subjectName} saving={saving} onCancel={() => setDeleteTarget(null)} onConfirm={() => void confirmDelete()} />}
   </div>
 }
@@ -237,13 +278,20 @@ export function TimetablePage({ connected, environment = 'development', error }:
 type DayColumnProps = { day: DayOfWeek; sessions: TimetableSession[]; timelineHeight: number; subjectName: (id: string) => string; teacherName: (id: string) => string; roomName: (id: string) => string; onEdit: (session: TimetableSession) => void; onAdd: () => void; focused: boolean }
 function DayColumn({ day, sessions, timelineHeight, subjectName, teacherName, roomName, onEdit, onAdd, focused }: DayColumnProps) {
   const layouts = layoutDaySessions(sessions, day)
-  return <div className={`timetable-day ${focused ? 'timetable-day--focused' : ''}`} style={{ height: timelineHeight }}><div className="timetable-day__grid" />{sessions.map((session) => { const start = timeToMinutes(session.startTime) ?? SCHEDULE_START_MINUTES; const end = timeToMinutes(session.endTime) ?? start + 60; const layout = layouts.get(session.id) ?? { lane: 0, laneCount: 1 }; const gap = 8; const width = `calc(${100 / layout.laneCount}% - ${gap}px)`; const left = `calc(${layout.lane * (100 / layout.laneCount)}% + ${gap / 2}px)`; const height = Math.max(durationToHeight(start, end), 38); return <div key={session.id} className="timetable-session-slot" style={{ top: minutesToPosition(start), height, width, left }}><button type="button" className={`timetable-session timetable-session--${session.type.toLowerCase()}`} onClick={() => onEdit(session)} aria-label={`Edit ${subjectName(session.subjectId)} ${session.startTime} to ${session.endTime}`}><span className="timetable-session__type">{session.type}</span><strong>{subjectName(session.subjectId)}</strong><span>{session.startTime}–{session.endTime}</span><small>{teacherName(session.teacherId)} · {roomName(session.roomId)}</small></button></div> })}<button type="button" className="day-add-button" onClick={onAdd}><Plus size={14} /> Add</button></div>
+  return <div className={`timetable-day ${focused ? 'timetable-day--focused' : ''}`} style={{ height: timelineHeight }}><div className="timetable-day__grid" />{sessions.map((session) => { const start = timeToMinutes(session.startTime) ?? SCHEDULE_START_MINUTES; const end = timeToMinutes(session.endTime) ?? start + 60; const layout = layouts.get(session.id) ?? { lane: 0, laneCount: 1 }; const gap = 8; const width = `calc(${100 / layout.laneCount}% - ${gap}px)`; const left = `calc(${layout.lane * (100 / layout.laneCount)}% + ${gap / 2}px)`; const height = Math.max(durationToHeight(start, end), 38); return <div key={session.id} className="timetable-session-slot" style={{ top: minutesToPosition(start), height, width, left }}><button type="button" className={`timetable-session timetable-session--${session.type.toLowerCase()} ${session.generated ? 'timetable-session--proposal' : ''}`} onClick={() => { if (!session.generated) onEdit(session) }} aria-label={`${session.generated ? 'Proposed' : 'Edit'} ${subjectName(session.subjectId)} ${session.startTime} to ${session.endTime}`}><span className="timetable-session__type">{session.type}</span><strong>{subjectName(session.subjectId)}</strong><span>{session.startTime}–{session.endTime}</span><small>{teacherName(session.teacherId)} · {roomName(session.roomId)}</small></button></div> })}<button type="button" className="day-add-button" onClick={onAdd}><Plus size={14} /> Add</button></div>
 }
 
 
 type SelectFieldProps = { label: string; value: string; options: { id: string; label: string }[]; onChange: (value: string) => void; disabled?: boolean; loading?: boolean; emptyLabel?: string; inputRef?: RefObject<HTMLSelectElement | null> }
 function SelectField({ label, value, options, onChange, disabled, loading, emptyLabel = 'No options', inputRef }: SelectFieldProps) {
   return <label className="field"><span>{label}{loading && <em>Loading…</em>}</span><select ref={inputRef} value={value} disabled={disabled || loading} onChange={(event) => onChange(event.target.value)}><option value="">{loading ? 'Loading…' : options.length ? 'Select…' : emptyLabel}</option>{options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>
+}
+
+type GeneratorDialogProps = { term: AcademicTerm; group: ClassGroup | null; resources: AcademicResources; requirements: SchedulingRequirement[]; loading: boolean; error: string | null; onAddRequirement: (payload: Omit<SchedulingRequirement, 'id' | 'classGroupId' | 'active'>) => Promise<void>; onGenerate: (options: { workingDays: DayOfWeek[]; dailyStartTime: string; dailyEndTime: string; quantumMinutes: number; timeLimitSeconds: number; preference: 'earlier' | 'balanced' }) => Promise<void>; onCancel: () => void }
+function GeneratorDialog({ term, group, resources, requirements, loading, error, onAddRequirement, onGenerate, onCancel }: GeneratorDialogProps) {
+  const [subjectId, setSubjectId] = useState(''); const [teacherId, setTeacherId] = useState(''); const [sessionType, setSessionType] = useState<SessionType>('Lecture'); const [weeklyCount, setWeeklyCount] = useState(2); const [durationMinutes, setDurationMinutes] = useState(60); const [roomType, setRoomType] = useState('classroom'); const [start, setStart] = useState('09:00'); const [end, setEnd] = useState('17:00'); const [preference, setPreference] = useState<'earlier' | 'balanced'>('earlier')
+  const activeSubjects = resources.subjects.filter((value) => value.active); const activeTeachers = resources.teachers.filter((value) => value.active)
+  return <div className="dialog-backdrop" role="presentation"><div className="dialog generator-dialog" role="dialog" aria-modal="true" aria-labelledby="generator-dialog-title"><div className="dialog__header"><div><p className="section-kicker">Constraint-based scheduling</p><h2 id="generator-dialog-title">Generate timetable</h2><p className="dialog__subtitle">{group?.label ?? 'Selected class group'} · {term.academicYear} {term.term}</p></div><button type="button" className="dialog-close" onClick={onCancel} aria-label="Close generator"><X size={19} /></button></div>{error && <div className="form-errors" role="alert"><strong>Generation setup</strong><p>{error}</p></div>}<div className="generator-section"><div><p className="section-kicker">1 · Requirements</p><h3>What must be scheduled?</h3><p className="muted-copy">Requirements are persisted; the generator will not invent weekly teaching hours.</p></div>{requirements.length ? <ul className="requirement-list">{requirements.map((requirement) => <li key={requirement.id}><strong>{resources.subjects.find((item) => item.id === requirement.subjectId)?.name ?? 'Subject'}</strong><span>{requirement.weeklyCount} × {requirement.durationMinutes} min {requirement.sessionType} · {requirement.roomType}</span></li>)}</ul> : <p className="empty-inline">No requirements configured yet. Add at least one below.</p>}<div className="generator-grid"><SelectField label="Subject" value={subjectId} options={activeSubjects.map((value) => ({ id: value.id, label: value.name }))} onChange={setSubjectId} emptyLabel="No active subjects" /><SelectField label="Teacher" value={teacherId} options={activeTeachers.map((value) => ({ id: value.id, label: value.name }))} onChange={setTeacherId} emptyLabel="No active teachers" /><SelectField label="Type" value={sessionType} options={SESSION_TYPES.map((value) => ({ id: value, label: value }))} onChange={(value) => setSessionType(value as SessionType)} /><label className="field"><span>Weekly sessions</span><input type="number" min={1} max={20} value={weeklyCount} onChange={(event) => setWeeklyCount(Number(event.target.value))} /></label><label className="field"><span>Duration (minutes)</span><input type="number" min={15} max={240} step={5} value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))} /></label><SelectField label="Room type" value={roomType} options={['classroom', 'laboratory', 'tutorial', 'any'].map((value) => ({ id: value, label: value }))} onChange={setRoomType} /></div><Button type="button" variant="secondary" size="sm" disabled={loading || !subjectId || !teacherId} onClick={() => void onAddRequirement({ subjectId, teacherId, sessionType, weeklyCount, durationMinutes, roomType })}>Add requirement</Button></div><div className="generator-section"><p className="section-kicker">2 · Generation rules</p><div className="generator-grid"><label className="field"><span>Daily start</span><input type="time" value={start} onChange={(event) => setStart(event.target.value)} /></label><label className="field"><span>Daily end</span><input type="time" value={end} onChange={(event) => setEnd(event.target.value)} /></label><SelectField label="Preference" value={preference} options={[{ id: 'earlier', label: 'Prefer earlier periods' }, { id: 'balanced', label: 'Balanced day ordering' }]} onChange={(value) => setPreference(value as 'earlier' | 'balanced')} /></div><p className="muted-copy">Monday–Saturday, 30-minute start grid, existing sessions preserved, and solver work bounded to 10 seconds.</p></div><div className="dialog__actions"><Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>Cancel</Button><Button type="button" onClick={() => void onGenerate({ workingDays: [...DAYS], dailyStartTime: start, dailyEndTime: end, quantumMinutes: 30, timeLimitSeconds: 10, preference })} disabled={loading || requirements.length === 0}>{loading ? 'Generating…' : 'Generate proposal'}</Button></div></div></div>
 }
 
 type SessionDialogProps = { mode: 'add' | 'edit'; draft: SessionDraft; resources: AcademicResources; errors: string[]; firstFieldRef: RefObject<HTMLSelectElement | null>; saving: boolean; onChange: <K extends keyof SessionDraft>(key: K, value: SessionDraft[K]) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; onRequestDelete?: () => void }

@@ -33,6 +33,7 @@ def _read(session: TimetableSession) -> TimetableSessionRead:
         room_id=session.room_id,
         session_type=session.session_type,
         notes=session.notes,
+        locked=session.locked,
         created_at=session.created_at,
         updated_at=session.updated_at,
     )
@@ -121,7 +122,7 @@ def create_session(class_group_id: str, payload: SessionCreate, db: Session = De
     _validate_resources(db, group, payload.subject_id, payload.teacher_id, payload.room_id)
     candidate = {"id": new_id(), "academic_term_id": group.academic_term_id, "class_group_id": group.id, "day": payload.day, "start_minute": _minutes(payload.start_time), "end_minute": _minutes(payload.end_time), "teacher_id": payload.teacher_id, "room_id": payload.room_id}
     _validate_with_engine(db, group, candidate)
-    session = TimetableSession(id=candidate["id"], academic_term_id=group.academic_term_id, class_group_id=group.id, subject_id=payload.subject_id, teacher_id=payload.teacher_id, room_id=payload.room_id, day_of_week=payload.day, start_minute=candidate["start_minute"], end_minute=candidate["end_minute"], session_type=payload.session_type, notes=payload.notes)
+    session = TimetableSession(id=candidate["id"], academic_term_id=group.academic_term_id, class_group_id=group.id, subject_id=payload.subject_id, teacher_id=payload.teacher_id, room_id=payload.room_id, day_of_week=payload.day, start_minute=candidate["start_minute"], end_minute=candidate["end_minute"], session_type=payload.session_type, notes=payload.notes, locked=payload.locked)
     db.add(session)
     try:
         db.commit()
@@ -137,6 +138,8 @@ def update_session(session_id: str, payload: SessionUpdate, db: Session = Depend
     session = db.get(TimetableSession, session_id)
     if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"message": "Timetable session not found", "id": session_id})
+    if session.locked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "Locked sessions must be unlocked before editing."})
     group = _get_group(db, session.class_group_id)
     _validate_resources(db, group, payload.subject_id, payload.teacher_id, payload.room_id, {session.subject_id, session.teacher_id, session.room_id})
     candidate = {"id": session.id, "academic_term_id": session.academic_term_id, "class_group_id": session.class_group_id, "day": payload.day, "start_minute": _minutes(payload.start_time), "end_minute": _minutes(payload.end_time), "teacher_id": payload.teacher_id, "room_id": payload.room_id}
@@ -149,6 +152,7 @@ def update_session(session_id: str, payload: SessionUpdate, db: Session = Depend
     session.end_minute = candidate["end_minute"]
     session.session_type = payload.session_type
     session.notes = payload.notes
+    session.locked = payload.locked
     try:
         db.commit()
         db.refresh(session)
@@ -163,5 +167,7 @@ def delete_session(session_id: str, db: Session = Depends(get_db)):
     session = db.get(TimetableSession, session_id)
     if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"message": "Timetable session not found", "id": session_id})
+    if session.locked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "Locked sessions must be unlocked before removal."})
     db.delete(session)
     db.commit()

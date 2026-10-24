@@ -86,6 +86,7 @@ class SessionBase(BaseModel):
     room_id: str
     session_type: SessionType
     notes: str | None = Field(default=None, max_length=2000)
+    locked: bool = False
 
     @field_validator("start_time", "end_time")
     @classmethod
@@ -108,8 +109,105 @@ class TimetableSessionRead(SessionBase):
     id: str
     academic_term_id: str
     class_group_id: str
+    locked: bool = False
     created_at: datetime
     updated_at: datetime
+
+
+class SchedulingRequirementCreate(BaseModel):
+    subject_id: str
+    teacher_id: str
+    session_type: SessionType = "Lecture"
+    weekly_count: int = Field(ge=1, le=20)
+    duration_minutes: int = Field(ge=15, le=240)
+    room_type: RoomType | Literal["any"] = "classroom"
+    active: bool = True
+
+
+class SchedulingRequirementUpdate(BaseModel):
+    subject_id: str | None = None
+    teacher_id: str | None = None
+    session_type: SessionType | None = None
+    weekly_count: int | None = Field(default=None, ge=1, le=20)
+    duration_minutes: int | None = Field(default=None, ge=15, le=240)
+    room_type: RoomType | Literal["any"] | None = None
+    active: bool | None = None
+
+
+class SchedulingRequirementRead(ORMModel):
+    id: str
+    class_group_id: str
+    subject_id: str
+    teacher_id: str
+    session_type: SessionType
+    weekly_count: int
+    duration_minutes: int
+    room_type: str
+    active: bool
+
+
+class TeacherAvailabilityCreate(BaseModel):
+    teacher_id: str
+    academic_term_id: str
+    day: DayOfWeek
+    start_time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    end_time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    available: bool = False
+
+
+class TeacherAvailabilityRead(ORMModel):
+    id: str
+    teacher_id: str
+    academic_term_id: str
+    day: DayOfWeek
+    start_time: str
+    end_time: str
+    available: bool
+
+
+class GenerateTimetableRequest(BaseModel):
+    institution_id: str
+    academic_term_id: str
+    class_group_ids: list[str] = Field(min_length=1, max_length=12)
+    working_days: list[DayOfWeek] = Field(default_factory=lambda: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], min_length=1)
+    daily_start_time: str = Field(default="09:00", pattern=r"^\d{2}:\d{2}$")
+    daily_end_time: str = Field(default="17:00", pattern=r"^\d{2}:\d{2}$")
+    quantum_minutes: int = Field(default=30, ge=5, le=60)
+    time_limit_seconds: int = Field(default=10, ge=1, le=30)
+    preference: Literal["earlier", "balanced"] = "earlier"
+    preserve_existing: bool = True
+
+
+class GeneratedSessionRead(BaseModel):
+    id: str
+    academic_term_id: str
+    class_group_id: str
+    day: DayOfWeek
+    start_time: str
+    end_time: str
+    subject_id: str
+    teacher_id: str
+    room_id: str
+    session_type: SessionType
+    locked: bool = False
+    generated: bool = True
+
+
+class GenerateTimetableResponse(BaseModel):
+    proposal_id: str | None = None
+    status: Literal["OPTIMAL", "FEASIBLE", "INFEASIBLE", "MODEL_INVALID", "UNKNOWN"]
+    message: str
+    sessions: list[GeneratedSessionRead] = []
+    preserved_sessions: list[GeneratedSessionRead] = []
+    objective_value: float | None = None
+    solve_time_ms: int
+
+
+class ApproveProposalResponse(BaseModel):
+    proposal_id: str
+    status: Literal["approved"]
+    saved_sessions: list[TimetableSessionRead]
+    message: str
 
 
 class SetupResponse(BaseModel):

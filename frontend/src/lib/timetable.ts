@@ -24,6 +24,8 @@ export type TimetableSession = {
   roomId: string
   type: SessionType
   notes?: string
+  locked?: boolean
+  generated?: boolean
 }
 
 export type SelectOption = { id: string; label: string }

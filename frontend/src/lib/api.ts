@@ -12,7 +12,11 @@ export type Subject = { id: string; institutionId: string; departmentId?: string
 export type Teacher = { id: string; institutionId: string; departmentId?: string; code?: string; name: string; email?: string; active: boolean }
 export type Room = { id: string; institutionId: string; code: string; name: string; building?: string; capacity?: number; roomType: string; active: boolean }
 export type AcademicResources = { subjects: Resource[]; teachers: Resource[]; rooms: Resource[] }
-export type SessionPayload = { day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; notes?: string }
+export type SessionPayload = { day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; notes?: string; locked?: boolean }
+export type SchedulingRequirement = { id: string; classGroupId: string; subjectId: string; teacherId: string; sessionType: SessionType; weeklyCount: number; durationMinutes: number; roomType: string; active: boolean }
+export type GenerateRequest = { institutionId: string; academicTermId: string; classGroupIds: string[]; workingDays?: DayOfWeek[]; dailyStartTime?: string; dailyEndTime?: string; quantumMinutes?: number; timeLimitSeconds?: number; preference?: 'earlier' | 'balanced'; preserveExisting?: boolean }
+export type GeneratedSession = { id: string; academicTermId: string; classGroupId: string; day: DayOfWeek; startTime: string; endTime: string; subjectId: string; teacherId: string; roomId: string; sessionType: SessionType; locked: boolean; generated: boolean }
+export type GenerateResponse = { proposal_id: string | null; status: 'OPTIMAL' | 'FEASIBLE' | 'INFEASIBLE' | 'MODEL_INVALID' | 'UNKNOWN'; message: string; sessions: GeneratedSession[]; preserved_sessions: GeneratedSession[]; objective_value?: number | null; solve_time_ms: number }
 
 export class ApiError extends Error {
   status: number
@@ -58,8 +62,12 @@ function mapClassGroup(value: { id: string; department_id: string; semester_id: 
   return { id: value.id, departmentId: value.department_id, semesterId: value.semester_id, academicTermId: value.academic_term_id, sectionName: value.section_name, label: value.label, active: value.active ?? true }
 }
 
-function mapSession(value: { id: string; academic_term_id: string; class_group_id: string; day: DayOfWeek; start_time: string; end_time: string; subject_id: string; teacher_id: string; room_id: string; session_type: SessionType; notes?: string }): TimetableSession {
+function mapSession(value: { id: string; academic_term_id: string; class_group_id: string; day: DayOfWeek; start_time: string; end_time: string; subject_id: string; teacher_id: string; room_id: string; session_type: SessionType; notes?: string; locked?: boolean }): TimetableSession {
   return { id: value.id, classGroupId: value.class_group_id, day: value.day, startTime: value.start_time, endTime: value.end_time, subjectId: value.subject_id, teacherId: value.teacher_id, roomId: value.room_id, type: value.session_type, notes: value.notes ?? '' }
+}
+
+function mapRequirement(value: { id: string; class_group_id: string; subject_id: string; teacher_id: string; session_type: SessionType; weekly_count: number; duration_minutes: number; room_type: string; active: boolean }): SchedulingRequirement {
+  return { id: value.id, classGroupId: value.class_group_id, subjectId: value.subject_id, teacherId: value.teacher_id, sessionType: value.session_type, weeklyCount: value.weekly_count, durationMinutes: value.duration_minutes, roomType: value.room_type, active: value.active }
 }
 
 export async function getInstitutions(signal?: AbortSignal, includeInactive = true): Promise<Institution[]> {
@@ -107,7 +115,7 @@ export async function getSessions(classGroupId: string, signal?: AbortSignal): P
 }
 
 function toApiPayload(payload: SessionPayload) {
-  return { day: payload.day, start_time: payload.startTime, end_time: payload.endTime, subject_id: payload.subjectId, teacher_id: payload.teacherId, room_id: payload.roomId, session_type: payload.sessionType, notes: payload.notes || null }
+  return { day: payload.day, start_time: payload.startTime, end_time: payload.endTime, subject_id: payload.subjectId, teacher_id: payload.teacherId, room_id: payload.roomId, session_type: payload.sessionType, notes: payload.notes || null, locked: payload.locked ?? false }
 }
 
 export async function createSession(classGroupId: string, payload: SessionPayload): Promise<TimetableSession> {

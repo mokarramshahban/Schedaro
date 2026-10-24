@@ -22,6 +22,8 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 - FastAPI, PostgreSQL and Rust scheduling-engine health indicators.
 - Accessible controls, focus states and keyboard-friendly dialogs.
 - Institution-branded A4 landscape print preview using the browser's Print / Save as PDF workflow.
+- Deterministic OR-Tools timetable generation from persisted weekly requirements, teacher availability, room suitability and existing bookings.
+- Clearly marked unsaved proposals with regenerate, discard and explicit transactional approval actions.
 
 Timetable persistence is provided by the local FastAPI and PostgreSQL services. PDF output uses the browser print dialog rather than claiming a direct downloadable PDF generator.
 
@@ -35,6 +37,7 @@ Screenshots will be added as approved product captures become available.
 - Tailwind CSS and shadcn-compatible UI foundations
 - FastAPI, Pydantic, SQLAlchemy and Alembic
 - Rust scheduling engine with PyO3 and maturin
+- Google OR-Tools CP-SAT
 - PostgreSQL 18
 - Docker Compose
 

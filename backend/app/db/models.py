@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import uuid4
 
-from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -155,6 +155,7 @@ class TimetableSession(Base):
     end_minute: Mapped[int] = mapped_column(Integer, nullable=False)
     session_type: Mapped[str] = mapped_column(String(16), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text)
+    locked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     academic_term: Mapped[AcademicTerm] = relationship(back_populates="sessions")
@@ -162,3 +163,46 @@ class TimetableSession(Base):
     subject: Mapped[Subject] = relationship(back_populates="sessions")
     teacher: Mapped[Teacher] = relationship(back_populates="sessions")
     room: Mapped[Room] = relationship(back_populates="sessions")
+
+
+class SchedulingRequirement(Base):
+    __tablename__ = "scheduling_requirements"
+    __table_args__ = (UniqueConstraint("class_group_id", "subject_id", "session_type", name="uq_requirement_group_subject_type"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    class_group_id: Mapped[str] = mapped_column(ForeignKey("class_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject_id: Mapped[str] = mapped_column(ForeignKey("subjects.id", ondelete="RESTRICT"), nullable=False, index=True)
+    teacher_id: Mapped[str] = mapped_column(ForeignKey("teachers.id", ondelete="RESTRICT"), nullable=False, index=True)
+    session_type: Mapped[str] = mapped_column(String(16), nullable=False, default="Lecture")
+    weekly_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    room_type: Mapped[str] = mapped_column(String(32), nullable=False, default="classroom")
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    class_group: Mapped[ClassGroup] = relationship()
+    subject: Mapped[Subject] = relationship()
+    teacher: Mapped[Teacher] = relationship()
+
+
+class TeacherAvailability(Base):
+    __tablename__ = "teacher_availability"
+    __table_args__ = (CheckConstraint("start_minute >= 0 AND end_minute <= 1440 AND start_minute < end_minute", name="ck_teacher_availability_interval"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    teacher_id: Mapped[str] = mapped_column(ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_term_id: Mapped[str] = mapped_column(ForeignKey("academic_terms.id", ondelete="CASCADE"), nullable=False, index=True)
+    day_of_week: Mapped[str] = mapped_column(String(12), nullable=False)
+    start_minute: Mapped[int] = mapped_column(Integer, nullable=False)
+    end_minute: Mapped[int] = mapped_column(Integer, nullable=False)
+    available: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    teacher: Mapped[Teacher] = relationship()
+    academic_term: Mapped[AcademicTerm] = relationship()
+
+
+class TimetableProposal(Base):
+    __tablename__ = "timetable_proposals"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_term_id: Mapped[str] = mapped_column(ForeignKey("academic_terms.id", ondelete="CASCADE"), nullable=False, index=True)
+    class_group_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    candidate_sessions: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
+    base_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

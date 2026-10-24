@@ -35,6 +35,10 @@ Verified from the running Schedaro backend dependency environment and `backend/r
 | Alembic | 1.14.1 | MIT | Migration dependency; preserve upstream notices where applicable. |
 | pytest | 8.3.4 | MIT | Test-only dependency. |
 | httpx | 0.28.1 | BSD-3-Clause | Test/API client dependency; preserve BSD notice where applicable. |
+| OR-Tools | 9.12.4544 | Apache-2.0 | CP-SAT automatic timetable generation; retain Apache-2.0 and bundled upstream notices for distributed artifacts. |
+| numpy | 2.5.4 | BSD-3-Clause | OR-Tools runtime dependency. |
+| pandas | 3.1.0 | BSD-3-Clause | OR-Tools runtime dependency. |
+| protobuf | 5.29.6 | BSD-3-Clause | OR-Tools runtime dependency. |
 
 ## Rust engine direct dependencies
 

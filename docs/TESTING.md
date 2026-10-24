@@ -141,5 +141,17 @@ Every future implementation must be built and made live before completion. Valid
 - Frontend Vitest: PASS — 26 tests.
 - Actual browser/PDF visual verification: NOT TESTED / pending owner review.
 
+## Stage 6 verification record
+
+- OR-Tools CP-SAT unit tests: PASS — 5 focused cases covering variable durations, shared teacher/room constraints, unavailable teachers, incompatible laboratories, and existing bookings.
+- Backend pytest: PASS — 10 tests.
+- Frontend Vitest: PASS — 26 tests; TypeScript and production build: PASS.
+- Rust validator: PASS — 7 tests; generated candidates are independently validated before proposal staging and approval.
+- Alembic migration `20260303_0004`: PASS — applied against `schedaro_db`, head verified.
+- Docker Compose config, backend image with pinned OR-Tools 9.12.4544, service refresh and health checks: PASS; PostgreSQL named volume preserved.
+- Controlled live API: PASS — requirement created, OPTIMAL proposal generated without changing saved sessions, proposal approved transactionally, and approved session returned after persistence readback.
+- Browser UI and Firefox candidate/PDF visual verification: NOT TESTED in Harness; owner review remains required.
+- Known limitations: advanced persisted break/holiday calendars, alternate eligible-teacher sets, authentication/rate limiting, and direct browser automation remain future/deployment work.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.

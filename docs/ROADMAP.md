@@ -26,8 +26,8 @@ Subjects, Teachers, Rooms, Classes, and Institution Settings now use real Postgr
 ## Stage 5 — Printing & PDF — PARTIALLY COMPLETE
 Institution-branded A4 landscape preview and browser Print / Save as PDF workflow are implemented from persisted institution, scope, resource and session data. Automated time-position tests, print CSS, frontend build, and live Docker refresh passed; actual browser/PDF visual verification remains pending because Harness has no browser/Chromium automation.
 
-## Stage 6 — Puter.js AI — NOT STARTED
-Optional suggestions and optimization with human approval. Depends on validation and privacy review.
+## Stage 6 — Automatic Timetable Generation — PARTIALLY COMPLETE
+Persisted scheduling requirements, teacher availability windows, locked-session preservation, bounded OR-Tools CP-SAT generation, Rust independent validation, unsaved candidate preview, regenerate/discard actions, stale detection, and transactional approval are implemented. Supported scope is one or multiple selected class groups within one institution and academic term. Calendar settings are request-configurable with a Monday–Saturday default; advanced holiday/break calendars and alternate eligible-teacher sets remain future work. Backend/frontend automated tests, Docker build/refresh, migration, health checks, and a controlled live generation/approval request passed. Browser visual verification remains owner-pending.
 
 ## Stage 7 — Deployment — NOT STARTED
 Vercel frontend, Render API, managed PostgreSQL. Depends on production security and testing.
