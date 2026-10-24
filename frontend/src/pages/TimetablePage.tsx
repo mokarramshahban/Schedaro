@@ -6,7 +6,7 @@ import { StatusDot } from '../components/ui/StatusDot'
 import { ApiError, createSession, deleteSession, getClassGroups, getDepartments, getResources, getSemesters, getSessions, getTerms, provisionDevelopmentSetup, updateSession, type AcademicResources, type AcademicTerm, type ClassGroup, type Department, type Resource, type Semester, type SessionPayload } from '../lib/api'
 import { useInstitution } from '../lib/InstitutionContext'
 import { TimetablePrintView } from '../components/timetable/TimetablePrintView'
-import { DAY_LABELS, DAYS, PIXELS_PER_HOUR, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, SESSION_TYPES, durationToHeight, layoutDaySessions, minutesToPosition, minutesToTime, removeSession, timeToMinutes, upsertSession, validateSession, type DayOfWeek, type SessionType, type TimetableSession } from '../lib/timetable'
+import { DAY_LABELS, DAYS, PIXELS_PER_HOUR, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, SESSION_TYPES, durationToHeight, layoutDaySessions, minutesToPosition, minutesToTime, removeSession, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type DayOfWeek, type SessionType, type TimetableSession } from '../lib/timetable'
 
 type TimetablePageProps = { connected: boolean; environment?: string; error?: string | null }
 type SessionDraft = Omit<TimetableSession, 'id' | 'classGroupId'>
@@ -220,7 +220,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
         {sessionsLoading ? <div className="calendar-empty"><p>Loading saved sessions…</p></div> : <div className="timetable-calendar" style={{ '--timeline-height': `${timelineHeight}px` } as CSSProperties}>
           <div className="timetable-day-header timetable-day-header--time">Time</div>
           {DAYS.map((day) => <div key={day} className={`timetable-day-header ${focusedDay === day ? 'timetable-day-header--focused' : ''}`}><strong>{DAY_LABELS[day]}</strong><span>{sessions.filter((session) => session.day === day).length} sessions</span></div>)}
-          <div className="timetable-body"><div className="time-axis" aria-hidden="true">{timeLabels.map((minutes) => <span key={minutes} className="time-axis__label" style={{ top: minutesToPosition(minutes) }}>{minutesToTime(minutes)}</span>)}</div>{DAYS.map((day) => <DayColumn key={day} day={day} sessions={sessions.filter((session) => session.day === day)} timelineHeight={timelineHeight} subjectName={subjectName} teacherName={teacherName} roomName={roomName} onEdit={openEdit} onAdd={() => openAdd(day)} focused={focusedDay === day} />)}</div>
+          <div className="timetable-body"><div className="time-axis" aria-hidden="true">{timeLabels.map((minutes) => { const labelPosition = timeLabelPosition(minutes); return <span key={minutes} className="time-axis__label" style={{ top: minutesToPosition(minutes), transform: labelPosition.transform }}>{minutesToTime(minutes)}</span> })}</div>{DAYS.map((day) => <DayColumn key={day} day={day} sessions={sessions.filter((session) => session.day === day)} timelineHeight={timelineHeight} subjectName={subjectName} teacherName={teacherName} roomName={roomName} onEdit={openEdit} onAdd={() => openAdd(day)} focused={focusedDay === day} />)}</div>
         </div>}
       </div>}
     </Card>

@@ -47,8 +47,18 @@ export function minutesToTime(minutes: number): string {
   return `${hours}:${remainder}`
 }
 
+export type TimeLabelPosition = { topPercent: number; transform: string }
+
 export function minutesToPosition(minutes: number, origin = SCHEDULE_START_MINUTES, pixelsPerHour = PIXELS_PER_HOUR): number {
   return ((minutes - origin) / 60) * pixelsPerHour
+}
+
+export function timeLabelPosition(minutes: number, origin = SCHEDULE_START_MINUTES, end = SCHEDULE_END_MINUTES, edgeInset = '4px'): TimeLabelPosition {
+  const range = end - origin
+  const topPercent = ((minutes - origin) / range) * 100
+  if (minutes <= origin) return { topPercent: 0, transform: `translateY(${edgeInset})` }
+  if (minutes >= end) return { topPercent: 100, transform: `translateY(calc(-100% - ${edgeInset}))` }
+  return { topPercent, transform: 'translateY(-50%)' }
 }
 
 export function durationToHeight(startMinutes: number, endMinutes: number, pixelsPerHour = PIXELS_PER_HOUR): number {

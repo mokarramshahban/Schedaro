@@ -22,8 +22,8 @@ describe('A4 print timetable positioning', () => {
   })
 
   it('keeps boundary labels fully inside the time gutter', () => {
-    expect(printTimeLabelPosition(540)).toEqual({ topPercent: 0, transform: 'translateY(0)' })
-    expect(printTimeLabelPosition(1020)).toEqual({ topPercent: 100, transform: 'translateY(-100%)' })
+    expect(printTimeLabelPosition(540)).toEqual({ topPercent: 0, transform: 'translateY(0.8mm)' })
+    expect(printTimeLabelPosition(1020)).toEqual({ topPercent: 100, transform: 'translateY(calc(-100% - 0.8mm))' })
     expect(printTimeLabelPosition(660)).toEqual({ topPercent: 25, transform: 'translateY(-50%)' })
   })
 })

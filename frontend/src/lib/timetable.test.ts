@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoSessions } from '../data/timetableDemo'
-import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, rangesOverlap, removeSession, sessionsForClassGroup, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
+import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
 
 const baseSession: TimetableSession = {
   id: 'test-session',
@@ -28,6 +28,12 @@ describe('shared timetable coordinate model', () => {
   it('keeps a late first class at its actual timeline position', () => {
     expect(minutesToPosition(timeToMinutes('11:00')!)).toBe(2 * 84)
     expect(minutesToPosition(timeToMinutes('09:00')!)).toBe(0)
+  })
+
+  it('insets boundary labels without changing their shared coordinates', () => {
+    expect(timeLabelPosition(timeToMinutes('09:00')!)).toEqual({ topPercent: 0, transform: 'translateY(4px)' })
+    expect(timeLabelPosition(timeToMinutes('17:00')!)).toEqual({ topPercent: 100, transform: 'translateY(calc(-100% - 4px))' })
+    expect(timeLabelPosition(timeToMinutes('11:30')!)).toEqual({ topPercent: 31.25, transform: 'translateY(-50%)' })
   })
 
   it('treats boundary-touching intervals as consecutive, not overlapping', () => {

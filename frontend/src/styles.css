@@ -102,7 +102,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .timetable-day-header--focused { background: #f6f5ff; }
 .timetable-body { display: grid; grid-column: 1 / -1; grid-template-columns: 76px repeat(6, minmax(160px, 1fr)); height: var(--timeline-height); }
 .time-axis { position: relative; border-right: 1px solid #e7eaf0; background: #fff; }
-.time-axis__label { position: absolute; right: 12px; z-index: 1; color: #8d96a5; font-size: 10px; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.time-axis__label { position: absolute; right: 8px; z-index: 1; padding: 0 3px; color: #667289; background: #fff; font-size: 10px; font-variant-numeric: tabular-nums; line-height: 1.2; white-space: nowrap; }
 .timetable-day { position: relative; overflow: hidden; border-right: 1px solid #edf0f4; background: #fff; }
 .timetable-day--focused { background: #fdfdff; }
 .timetable-day__grid { position: absolute; inset: 0; background-image: linear-gradient(to bottom, rgba(231, 234, 240, .9) 1px, transparent 1px), linear-gradient(to bottom, transparent 41px, rgba(242, 244, 248, .95) 42px, transparent 43px); background-size: 100% 84px, 100% 84px; pointer-events: none; }
@@ -294,8 +294,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .print-grid__time-header, .print-grid__day-header { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 2mm; color: #273247; border-right: .3mm solid #aeb6c2; border-bottom: .3mm solid #aeb6c2; background: #f7f8fc; font-size: 8pt; font-weight: 800; }
 .print-grid__time-header { color: #667085; font-size: 7pt; text-transform: uppercase; }
 .print-grid__body { display: grid; grid-column: 1 / -1; grid-template-columns: 18mm repeat(6, minmax(0, 1fr)); height: 112mm; }
-.print-grid__time-axis, .print-grid__day { position: relative; min-width: 0; border-right: .3mm solid #aeb6c2; border-bottom: .3mm solid #aeb6c2; background-image: linear-gradient(to bottom, #dfe3ea .25mm, transparent .25mm); background-size: 100% 12.5%; }
+.print-grid__time-axis, .print-grid__day { position: relative; min-width: 0; border-right: .3mm solid #aeb6c2; border-bottom: .3mm solid #aeb6c2; }
 .print-grid__time-axis { background-color: #fbfcfe; }
+.print-grid__day { background-image: linear-gradient(to bottom, #dfe3ea .25mm, transparent .25mm); background-size: 100% 12.5%; }
 .print-grid__time-axis span { position: absolute; right: 1.5mm; z-index: 1; padding: 0 .6mm; color: #4b5563; background: #fbfcfe; font-size: 7pt; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .print-grid__day { overflow: hidden; }
 .print-session { position: absolute; right: 1mm; left: 1mm; display: flex; min-height: 8mm; flex-direction: column; gap: .8mm; overflow: hidden; padding: 1.7mm; border: .3mm solid #b9b6f6; border-radius: 1.2mm; background: #eeedff; color: #273247; font-size: 7pt; line-height: 1.2; page-break-inside: avoid; }

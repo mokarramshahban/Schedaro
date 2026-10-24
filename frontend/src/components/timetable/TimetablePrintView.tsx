@@ -1,6 +1,6 @@
 import { Printer, X } from 'lucide-react'
 import type { AcademicTerm, ClassGroup, Department, Institution, Resource, Semester } from '../../lib/api'
-import { DAY_LABELS, DAYS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, timeToMinutes, type TimetableSession } from '../../lib/timetable'
+import { DAY_LABELS, DAYS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, timeLabelPosition, timeToMinutes, type TimetableSession } from '../../lib/timetable'
 
 type Props = {
   institution: Institution
@@ -24,11 +24,7 @@ export function printSessionPosition(session: Pick<TimetableSession, 'startTime'
 }
 
 export function printTimeLabelPosition(minutes: number): PrintTimeLabelPosition {
-  const range = SCHEDULE_END_MINUTES - SCHEDULE_START_MINUTES
-  const topPercent = ((minutes - SCHEDULE_START_MINUTES) / range) * 100
-  if (minutes <= SCHEDULE_START_MINUTES) return { topPercent: 0, transform: 'translateY(0)' }
-  if (minutes >= SCHEDULE_END_MINUTES) return { topPercent: 100, transform: 'translateY(-100%)' }
-  return { topPercent, transform: 'translateY(-50%)' }
+  return timeLabelPosition(minutes, SCHEDULE_START_MINUTES, SCHEDULE_END_MINUTES, '0.8mm')
 }
 
 function resourceName(resources: Resource[], id: string, missingLabel: string) {

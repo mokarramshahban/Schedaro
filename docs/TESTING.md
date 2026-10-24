@@ -129,9 +129,17 @@ Every future implementation must be built and made live before completion. Valid
 - Exact session coordinates remain minute-based: PASS — existing timetable coordinate and duration tests remain green.
 - Session cards now render inside exact absolute interval wrappers with 4px visual insets on every side: PASS by source inspection and production build.
 - First-slot 09:00 cards, 10:00 alignment, two-hour durations, overlap lanes, short-session minimum height, and mobile focused-day behavior: covered by preserved timetable model tests and responsive CSS path.
-- Frontend Vitest: PASS — 25 tests.
+- Frontend Vitest: PASS — 26 tests.
 - TypeScript and frontend production build: PASS.
 - Browser visual verification: NOT TESTED / unavailable in Harness; owner review remains required.
+
+## Time-axis label alignment hotfix
+
+- Shared `timeLabelPosition` helper now drives interactive and A4 labels from the same minute coordinate model: PASS.
+- 09:00 uses a small downward inset; 17:00 uses an upward inset; intermediate labels remain centered without shifting sessions: PASS — covered by focused coordinate/label tests.
+- Interactive gutter labels have a white mask/padding and no grid lines cross the gutter; print gutter grid lines stop at the day columns: PASS by source inspection/build.
+- Frontend Vitest: PASS — 26 tests.
+- Actual browser/PDF visual verification: NOT TESTED / pending owner review.
 
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.
