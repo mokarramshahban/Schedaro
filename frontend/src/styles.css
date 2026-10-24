@@ -178,3 +178,46 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .management-dialog { width: min(720px, 100%); }
 @media (max-width: 700px) { .management-filters { width: 100%; justify-content: stretch; } .management-search { flex: 1; } .management-filters select { flex: 1; min-width: 130px; } .management-card .surface-card__header { align-items: flex-start; } }
 @media (max-width: 620px) { .management-filters { flex-direction: column; align-items: stretch; } .management-filters select, .management-search { width: 100%; } .management-search input { width: 100%; } .management-error { align-items: flex-start; flex-wrap: wrap; } .management-error .button { margin-left: 0; } }
+
+/* Stage 4 institution context hotfix */
+.sidebar-panel { overflow-y: auto; }
+.active-institution { margin: 14px 0 2px; padding: 12px 10px; border: 1px solid #dddefe; border-radius: 12px; background: #f7f7ff; }
+.active-institution__heading { display: flex; align-items: center; gap: 6px; color: #4f46e5; font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.active-institution__control { position: relative; margin-top: 9px; }
+.active-institution__control select, .active-institution__control input { width: 100%; min-height: 38px; padding: 0 28px 0 9px; overflow: hidden; color: #303b53; border: 1px solid #c9c7ff; border-radius: 8px; outline: 0; background: #fff; appearance: none; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.active-institution__control select:focus, .active-institution__control input:focus { box-shadow: 0 0 0 3px rgba(79, 70, 229, .13); }
+.active-institution__control svg { position: absolute; top: 12px; right: 9px; color: #6c63d9; pointer-events: none; }
+.active-institution__current { display: flex; min-width: 0; flex-direction: column; gap: 3px; margin: 9px 1px 0; color: #6f78a0; font-size: 9px; line-height: 1.35; }
+.active-institution__current strong { overflow: hidden; color: #3b3f8d; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.active-institution__current span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.active-institution__loading, .active-institution__empty { margin-top: 9px; color: #7d8797; font-size: 10px; line-height: 1.45; }
+.active-institution__empty { display: flex; flex-direction: column; gap: 3px; }
+.active-institution__empty strong { color: #9f2f2f; font-size: 10px; }
+.active-institution__action { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 0; color: #5c55c4; border: 0; background: transparent; font-size: 9px; font-weight: 800; }
+.active-institution__action:hover, .active-institution__action:focus-visible { color: #3730a3; outline: 0; text-decoration: underline; }
+.selector-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.institution-context-banner { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 11px 14px; color: #5c55c4; border: 1px solid #dddefe; border-radius: 11px; background: #fafaff; }
+.institution-context-banner > svg { flex: 0 0 auto; }
+.institution-context-banner div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.institution-context-banner span { color: #8584b1; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.institution-context-banner strong { overflow: hidden; color: #3b3f8d; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.institution-context-banner small { margin-left: auto; color: #8b91ab; font-size: 10px; }
+.dialog-institution-context { display: flex; align-items: flex-start; gap: 10px; margin: -3px 0 19px; padding: 10px 12px; color: #5c55c4; border: 1px solid #e3e2ff; border-radius: 10px; background: #fafaff; }
+.dialog-institution-context > svg { flex: 0 0 auto; margin-top: 1px; }
+.dialog-institution-context div { display: flex; flex-direction: column; gap: 2px; }
+.dialog-institution-context span { color: #8584b1; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.dialog-institution-context strong { color: #3b3f8d; font-size: 11px; }
+.dialog-institution-context small { color: #898fa5; font-size: 10px; }
+.institution-setup-page, .institution-choice-page { display: grid; max-width: 900px; grid-template-columns: minmax(0, .9fr) minmax(360px, 1.1fr); align-items: center; gap: 34px; min-height: calc(100vh - 150px); }
+.institution-setup-page__intro { padding: 14px 0; }
+.institution-setup-page__intro h1, .institution-choice-card h1 { margin: 0; color: #1d2638; font: 700 clamp(1.7rem, 1.2rem + 1vw, 2.25rem)/1.2 Georgia, serif; letter-spacing: -.025em; }
+.institution-setup-page__intro > p:last-child, .institution-choice-card > p { margin: 13px 0 0; color: #7d8797; font-size: 13px; line-height: 1.65; }
+.institution-setup-page__icon { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 18px; color: #4f46e5; border-radius: 16px; background: #eeedff; }
+.institution-setup-card, .institution-choice-card { width: 100%; }
+.setup-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.institution-setup-success { display: flex; min-height: 220px; flex-direction: column; align-items: center; justify-content: center; color: #16824a; text-align: center; }
+.institution-setup-success h2 { margin: 12px 0 0; color: #273247; font-size: 19px; }
+.institution-setup-success p { max-width: 350px; margin: 8px 0 0; color: #7d8797; font-size: 12px; line-height: 1.6; }
+.institution-choice-card .field { margin: 22px 0 16px; }
+@media (max-width: 900px) { .selector-grid--three { grid-template-columns: repeat(2, minmax(0, 1fr)); } .institution-setup-page, .institution-choice-page { grid-template-columns: 1fr; min-height: auto; } .institution-setup-page__intro { padding-bottom: 0; } .institution-context-banner { align-items: flex-start; flex-wrap: wrap; } .institution-context-banner small { width: 100%; margin-left: 27px; } }
+@media (max-width: 620px) { .selector-grid--three, .setup-form-grid { grid-template-columns: 1fr; } .institution-setup-page, .institution-choice-page { padding-top: 24px; } .institution-context-banner small { margin-left: 0; } .active-institution { margin-top: 12px; } }

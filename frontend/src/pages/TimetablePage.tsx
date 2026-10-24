@@ -3,7 +3,8 @@ import { Check, Info, Plus, RefreshCw, Trash2, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card'
 import { StatusDot } from '../components/ui/StatusDot'
-import { ApiError, createSession, deleteSession, getClassGroups, getDepartments, getInstitutions, getResources, getSemesters, getSessions, provisionDevelopmentSetup, updateSession, type AcademicResources, type ClassGroup, type Department, type Institution, type Resource, type Semester, type SessionPayload } from '../lib/api'
+import { ApiError, createSession, deleteSession, getClassGroups, getDepartments, getResources, getSemesters, getSessions, provisionDevelopmentSetup, updateSession, type AcademicResources, type ClassGroup, type Department, type Resource, type Semester, type SessionPayload } from '../lib/api'
+import { useInstitution } from '../lib/InstitutionContext'
 import { DAY_LABELS, DAYS, PIXELS_PER_HOUR, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, SESSION_TYPES, durationToHeight, layoutDaySessions, minutesToPosition, minutesToTime, removeSession, timeToMinutes, upsertSession, validateSession, type DayOfWeek, type SessionType, type TimetableSession } from '../lib/timetable'
 
 type TimetablePageProps = { connected: boolean; environment?: string; error?: string | null }
@@ -21,17 +22,17 @@ function apiErrorMessages(error: unknown): string[] {
 }
 
 export function TimetablePage({ connected, environment = 'development', error }: TimetablePageProps) {
-  const [institutions, setInstitutions] = useState<Institution[]>([])
+  const { activeInstitutionId, activeInstitution, activeInstitutions, loading: institutionLoading, error: institutionError, refreshInstitutions } = useInstitution()
   const [departments, setDepartments] = useState<Department[]>([])
   const [semesters, setSemesters] = useState<Semester[]>([])
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([])
   const [resources, setResources] = useState<AcademicResources>(emptyResources)
   const [sessions, setSessions] = useState<TimetableSession[]>([])
-  const [selectedInstitution, setSelectedInstitution] = useState('')
   const [selectedDepartment, setSelectedDepartment] = useState('')
   const [selectedSemester, setSelectedSemester] = useState('')
   const [selectedClassGroup, setSelectedClassGroup] = useState('')
   const [scopeLoading, setScopeLoading] = useState(false)
+  const [scopeInstitutionId, setScopeInstitutionId] = useState('')
   const [resourcesLoading, setResourcesLoading] = useState(false)
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [scopeError, setScopeError] = useState<string | null>(null)
@@ -52,78 +53,67 @@ export function TimetablePage({ connected, environment = 'development', error }:
   const selectedGroupRecord = classGroups.find((item) => item.id === selectedClassGroup)
   const timelineHeight = minutesToPosition(SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, PIXELS_PER_HOUR)
   const timeLabels = Array.from({ length: 9 }, (_, index) => SCHEDULE_START_MINUTES + index * 60)
-  const selectedInstitutionRecord = institutions.find((item) => item.id === selectedInstitution)
+  const selectedInstitutionRecord = activeInstitution
+  const scopeReady = Boolean(activeInstitutionId && scopeInstitutionId === activeInstitutionId)
 
-  const loadInstitutions = useCallback(async (signal?: AbortSignal) => {
-    setScopeLoading(true)
-    setScopeError(null)
-    try {
-      const values = await getInstitutions(signal)
-      setInstitutions(values)
-      setSelectedInstitution((current) => current && values.some((item) => item.id === current) ? current : values[0]?.id ?? '')
-    } catch (reason) {
-      if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0])
-    } finally {
-      if (!signal?.aborted) setScopeLoading(false)
-    }
-  }, [])
+  const loadInstitutions = useCallback(async () => {
+    await refreshInstitutions()
+  }, [refreshInstitutions])
 
   useEffect(() => {
-    const controller = new AbortController()
-    void loadInstitutions(controller.signal)
-    return () => controller.abort()
-  }, [loadInstitutions])
+    if (institutionError) setScopeError(institutionError)
+  }, [institutionError])
 
   useEffect(() => {
-    setDepartments([]); setSemesters([]); setClassGroups([]); setResources(emptyResources); setSessions([]); setSelectedDepartment(''); setSelectedSemester(''); setSelectedClassGroup('')
-    if (!selectedInstitution) return
+    setDepartments([]); setSemesters([]); setClassGroups([]); setResources(emptyResources); setSessions([]); setSelectedDepartment(''); setSelectedSemester(''); setSelectedClassGroup(''); setScopeInstitutionId('')
+    if (!activeInstitutionId) return
     const controller = new AbortController()
     setScopeLoading(true); setScopeError(null)
-    void getDepartments(selectedInstitution, controller.signal).then((values) => {
-      setDepartments(values); setSelectedDepartment(values[0]?.id ?? '')
+    void getDepartments(activeInstitutionId, controller.signal).then((values) => {
+      setDepartments(values); setSelectedDepartment(values[0]?.id ?? ''); setScopeInstitutionId(activeInstitutionId)
     }).catch((reason) => { if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setScopeLoading(false) })
     return () => controller.abort()
-  }, [selectedInstitution])
+  }, [activeInstitutionId])
 
   useEffect(() => {
     setSemesters([]); setClassGroups([]); setResources(emptyResources); setSessions([]); setSelectedSemester(''); setSelectedClassGroup('')
-    if (!selectedDepartment) return
+    if (!selectedDepartment || !departments.some((department) => department.id === selectedDepartment && department.institutionId === activeInstitutionId)) return
     const controller = new AbortController()
     setScopeLoading(true); setScopeError(null)
     void getSemesters(selectedDepartment, controller.signal).then((values) => {
       setSemesters(values); setSelectedSemester(values[0]?.id ?? '')
     }).catch((reason) => { if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setScopeLoading(false) })
     return () => controller.abort()
-  }, [selectedDepartment])
+  }, [activeInstitutionId, departments, selectedDepartment])
 
   useEffect(() => {
     setClassGroups([]); setSessions([]); setSelectedClassGroup('')
-    if (!selectedSemester) return
+    if (!selectedSemester || !semesters.some((semester) => semester.id === selectedSemester && semester.departmentId === selectedDepartment)) return
     const controller = new AbortController()
     setScopeLoading(true); setScopeError(null)
     void getClassGroups(selectedSemester, controller.signal).then((values) => {
       setClassGroups(values); setSelectedClassGroup(values[0]?.id ?? '')
     }).catch((reason) => { if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setScopeLoading(false) })
     return () => controller.abort()
-  }, [selectedSemester])
+  }, [selectedDepartment, selectedSemester])
 
   useEffect(() => {
     setResources(emptyResources)
-    if (!selectedInstitution || !selectedDepartment) return
+    if (!scopeReady || !selectedDepartment || !departments.some((department) => department.id === selectedDepartment && department.institutionId === activeInstitutionId)) return
     const controller = new AbortController()
     setResourcesLoading(true)
-    void getResources(selectedInstitution, selectedDepartment, controller.signal, selectedSemester).then(setResources).catch((reason) => { if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setResourcesLoading(false) })
+    void getResources(activeInstitutionId, selectedDepartment, controller.signal, selectedSemester).then(setResources).catch((reason) => { if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setResourcesLoading(false) })
     return () => controller.abort()
-  }, [selectedInstitution, selectedDepartment])
+  }, [activeInstitutionId, departments, scopeReady, selectedDepartment, selectedSemester])
 
   useEffect(() => {
     setSessions([]); setSessionError(null); setNotice(null)
-    if (!selectedClassGroup) return
+    if (!selectedClassGroup || !classGroups.some((group) => group.id === selectedClassGroup)) return
     const controller = new AbortController()
     setSessionsLoading(true)
     void getSessions(selectedClassGroup, controller.signal).then(setSessions).catch((reason) => { if ((reason as Error).name !== 'AbortError') setSessionError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setSessionsLoading(false) })
     return () => controller.abort()
-  }, [selectedClassGroup, sessionReload])
+  }, [classGroups, selectedClassGroup, sessionReload])
 
   useEffect(() => {
     if (dialog) window.setTimeout(() => firstFieldRef.current?.focus(), 0)
@@ -173,7 +163,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
   }
 
   const canAdd = Boolean(selectedClassGroup && resources.subjects.some((item) => item.active) && resources.teachers.some((item) => item.active) && resources.rooms.some((item) => item.active) && !resourcesLoading)
-  const noInstitutions = !scopeLoading && institutions.length === 0 && !scopeError
+  const noInstitutions = !institutionLoading && activeInstitutions.length === 0 && !scopeError
 
   return <div className="page-content timetable-page">
     <div className="page-heading">
@@ -192,9 +182,8 @@ export function TimetablePage({ connected, environment = 'development', error }:
       <CardBody>
         {scopeError && <div className="form-errors" role="alert"><strong>Academic data could not be loaded</strong><p>{scopeError}</p><Button type="button" variant="secondary" size="sm" onClick={() => void loadInstitutions()}><RefreshCw size={14} />Retry</Button></div>}
         {noInstitutions && <div className="scope-empty"><h3>No institution is configured yet.</h3><p>Provision deterministic local development records to create a usable academic hierarchy.</p><Button type="button" onClick={() => void setupWorkspace()} disabled={setupLoading}>{setupLoading ? 'Provisioning…' : 'Set up development workspace'}</Button></div>}
-        <div className="selector-grid">
-          <SelectField label="Institution" value={selectedInstitution} options={institutions.map((item) => ({ id: item.id, label: item.name }))} onChange={setSelectedInstitution} loading={scopeLoading && institutions.length === 0} emptyLabel="No institutions" />
-          <SelectField label="Department" value={selectedDepartment} options={departments.map((item) => ({ id: item.id, label: item.name }))} onChange={setSelectedDepartment} disabled={!selectedInstitution || scopeLoading} emptyLabel="No departments configured" />
+        <div className="selector-grid selector-grid--three">
+          <SelectField label="Department" value={selectedDepartment} options={departments.map((item) => ({ id: item.id, label: item.name }))} onChange={setSelectedDepartment} disabled={!activeInstitutionId || scopeLoading} emptyLabel="No departments configured" />
           <SelectField label="Semester" value={selectedSemester} options={semesters.map((item) => ({ id: item.id, label: item.label }))} onChange={setSelectedSemester} disabled={!selectedDepartment || scopeLoading} emptyLabel="No semesters configured" />
           <SelectField label="Section" value={selectedClassGroup} options={classGroups.map((item) => ({ id: item.id, label: item.label }))} onChange={setSelectedClassGroup} disabled={!selectedSemester || scopeLoading} emptyLabel="No sections configured" />
         </div>
@@ -208,9 +197,10 @@ export function TimetablePage({ connected, environment = 'development', error }:
 
     <Card className="timetable-card">
       <div className="mobile-day-picker" aria-label="Focused day preview">{DAYS.map((day) => <button key={day} type="button" className={focusedDay === day ? 'mobile-day-picker__item mobile-day-picker__item--active' : 'mobile-day-picker__item'} onClick={() => setFocusedDay(day)}>{DAY_LABELS[day].slice(0, 3)}</button>)}</div>
-      {!selectedClassGroup && <div className="calendar-empty"><h3>Select a section to load its timetable.</h3><p>Choose an institution, department, semester and section above.</p></div>}
-      {selectedClassGroup && sessionError && <div className="calendar-empty calendar-empty--error" role="alert"><h3>Timetable could not be loaded.</h3><p>{sessionError}</p><Button type="button" variant="secondary" onClick={() => setSessionReload((current) => current + 1)}><RefreshCw size={14} />Retry</Button></div>}
-      {selectedClassGroup && !sessionError && <div className="timetable-scroll">
+      {!scopeReady && activeInstitutionId && <div className="calendar-empty"><h3>Loading the selected institution…</h3><p>Previous institution records are cleared while the new academic scope loads.</p></div>}
+      {scopeReady && !selectedClassGroup && <div className="calendar-empty"><h3>Select a section to load its timetable.</h3><p>Choose a department, semester and section above.</p></div>}
+      {scopeReady && selectedClassGroup && sessionError && <div className="calendar-empty calendar-empty--error" role="alert"><h3>Timetable could not be loaded.</h3><p>{sessionError}</p><Button type="button" variant="secondary" onClick={() => setSessionReload((current) => current + 1)}><RefreshCw size={14} />Retry</Button></div>}
+      {scopeReady && selectedClassGroup && !sessionError && <div className="timetable-scroll">
         {sessionsLoading ? <div className="calendar-empty"><p>Loading saved sessions…</p></div> : <div className="timetable-calendar" style={{ '--timeline-height': `${timelineHeight}px` } as CSSProperties}>
           <div className="timetable-day-header timetable-day-header--time">Time</div>
           {DAYS.map((day) => <div key={day} className={`timetable-day-header ${focusedDay === day ? 'timetable-day-header--focused' : ''}`}><strong>{DAY_LABELS[day]}</strong><span>{sessions.filter((session) => session.day === day).length} sessions</span></div>)}
@@ -219,7 +209,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
       </div>}
     </Card>
 
-    <div className="timetable-footer"><span><Check size={15} /> {sessions.length} saved sessions loaded</span><span>API: {environment}{error ? ` · ${error}` : ''}</span></div>
+    <div className="timetable-footer"><span><Check size={15} /> {scopeReady ? sessions.length : 0} saved sessions loaded</span><span>API: {environment}{error ? ` · ${error}` : ''}</span></div>
 
     {dialog && <SessionDialog mode={dialog.mode} draft={draft} resources={resources} errors={formErrors} firstFieldRef={firstFieldRef} saving={saving} onChange={updateDraft} onSubmit={submitSession} onCancel={() => setDialog(null)} onRequestDelete={dialog.sessionId ? () => { const target = sessions.find((session) => session.id === dialog.sessionId); setDialog(null); if (target) setDeleteTarget(target) } : undefined} />}
     {deleteTarget && <ConfirmDialog session={deleteTarget} subjectName={subjectName} saving={saving} onCancel={() => setDeleteTarget(null)} onConfirm={() => void confirmDelete()} />}

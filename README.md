@@ -10,7 +10,8 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 
 - Monday–Saturday weekly timetable workspace.
 - Shared aligned time axis with variable-duration session cards.
-- Institution, department, semester and section selectors.
+- Global PostgreSQL-backed Active Institution context with easy switching.
+- Department, semester and section selectors within the active institution.
 - PostgreSQL-backed institution, department, semester, section and class-group scope.
 - Subjects, teachers, rooms/laboratories, classes and institution settings management.
 - Persistent session creation, editing and removal.

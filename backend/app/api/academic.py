@@ -249,6 +249,9 @@ def update_class_group(class_group_id: str, payload: ClassGroupUpdate, db: Sessi
     term = _require(db, AcademicTerm, term_id, "Academic term")
     if semester.department_id != department.id or term.institution_id != department.institution_id:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "Class group academic relationships do not match."})
+    institution = _require(db, Institution, department.institution_id, "Institution")
+    if values.get("active", group.active) and not institution.active:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"message": "An active class group requires an active institution."})
     for key, value in values.items():
         setattr(group, key, value)
     return _class_group_read(_commit(db, group, "Class group"))

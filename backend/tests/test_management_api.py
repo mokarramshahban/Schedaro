@@ -12,6 +12,15 @@ def test_resource_crud_duplicate_validation_and_lifecycle():
     marker = uuid4().hex[:8].upper()
     subject_id = teacher_id = room_id = None
     try:
+        north_subjects = client.get("/api/v1/academic/subjects?institution_id=inst-northbridge")
+        lake_subjects = client.get("/api/v1/academic/subjects?institution_id=inst-lakeside")
+        assert north_subjects.status_code == lake_subjects.status_code == 200
+        assert all(item["institution_id"] == "inst-northbridge" for item in north_subjects.json())
+        assert all(item["institution_id"] == "inst-lakeside" for item in lake_subjects.json())
+        lake_teachers = client.get("/api/v1/academic/teachers?institution_id=inst-lakeside")
+        lake_rooms = client.get("/api/v1/academic/rooms?institution_id=inst-lakeside")
+        assert all(item["institution_id"] == "inst-lakeside" for item in lake_teachers.json())
+        assert all(item["institution_id"] == "inst-lakeside" for item in lake_rooms.json())
         subject = client.post(
             "/api/v1/academic/institutions/inst-northbridge/subjects",
             json={"department_id": "dept-computing", "code": f"TST{marker}", "name": "Stage 4 Test Subject", "active": True},

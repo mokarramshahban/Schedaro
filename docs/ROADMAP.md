@@ -21,7 +21,7 @@ Interactive Monday–Saturday calendar, shared time-axis rendering, responsive b
 Relational academic scope, versioned FastAPI routes, PostgreSQL persistence, transactional overlap constraints, PyO3/maturin Rust validation, and API-backed frontend timetable CRUD are implemented and verified. Harness independently verified the automated tests, migration, live APIs, persistence, Docker refresh, and service health. The owner manually verified the Firefox interface and confirmed that the Edit Session dialog displayed the database-backed ROOM-201 conflict for Monday 11:00–12:30; changing the room to ROOM-305 removed the conflict. Harness browser automation was unavailable and remains recorded separately.
 
 ## Stage 4 — Academic Resource Management — PARTIALLY COMPLETE
-Subjects, Teachers, Rooms, Classes, and Institution Settings now use real PostgreSQL/FastAPI CRUD with lifecycle protection and timetable selector synchronization. Independent Harness verification passed; owner Firefox verification of the management pages and responsive behavior remains pending. Do not begin Stage 5 until Stage 4 browser review is complete.
+Subjects, Teachers, Rooms, Classes, and Institution Settings now use real PostgreSQL/FastAPI CRUD with lifecycle protection, a global Active Institution context, first-institution onboarding, institution switching, contextual actions, and timetable selector synchronization. Independent Harness verification passed; owner Firefox verification of the management pages, institution switching, and responsive behavior remains pending. Do not begin Stage 5 until Stage 4 browser review is complete.
 
 ## Stage 5 — Printing & PDF — NOT STARTED
 Institution-branded A4 output. Depends on stable timetable data.

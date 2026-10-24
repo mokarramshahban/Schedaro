@@ -31,7 +31,7 @@ Inter is the reference font. The app uses an Inter-compatible system stack with 
 
 ## Components
 
-- `AppSidebar`: accessible primary navigation, active Timetable, and disabled planned destinations.
+- `AppSidebar`: accessible primary navigation, global Active Institution selector, institution-management action, and current-page state.
 - `AppHeader`: mobile menu trigger, page context, search affordance, and live API status.
 - `Button`: primary, secondary, ghost, and compact variants with focus-visible rings.
 - `Card`: shared surface primitive with optional header/body composition.

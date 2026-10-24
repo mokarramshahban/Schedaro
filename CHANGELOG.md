@@ -17,3 +17,4 @@
 - Added PostgreSQL-backed management pages for subjects, teachers, rooms/laboratories, departments, semesters, terms, class groups, and institution settings.
 - Added additive lifecycle fields, scoped resource codes, room metadata, subject semester scope, and safe inactive-resource behavior that preserves existing timetable references.
 - Added management API and frontend tests covering real CRUD payloads, duplicate validation, invalid associations, lifecycle updates, and Stage 3 scheduling regressions.
+- Added a global PostgreSQL-backed Active Institution selector, first-institution onboarding, multi-institution switching, institution-scoped management context, contextual creation actions, and synchronized timetable scope.

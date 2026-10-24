@@ -68,5 +68,20 @@ Every future implementation must be built and made live before completion. Valid
 ### Owner manual verification
 - Pending owner Firefox verification of Subjects, Teachers, Rooms, Classes, Settings, responsive behavior, and refresh persistence.
 
+## Stage 4 institution-context hotfix verification record
+
+### Independent Harness verification
+- Active institution resolution tests: PASS — 4 tests covering empty, single, persisted multi-institution, and inactive selections.
+- Frontend Vitest: PASS — 18 tests.
+- TypeScript and frontend production build: PASS.
+- Backend institution-scoped CRUD/regression tests: PASS — 5 tests.
+- Existing cross-institution list and relationship checks: PASS.
+- Docker Compose validation, frontend image build, targeted frontend refresh, health, readiness, and frontend HTTP checks: PASS.
+- PostgreSQL container and named volume preserved.
+- Harness browser automation: NOT TESTED / unavailable.
+
+### Owner manual verification
+- Pending Firefox verification of global institution switching, first-institution setup, contextual add labels, dialog ownership context, responsive mobile selector behavior, and timetable reset behavior.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and Stage 5 printing workflows. Browser verification remains a release prerequisite for Stage 4.
