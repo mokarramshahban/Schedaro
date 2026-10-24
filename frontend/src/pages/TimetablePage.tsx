@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type RefObject } from 'react'
-import { Check, Info, Plus, RefreshCw, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type RefObject } from 'react'
+import { Check, Info, Plus, Printer, RefreshCw, Trash2, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card'
 import { StatusDot } from '../components/ui/StatusDot'
-import { ApiError, createSession, deleteSession, getClassGroups, getDepartments, getResources, getSemesters, getSessions, provisionDevelopmentSetup, updateSession, type AcademicResources, type ClassGroup, type Department, type Resource, type Semester, type SessionPayload } from '../lib/api'
+import { ApiError, createSession, deleteSession, getClassGroups, getDepartments, getResources, getSemesters, getSessions, getTerms, provisionDevelopmentSetup, updateSession, type AcademicResources, type AcademicTerm, type ClassGroup, type Department, type Resource, type Semester, type SessionPayload } from '../lib/api'
 import { useInstitution } from '../lib/InstitutionContext'
+import { TimetablePrintView } from '../components/timetable/TimetablePrintView'
 import { DAY_LABELS, DAYS, PIXELS_PER_HOUR, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, SESSION_TYPES, durationToHeight, layoutDaySessions, minutesToPosition, minutesToTime, removeSession, timeToMinutes, upsertSession, validateSession, type DayOfWeek, type SessionType, type TimetableSession } from '../lib/timetable'
 
 type TimetablePageProps = { connected: boolean; environment?: string; error?: string | null }
@@ -24,6 +25,7 @@ function apiErrorMessages(error: unknown): string[] {
 export function TimetablePage({ connected, environment = 'development', error }: TimetablePageProps) {
   const { activeInstitutionId, activeInstitution, activeInstitutions, loading: institutionLoading, error: institutionError, refreshInstitutions } = useInstitution()
   const [departments, setDepartments] = useState<Department[]>([])
+  const [terms, setTerms] = useState<AcademicTerm[]>([])
   const [semesters, setSemesters] = useState<Semester[]>([])
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([])
   const [resources, setResources] = useState<AcademicResources>(emptyResources)
@@ -32,6 +34,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
   const [selectedSemester, setSelectedSemester] = useState('')
   const [selectedClassGroup, setSelectedClassGroup] = useState('')
   const [scopeLoading, setScopeLoading] = useState(false)
+  const [termsLoading, setTermsLoading] = useState(false)
   const [scopeInstitutionId, setScopeInstitutionId] = useState('')
   const [resourcesLoading, setResourcesLoading] = useState(false)
   const [sessionsLoading, setSessionsLoading] = useState(false)
@@ -44,6 +47,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
   const [formErrors, setFormErrors] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<TimetableSession | null>(null)
+  const [printOpen, setPrintOpen] = useState(false)
   const [focusedDay, setFocusedDay] = useState<DayOfWeek>('monday')
   const [sessionReload, setSessionReload] = useState(0)
   const firstFieldRef = useRef<HTMLSelectElement>(null)
@@ -51,6 +55,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
   const selectedDepartmentRecord = departments.find((item) => item.id === selectedDepartment)
   const selectedSemesterRecord = semesters.find((item) => item.id === selectedSemester)
   const selectedGroupRecord = classGroups.find((item) => item.id === selectedClassGroup)
+  const selectedTermRecord = terms.find((item) => item.id === selectedGroupRecord?.academicTermId)
   const timelineHeight = minutesToPosition(SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, PIXELS_PER_HOUR)
   const timeLabels = Array.from({ length: 9 }, (_, index) => SCHEDULE_START_MINUTES + index * 60)
   const selectedInstitutionRecord = activeInstitution
@@ -63,6 +68,15 @@ export function TimetablePage({ connected, environment = 'development', error }:
   useEffect(() => {
     if (institutionError) setScopeError(institutionError)
   }, [institutionError])
+
+  useEffect(() => {
+    setTerms([])
+    if (!activeInstitutionId) { setTermsLoading(false); return }
+    const controller = new AbortController()
+    setTermsLoading(true)
+    void getTerms(activeInstitutionId, controller.signal).then(setTerms).catch((reason) => { if ((reason as Error).name !== 'AbortError') setScopeError(apiErrorMessages(reason)[0]) }).finally(() => { if (!controller.signal.aborted) setTermsLoading(false) })
+    return () => controller.abort()
+  }, [activeInstitutionId])
 
   useEffect(() => {
     setDepartments([]); setSemesters([]); setClassGroups([]); setResources(emptyResources); setSessions([]); setSelectedDepartment(''); setSelectedSemester(''); setSelectedClassGroup(''); setScopeInstitutionId('')
@@ -119,6 +133,8 @@ export function TimetablePage({ connected, environment = 'development', error }:
     if (dialog) window.setTimeout(() => firstFieldRef.current?.focus(), 0)
   }, [dialog])
 
+  useEffect(() => { setPrintOpen(false) }, [activeInstitutionId, selectedClassGroup])
+
   const subjectName = (id: string) => { const option = resources.subjects.find((item) => item.id === id); return option ? `${option.name}${option.active ? '' : ' · inactive'}` : 'Unknown subject' }
   const teacherName = (id: string) => { const option = resources.teachers.find((item) => item.id === id); return option ? `${option.name}${option.active ? '' : ' · inactive'}` : 'Unknown teacher' }
   const roomName = (id: string) => { const option = resources.rooms.find((item) => item.id === id); return option ? `${option.name}${option.active ? '' : ' · inactive'}` : 'Unknown room' }
@@ -168,7 +184,7 @@ export function TimetablePage({ connected, environment = 'development', error }:
   return <div className="page-content timetable-page">
     <div className="page-heading">
       <div><p className="eyebrow">Workspace / Timetable</p><h1>Build your academic week.</h1><p className="page-description">Arrange persisted sessions on one shared timeline across Monday through Saturday.</p></div>
-      <Button disabled={!canAdd} onClick={() => openAdd()} title={!canAdd ? 'Select a class group with scheduling resources first' : undefined}><Plus size={17} />Add session</Button>
+      <div className="page-heading__actions"><Button variant="secondary" disabled={!scopeReady || !selectedGroupRecord || scopeLoading || termsLoading || resourcesLoading || sessionsLoading || Boolean(sessionError)} onClick={() => setPrintOpen(true)} title={!selectedGroupRecord ? 'Select a section before printing' : undefined}><Printer size={16} />Print / Save as PDF</Button><Button disabled={!canAdd} onClick={() => openAdd()} title={!canAdd ? 'Select a class group with scheduling resources first' : undefined}><Plus size={17} />Add session</Button></div>
     </div>
 
     <div className="status-banner timetable-status" role="status">
@@ -210,6 +226,8 @@ export function TimetablePage({ connected, environment = 'development', error }:
     </Card>
 
     <div className="timetable-footer"><span><Check size={15} /> {scopeReady ? sessions.length : 0} saved sessions loaded</span><span>API: {environment}{error ? ` · ${error}` : ''}</span></div>
+
+     {printOpen && activeInstitution && selectedDepartmentRecord && selectedSemesterRecord && selectedGroupRecord && <TimetablePrintView institution={activeInstitution} department={selectedDepartmentRecord} semester={selectedSemesterRecord} group={selectedGroupRecord} term={selectedTermRecord} resources={resources} sessions={sessions} onClose={() => setPrintOpen(false)} />}
 
     {dialog && <SessionDialog mode={dialog.mode} draft={draft} resources={resources} errors={formErrors} firstFieldRef={firstFieldRef} saving={saving} onChange={updateDraft} onSubmit={submitSession} onCancel={() => setDialog(null)} onRequestDelete={dialog.sessionId ? () => { const target = sessions.find((session) => session.id === dialog.sessionId); setDialog(null); if (target) setDeleteTarget(target) } : undefined} />}
     {deleteTarget && <ConfirmDialog session={deleteTarget} subjectName={subjectName} saving={saving} onCancel={() => setDeleteTarget(null)} onConfirm={() => void confirmDelete()} />}

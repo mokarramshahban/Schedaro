@@ -10,7 +10,7 @@ PostgreSQL persistent volume: schedaro_pgdata
 
 ## Implemented
 
-`frontend` is a React/TypeScript/Vite timetable workspace. It loads the academic hierarchy and scheduling resources through typed API clients, provides a shared PostgreSQL-backed active-institution context across the shell, timetable, Subjects, Teachers, Rooms, Classes, and Institution Settings management pages, preserves the shared minute-based time axis, and performs persistent session CRUD through FastAPI.
+`frontend` is a React/TypeScript/Vite timetable workspace. It loads the academic hierarchy and scheduling resources through typed API clients, provides a shared PostgreSQL-backed active-institution context across the shell, timetable, Subjects, Teachers, Rooms, Classes, and Institution Settings management pages, preserves the shared minute-based time axis, performs persistent session CRUD through FastAPI, and renders a dedicated institution-branded A4 print preview from the selected persisted class-group data. Browser printing/Save as PDF is used instead of a separate PDF service.
 
 `backend` is FastAPI with versioned academic and timetable routes, Pydantic request/response schemas, SQLAlchemy sessions, Alembic migrations, PostgreSQL-backed readiness checks, and structured conflict responses. The backend invokes the compiled `schedaro_engine` PyO3 extension for deterministic interval validation before writes.
 

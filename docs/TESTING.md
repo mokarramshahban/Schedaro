@@ -94,5 +94,27 @@ Every future implementation must be built and made live before completion. Valid
 ### Owner manual verification
 - Pending Firefox verification of header placement, long institution-name truncation, mobile header behavior, switching, onboarding, contextual add labels, dialog ownership context, and timetable reset behavior.
 
+## Stage 5 printing and PDF verification record
+
+### Independent Harness verification
+- Print action is guarded by valid persisted institution/department/semester/section scope and loaded sessions: PASS by source inspection and TypeScript/build checks.
+- Institution-branded `TimetablePrintView` uses the selected institution, department, semester, section, academic term, resources, and saved sessions: PASS by source inspection and live API scope checks.
+- Shared-axis and duration positioning tests: PASS — equal starts, gaps, and variable-duration sessions remain minute-based.
+- Frontend Vitest: PASS — 24 tests.
+- TypeScript and frontend production build: PASS.
+- Backend pytest: PASS — 5 tests.
+- Rust scheduling tests: PASS — 7 tests.
+- Live persisted scope/session/resource API smoke checks: PASS.
+- Compose validation, frontend image build, targeted frontend refresh, backend readiness, API status, and frontend HTTP 200: PASS.
+- Chromium/Playwright PDF rendering: NOT TESTED — no Chromium or Playwright executable is available in Harness.
+- Harness browser visual/interaction verification: NOT TESTED / unavailable.
+
+### Owner manual Firefox verification required
+1. Select an active institution, department, semester, and section with saved sessions.
+2. Confirm the primary heading is the institution name, not Schedaro.
+3. Open **Print / Save PDF**, verify Monday–Saturday alignment, session names, teachers, rooms, term, and A4 landscape preview.
+4. Choose Firefox Print → Landscape → paper size A4 → Save to PDF; inspect for clipping, overlap, blank pages, and readable lab durations.
+5. Repeat at desktop, tablet, and mobile widths; verify the preview remains usable and the saved PDF remains A4 landscape.
+
 ## Later planned tests
-Add authenticated write-API tests, deployment smoke tests, and Stage 5 printing workflows. Browser verification remains a release prerequisite for Stage 4.
+Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.

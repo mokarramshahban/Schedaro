@@ -269,3 +269,51 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 @media (max-width: 1120px) { .active-institution--header { flex-basis: 280px; min-width: 210px; } }
 @media (max-width: 900px) { .active-institution--header { flex: 1 1 210px; min-width: 170px; max-width: 280px; } }
 @media (max-width: 620px) { .active-institution--header { flex: 1 1 150px; min-width: 0; max-width: none; } .active-institution__trigger { min-height: 36px; padding-inline: 7px; } .active-institution__trigger-text small { display: none; } .active-institution__trigger-text strong { font-size: 10px; } .active-institution__menu { right: -4px; width: min(330px, calc(100vw - 20px)); } }
+
+/* Stage 5 institution-branded A4 print preview */
+.page-heading__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+.print-preview-backdrop { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 22px; background: rgba(17, 24, 39, .5); }
+.print-preview-dialog { display: flex; width: min(1240px, 100%); max-height: calc(100vh - 44px); flex-direction: column; overflow: hidden; border: 1px solid #e1e4ed; border-radius: 16px; background: #f1f3f8; box-shadow: 0 28px 80px rgba(21, 30, 54, .28); }
+.print-preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: #fff; border-bottom: 1px solid #e4e7ef; }
+.print-preview-toolbar h2 { margin: 0; color: #273247; font-size: 18px; }
+.print-preview-actions { display: flex; align-items: center; gap: 9px; }
+.print-preview-scroll { overflow: auto; padding: 28px; }
+.print-document { width: 277mm; min-height: 190mm; margin: 0 auto; padding: 10mm; color: #172033; background: #fff; box-shadow: 0 8px 30px rgba(31, 41, 55, .12); }
+.print-document__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14mm; min-height: 25mm; }
+.print-document__identity { min-width: 0; flex: 1; }
+.print-document__eyebrow { margin: 0 0 2mm; color: #5c55c4; font-size: 8pt; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.print-document__identity h1 { max-width: 165mm; margin: 0; color: #172033; font: 700 20pt/1.15 Georgia, serif; overflow-wrap: anywhere; }
+.print-document__address { margin: 2mm 0 0; color: #667085; font-size: 8pt; }
+.print-document__scope { display: flex; min-width: 62mm; flex-direction: column; gap: 1.1mm; padding-top: 2mm; color: #4b5563; font-size: 8pt; text-align: right; }
+.print-document__scope p { margin: 0 0 1mm; color: #5c55c4; font-size: 10pt; font-weight: 800; }
+.print-document__scope strong { color: #172033; font-size: 9pt; }
+.print-document__rule { height: .5mm; margin: 3mm 0 5mm; background: #4f46e5; }
+.print-grid { display: grid; grid-template-columns: 18mm repeat(6, minmax(0, 1fr)); grid-template-rows: 9mm auto; border-top: .3mm solid #aeb6c2; border-left: .3mm solid #aeb6c2; }
+.print-grid__time-header, .print-grid__day-header { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 2mm; color: #273247; border-right: .3mm solid #aeb6c2; border-bottom: .3mm solid #aeb6c2; background: #f7f8fc; font-size: 8pt; font-weight: 800; }
+.print-grid__time-header { color: #667085; font-size: 7pt; text-transform: uppercase; }
+.print-grid__body { display: grid; grid-column: 1 / -1; grid-template-columns: 18mm repeat(6, minmax(0, 1fr)); height: 112mm; }
+.print-grid__time-axis, .print-grid__day { position: relative; min-width: 0; border-right: .3mm solid #aeb6c2; border-bottom: .3mm solid #aeb6c2; background-image: linear-gradient(to bottom, #dfe3ea .25mm, transparent .25mm); background-size: 100% 12.5%; }
+.print-grid__time-axis { background-color: #fbfcfe; }
+.print-grid__time-axis span { position: absolute; right: 2mm; color: #667085; font-size: 6.5pt; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.print-grid__day { overflow: hidden; }
+.print-session { position: absolute; right: 1mm; left: 1mm; display: flex; min-height: 8mm; flex-direction: column; gap: .7mm; overflow: hidden; padding: 1.5mm; border: .3mm solid #b9b6f6; border-radius: 1.2mm; background: #eeedff; color: #273247; font-size: 6.4pt; line-height: 1.15; page-break-inside: avoid; }
+.print-session strong { overflow-wrap: anywhere; font-size: 7pt; }
+.print-session span { color: #4b5563; font-variant-numeric: tabular-nums; }
+.print-session small { overflow-wrap: anywhere; color: #667085; font-size: 6pt; }
+.print-session--laboratory { border-color: #9dd8cb; background: #e9fbf6; }
+.print-session--tutorial { border-color: #e8c18d; background: #fff5e8; }
+.print-document__empty { margin: 4mm 0 0; color: #667085; font-size: 8pt; font-style: italic; }
+.print-document__footer { display: flex; justify-content: space-between; gap: 8mm; margin-top: 5mm; padding-top: 2mm; color: #667085; border-top: .3mm solid #dfe3ea; font-size: 6.5pt; }
+@media (max-width: 620px) { .page-heading__actions { width: 100%; flex-direction: column; } .page-heading__actions .button { width: 100%; } .print-preview-backdrop { padding: 8px; } .print-preview-scroll { padding: 12px; } .print-preview-toolbar { padding: 13px; } }
+@page { size: A4 landscape; margin: 10mm; }
+@media print {
+  html, body { width: 297mm; min-width: 0; background: #fff; }
+  body * { visibility: hidden !important; }
+  .print-preview-backdrop, .print-preview-backdrop * { visibility: visible !important; }
+  .print-preview-backdrop { position: static; display: block; padding: 0; background: #fff; }
+  .print-preview-dialog { display: block; width: auto; max-height: none; overflow: visible; border: 0; border-radius: 0; background: #fff; box-shadow: none; }
+  .print-preview-toolbar { display: none !important; }
+  .print-preview-scroll { overflow: visible; padding: 0; }
+  .print-document { width: 277mm; min-height: 190mm; margin: 0; padding: 0; box-shadow: none; }
+  .print-document__empty { page-break-inside: avoid; }
+}

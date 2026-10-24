@@ -23,8 +23,8 @@ Relational academic scope, versioned FastAPI routes, PostgreSQL persistence, tra
 ## Stage 4 — Academic Resource Management — PARTIALLY COMPLETE
 Subjects, Teachers, Rooms, Classes, and Institution Settings now use real PostgreSQL/FastAPI CRUD with lifecycle protection, a global Active Institution context, first-institution onboarding, institution switching, contextual actions, and timetable selector synchronization. Independent Harness verification passed; owner Firefox verification of the management pages, institution switching, and responsive behavior remains pending. Do not begin Stage 5 until Stage 4 browser review is complete.
 
-## Stage 5 — Printing & PDF — NOT STARTED
-Institution-branded A4 output. Depends on stable timetable data.
+## Stage 5 — Printing & PDF — PARTIALLY COMPLETE
+Institution-branded A4 landscape preview and browser Print / Save as PDF workflow are implemented from persisted institution, scope, resource and session data. Automated time-position tests, print CSS, frontend build, and live Docker refresh passed; actual browser/PDF visual verification remains pending because Harness has no browser/Chromium automation.
 
 ## Stage 6 — Puter.js AI — NOT STARTED
 Optional suggestions and optimization with human approval. Depends on validation and privacy review.

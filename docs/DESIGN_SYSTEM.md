@@ -36,7 +36,8 @@ Inter is the reference font. The app uses an Inter-compatible system stack with 
 - `Button`: primary, secondary, ghost, and compact variants with focus-visible rings.
 - `Card`: shared surface primitive with optional header/body composition.
 - `StatusDot`: real connection state with text, never a hardcoded success indicator.
-- `TimetablePage`: Stage 1 workspace foundation and honest empty state for the future weekly grid.
+- `TimetablePage`: Persisted academic scope selectors, shared-axis editing workspace, and guarded Print / Save PDF action.
+- `TimetablePrintView`: Read-only institution-branded A4 landscape preview with a dedicated physical grid and print-only stylesheet.
 
 ## Responsive strategy
 At desktop widths the sidebar remains visible and the workspace uses a two-column overview panel. At widths below 960px the sidebar becomes a focus-trapped-style drawer with backdrop behavior and the content becomes single-column. At mobile widths near 375px, controls stack, cards use full width, and no content relies on horizontal scrolling.
