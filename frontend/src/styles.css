@@ -220,4 +220,22 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .institution-setup-success p { max-width: 350px; margin: 8px 0 0; color: #7d8797; font-size: 12px; line-height: 1.6; }
 .institution-choice-card .field { margin: 22px 0 16px; }
 @media (max-width: 900px) { .selector-grid--three { grid-template-columns: repeat(2, minmax(0, 1fr)); } .institution-setup-page, .institution-choice-page { grid-template-columns: 1fr; min-height: auto; } .institution-setup-page__intro { padding-bottom: 0; } .institution-context-banner { align-items: flex-start; flex-wrap: wrap; } .institution-context-banner small { width: 100%; margin-left: 27px; } }
-@media (max-width: 620px) { .selector-grid--three, .setup-form-grid { grid-template-columns: 1fr; } .institution-setup-page, .institution-choice-page { padding-top: 24px; } .institution-context-banner small { margin-left: 0; } .active-institution { margin-top: 12px; } }
+@media (max-width: 620px) { .selector-grid--three, .setup-form-grid { grid-template-columns: 1fr; } .institution-setup-page, .institution-choice-page { padding-top: 24px; } .institution-context-banner small { margin-left: 0; } }
+
+/* Header institution context */
+.active-institution--header { display: flex; min-width: 0; flex: 0 1 330px; align-items: center; gap: 9px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.active-institution--header .active-institution__heading { flex: 0 0 auto; gap: 5px; color: #7d8797; font-size: 9px; letter-spacing: .06em; }
+.active-institution--header .active-institution__control { min-width: 0; flex: 1 1 auto; margin: 0; }
+.active-institution--header .active-institution__control select, .active-institution--header .active-institution__control input { min-width: 0; min-height: 34px; padding: 0 27px 0 10px; border-color: #dfe3ea; font-size: 11px; }
+.active-institution--header .active-institution__control select:hover, .active-institution--header .active-institution__control input:hover { border-color: #bdbaf6; }
+.active-institution--header .active-institution__control svg { top: 10px; }
+.active-institution--header .active-institution__current { display: none; }
+.active-institution--header .active-institution__loading, .active-institution--header .active-institution__empty { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.active-institution--header .active-institution__empty { display: block; }
+.active-institution--header .active-institution__empty strong { margin-right: 5px; color: #6b7280; }
+.active-institution--header .active-institution__empty span { color: #9aa3b2; }
+.active-institution--header .active-institution__action { flex: 0 0 auto; min-height: 32px; margin: 0; padding: 0 8px; color: #5c55c4; border: 1px solid #dddefe; border-radius: 8px; background: #fafaff; font-size: 10px; white-space: nowrap; }
+.active-institution--header .active-institution__action:hover, .active-institution--header .active-institution__action:focus-visible { border-color: #bdbaf6; background: #f0efff; text-decoration: none; }
+@media (max-width: 1120px) { .active-institution--header { flex-basis: 270px; } .active-institution--header .active-institution__heading span { display: none; } .active-institution--header .active-institution__action { width: 34px; padding: 0; justify-content: center; overflow: hidden; font-size: 0; } }
+@media (max-width: 900px) { .app-header { gap: 10px; } .active-institution--header { flex: 1 1 210px; max-width: 280px; } .active-institution--header .active-institution__heading span { display: inline; } .active-institution--header .active-institution__action { width: 34px; font-size: 0; } }
+@media (max-width: 620px) { .active-institution--header { flex: 1 1 150px; max-width: none; gap: 5px; } .active-institution--header .active-institution__heading span { display: none; } .active-institution--header .active-institution__heading svg { width: 16px; height: 16px; } .active-institution--header .active-institution__control select, .active-institution--header .active-institution__control input { min-height: 34px; font-size: 10px; } }

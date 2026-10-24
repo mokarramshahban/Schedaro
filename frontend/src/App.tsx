@@ -40,7 +40,7 @@ function AppShell() {
   const content = noActiveInstitution ? <InstitutionSetupPage /> : needsInstitutionChoice ? <InstitutionChoicePage /> : view === 'timetable' ? <TimetablePage connected={connected} environment={status?.environment} error={error} /> : <ResourceManagementPage mode={view} connected={connected} />
   return <div className="app-shell">
     <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} connected={connected} currentView={view} onNavigate={setView} />
-    <div className="app-main"><AppHeader pageTitle={noActiveInstitution ? 'Institution setup' : pageTitles[view]} onMenuOpen={() => setSidebarOpen(true)} connected={connected} loading={loading} onRefresh={loadStatus} /><main>{content}</main></div>
+    <div className="app-main"><AppHeader pageTitle={noActiveInstitution ? 'Institution setup' : pageTitles[view]} onMenuOpen={() => setSidebarOpen(true)} onOpenInstitutionSettings={() => setView('settings')} connected={connected} loading={loading} onRefresh={loadStatus} /><main>{content}</main></div>
   </div>
 }
 

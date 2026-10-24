@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { CalendarDays, ChevronRight, CircleHelp, DoorOpen, GraduationCap, LayoutGrid, Settings2, Shapes, UsersRound, X } from 'lucide-react'
 import { StatusDot } from '../ui/StatusDot'
-import { ActiveInstitutionSelector } from './ActiveInstitutionSelector'
 
 export type WorkspaceView = 'timetable' | 'subjects' | 'teachers' | 'rooms' | 'classes' | 'settings'
 type NavItem = { label: string; icon: LucideIcon; view: WorkspaceView }
@@ -27,7 +26,6 @@ export function AppSidebar({ open, onClose, connected, currentView, onNavigate }
       </div>
       <div className="sidebar-panel">
         <div className="sidebar-brand"><div><p className="brand-name">Schedaro</p><p className="brand-subtitle">Smart Academic Timetable Builder</p></div><span className="brand-version">v0.2</span></div>
-        <ActiveInstitutionSelector onOpenSettings={() => { onNavigate('settings'); onClose() }} />
         <div className="sidebar-section-label">Workspace</div>
         <nav className="primary-nav">
           {navItems.map(({ label, icon: Icon, view }) => { const active = currentView === view; return <button key={label} className={`nav-item ${active ? 'nav-item--active' : ''}`} type="button" onClick={() => { onNavigate(view); onClose() }} aria-current={active ? 'page' : undefined}><Icon size={18} strokeWidth={active ? 2.2 : 1.8} /><span>{label}</span>{active ? <ChevronRight className="nav-chevron" size={15} /> : null}</button> })}

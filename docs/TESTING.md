@@ -80,8 +80,18 @@ Every future implementation must be built and made live before completion. Valid
 - PostgreSQL container and named volume preserved.
 - Harness browser automation: NOT TESTED / unavailable.
 
+## Stage 4 header institution selector hotfix verification record
+
+### Independent Harness verification
+- Active Institution selector removed from `AppSidebar` and mounted once in `AppHeader`: PASS by source inspection and TypeScript/build checks.
+- Frontend Vitest: PASS — 18 tests.
+- TypeScript and frontend production build: PASS.
+- Docker Compose validation, frontend image build, targeted frontend refresh, service health, backend readiness, API status, and frontend HTTP 200: PASS.
+- Existing backend/Rust regression checks remain passing.
+- Harness browser automation: NOT TESTED / unavailable.
+
 ### Owner manual verification
-- Pending Firefox verification of global institution switching, first-institution setup, contextual add labels, dialog ownership context, responsive mobile selector behavior, and timetable reset behavior.
+- Pending Firefox verification of header placement, long institution-name truncation, mobile header behavior, switching, onboarding, contextual add labels, dialog ownership context, and timetable reset behavior.
 
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and Stage 5 printing workflows. Browser verification remains a release prerequisite for Stage 4.
