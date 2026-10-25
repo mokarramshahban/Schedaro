@@ -41,6 +41,9 @@ The Stage 7C branch adds stable college portal slugs, shared portal branding/log
 ## Stage 7C.1 — Manual / Offline Invitations — IMPLEMENTED ON FEATURE BRANCH, INCOMPLETE
 The Stage 7C.1 branch adds manual activation URL/key generation, one-time hashed keys, pending owner approval, activation and replay protection, manual invitation UI and a no-email fallback. Browser verification, final email regression and full cross-tenant authorization remain incomplete. Architecture decisions and living documentation governance are recorded in [DECISION_INDEX](DECISION_INDEX.md), [CONTRIBUTOR_GUIDE](CONTRIBUTOR_GUIDE.md) and [DOCUMENTATION_POLICY](DOCUMENTATION_POLICY.md). Stage 7D was not started.
 
+## Stage 7D — Hierarchical Roles & Scoped Access — IMPLEMENTED ON FEATURE BRANCH, INCOMPLETE
+Stage 7D adds explicit role assignments, permission definitions, organization scope validation, delegated user/invitation management, server-side acting-as context and revocation invalidation. Full permission coverage across every legacy academic endpoint, browser verification, student publication visibility and production hardening remain incomplete. Stage 7E dashboards were not started.
+
 ## Stage 7 — Deployment — NOT STARTED
 Vercel frontend, Render API, managed PostgreSQL. Depends on production security and testing.
 

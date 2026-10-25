@@ -223,6 +223,18 @@ Every future implementation must be built and made live before completion. Valid
 - Existing email invitation regression: not re-run after manual additions; local email path remains unchanged.
 - Existing academic data and PostgreSQL volume: preserved.
 
+## Stage 7D verification record
+
+- RBAC assignment, revocation and stale-scope tests: PASS — 3 tests.
+- Protected Platform Owner grant test: PASS.
+- Active role-context selection test: PASS.
+- Manual invitation regression tests: PASS — 4 tests.
+- Full backend suite: 39 passed, 3 skipped, 1 pre-existing scheduling regression failed (`UNKNOWN` result in `test_balanced_preference_discourages_consecutive_same_subject_sessions`).
+- Frontend production build: PASS.
+- Browser role-management click-through: NOT TESTED — browser automation unavailable.
+- Full permission enforcement across all legacy academic routes: NOT VERIFIED; current role-context foundation does not yet replace every legacy membership-only guard.
+- Database volume and existing academic records: preserved.
+
 ## Documentation validation
 
 Run `python scripts/check_docs.py` after documentation changes. The checker is read-only and validates relative Markdown links, indexed ADR files and obvious credential patterns.

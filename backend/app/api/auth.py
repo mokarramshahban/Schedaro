@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -5,13 +7,21 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.platform import get_platform_db, tenant_session
 from app.db.models import Institution
-from app.db.platform_models import PlatformInstitution, PlatformMembership, PlatformUser
+from app.db.platform_models import PlatformInstitution, PlatformMembership, PlatformRoleAssignment, PlatformSession, PlatformUser
 from app.schemas_platform import PlatformMembershipRead
 from app.schemas_platform import PlatformLoginRequest, PlatformUserRead
-from app.services.platform import create_session, has_institution_access, revoke_session, user_for_session, verify_password
+from app.services.platform import create_session, has_institution_access, revoke_session, token_hash, user_for_session, verify_password
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 settings = get_settings()
+
+
+def current_session(request: Request, db: Session = Depends(get_platform_db)) -> PlatformSession:
+    raw = request.cookies.get(settings.auth_cookie_name)
+    record = db.scalar(select(PlatformSession).where(PlatformSession.token_hash == token_hash(raw or '')))
+    if record is None or record.expires_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"message": "Authentication is required."})
+    return record
 
 
 def current_user(request: Request, db: Session = Depends(get_platform_db)) -> PlatformUser:
@@ -31,6 +41,13 @@ def require_academic_access(request: Request, db: Session = Depends(get_platform
     institution_id = request.path_params.get("institution_id") or request.query_params.get("institution_id")
     if user.role != "platform_owner" and (not institution_id or not has_institution_access(db, user, institution_id)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Institution membership is required."})
+    if user.role != "platform_owner":
+        raw = request.cookies.get(settings.auth_cookie_name)
+        session = db.scalar(select(PlatformSession).where(PlatformSession.token_hash == token_hash(raw or ""), PlatformSession.expires_at > datetime.now(timezone.utc)))
+        if session and session.active_assignment_id:
+            assignment = db.get(PlatformRoleAssignment, session.active_assignment_id)
+            if assignment is None or assignment.user_id != user.id or assignment.institution_id != institution_id or assignment.status != "active":
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "The active authorization context is invalid."})
     return user
 
 
