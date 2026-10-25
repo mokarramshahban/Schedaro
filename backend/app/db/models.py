@@ -223,6 +223,38 @@ class PdfmePrintTemplate(Base):
     institution: Mapped[Institution] = relationship()
 
 
+class TimetableVersion(Base):
+    __tablename__ = "timetable_versions"
+    __table_args__ = (UniqueConstraint("class_group_id", "version_number", name="uq_timetable_version_group_number"), Index("ix_timetable_version_group_status", "class_group_id", "status"))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_term_id: Mapped[str] = mapped_column(ForeignKey("academic_terms.id", ondelete="CASCADE"), nullable=False, index=True)
+    class_group_id: Mapped[str] = mapped_column(ForeignKey("class_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="draft", server_default="draft")
+    session_snapshot: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+    creator_user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    last_editor_user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    submitted_by_user_id: Mapped[str | None] = mapped_column(String(36))
+    published_by_user_id: Mapped[str | None] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    base_version_id: Mapped[str | None] = mapped_column(String(36))
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+
+
+class TimetableReview(Base):
+    __tablename__ = "timetable_reviews"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    timetable_version_id: Mapped[str] = mapped_column(ForeignKey("timetable_versions.id", ondelete="CASCADE"), nullable=False, index=True)
+    reviewer_user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    decision: Mapped[str] = mapped_column(String(24), nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class TimetableProposal(Base):
     __tablename__ = "timetable_proposals"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)

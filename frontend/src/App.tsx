@@ -14,11 +14,12 @@ import { InstitutionSetupPage } from './pages/InstitutionSetupPage'
 import { ResourceManagementPage } from './pages/ResourceManagementPage'
 import { TimetablePage } from './pages/TimetablePage'
 import { UsersAccessPage } from './pages/UsersAccessPage'
+import { RoleDashboardPage } from './pages/RoleDashboardPage'
 import { listRoleAssignments, getRoleContext, selectRoleContext, type RoleAssignment, type RoleContext } from './lib/platformApi'
 
 type Status = { application: string; environment: string; service: string; database_available: boolean; rust_engine_available?: boolean }
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001'
-const pageTitles: Record<WorkspaceView, string> = { timetable: 'Timetable', subjects: 'Subjects', teachers: 'Teachers', rooms: 'Rooms & labs', classes: 'Classes', access: 'Users & Access', settings: 'Institution settings' }
+const pageTitles: Record<WorkspaceView, string> = { dashboard: 'Dashboard', timetable: 'Timetable', subjects: 'Subjects', teachers: 'Teachers', rooms: 'Rooms & labs', classes: 'Classes', access: 'Users & Access', settings: 'Institution settings' }
 
 function App() { const activation = window.location.pathname.match(/^\/c\/([^/]+)\/activate\/([^/]+)/); if (activation) return <ManualActivationPage slug={activation[1]} invitationId={activation[2]} />; return <AuthProvider><AuthenticatedRoot /></AuthProvider> }
 
@@ -54,7 +55,7 @@ function AppShell({ portalSlug }: { portalSlug?: string }) {
   const noActiveInstitution = !institutionLoading && !institutionError && activeInstitutions.length === 0
   const needsInstitutionChoice = !isOwner && !institutionLoading && view !== 'settings' && activeInstitutions.length > 1 && !activeInstitutionId
   const platformOverview = isOwner && !activeInstitutionId
-  const content = portalDenied ? <div className="page-content"><Card className="institution-choice-card"><CardBody><p className="eyebrow">Access denied</p><h1>Institution access unavailable</h1><p>Your account is not authorized for this college portal.</p></CardBody></Card></div> : platformOverview ? <PlatformOverviewPage /> : noActiveInstitution ? <InstitutionSetupPage /> : needsInstitutionChoice ? <InstitutionChoicePage /> : view === 'timetable' ? <TimetablePage connected={connected} environment={status?.environment} error={error} /> : view === 'access' ? <UsersAccessPage /> : <ResourceManagementPage mode={view} connected={connected} />
+  const content = portalDenied ? <div className="page-content"><Card className="institution-choice-card"><CardBody><p className="eyebrow">Access denied</p><h1>Institution access unavailable</h1><p>Your account is not authorized for this college portal.</p></CardBody></Card></div> : platformOverview ? <PlatformOverviewPage /> : noActiveInstitution ? <InstitutionSetupPage /> : needsInstitutionChoice ? <InstitutionChoicePage /> : view === 'dashboard' ? <RoleDashboardPage /> : view === 'timetable' ? <TimetablePage connected={connected} environment={status?.environment} error={error} /> : view === 'access' ? <UsersAccessPage /> : <ResourceManagementPage mode={view} connected={connected} />
   return <div className="app-shell"><AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} connected={connected} currentView={view} onNavigate={setView} platformOverview={platformOverview} /><div className="app-main"><AppHeader pageTitle={platformOverview ? 'Platform Overview' : noActiveInstitution ? 'Institution setup' : pageTitles[view]} onMenuOpen={() => setSidebarOpen(true)} onOpenInstitutionSettings={() => setView('settings')} connected={connected} loading={loading} onRefresh={loadStatus} platformOwner={isOwner} onLogout={() => void logout()} roleAssignments={roleAssignments} roleContext={roleContext} onRoleChange={(assignmentId) => void changeRole(assignmentId)} /><main>{content}</main></div></div>
 }
 

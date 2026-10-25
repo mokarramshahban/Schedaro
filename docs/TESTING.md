@@ -229,11 +229,23 @@ Every future implementation must be built and made live before completion. Valid
 - Protected Platform Owner grant test: PASS.
 - Active role-context selection test: PASS.
 - Manual invitation regression tests: PASS — 4 tests.
-- Full backend suite: 39 passed, 3 skipped, 1 pre-existing scheduling regression failed (`UNKNOWN` result in `test_balanced_preference_discourages_consecutive_same_subject_sessions`).
+- Full backend suite: 40 passed, 3 skipped, 1 pre-existing scheduling regression failed (`UNKNOWN` result in `test_balanced_preference_discourages_consecutive_same_subject_sessions`).
 - Frontend production build: PASS.
 - Browser role-management click-through: NOT TESTED — browser automation unavailable.
 - Full permission enforcement across all legacy academic routes: NOT VERIFIED; current role-context foundation does not yet replace every legacy membership-only guard.
 - Database volume and existing academic records: preserved.
+
+## Combined Stage 7E/7F verification record
+
+- Workflow state test: PASS — draft creation, submission, creator self-review denial, independent approval and publication.
+- Additive tenant schema: PASS — `20260308_0008` migration added; existing tenant tables ensured without destructive reset.
+- Workflow backend compile: PASS.
+- Role-aware dashboard frontend build: PASS.
+- Full timetable-editor/version synchronization: NOT VERIFIED; versions currently snapshot persisted sessions and require deeper editor integration.
+- Multi-step configurable approval policy: NOT IMPLEMENTED; current workflow supports explicit review decisions but not policy configuration.
+- Student published-only API: implemented, broader student identity/enrollment linking remains incomplete.
+- Browser dashboard and approval click-through: NOT TESTED — browser automation unavailable.
+- Existing academic scheduling regression: remains failed with `UNKNOWN` as documented above.
 
 ## Documentation validation
 

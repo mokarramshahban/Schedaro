@@ -30,3 +30,5 @@ export function selectRoleContext(assignmentId: string) { return request<RoleCon
 export function listInstitutionAssignments(institutionId: string) { return request<RoleAssignment[]>(`/api/v1/platform/institutions/${institutionId}/users`) }
 export function assignRole(payload: { user_id: string; institution_id: string; role: string; scope_type: string; scope_id?: string; designation?: string }) { return request<RoleAssignment>(`/api/v1/platform/institutions/${payload.institution_id}/role-assignments`, { method: 'POST', body: JSON.stringify(payload) }) }
 export function revokeRole(assignmentId: string) { return request<RoleAssignment>(`/api/v1/platform/role-assignments/${assignmentId}/revoke`, { method: 'POST' }) }
+export type WorkflowDashboard = { role: string; institution_id: string; draft_count: number; submitted_count: number; changes_requested_count: number; approved_count: number; published_count: number; authorized_class_group_ids: string[] }
+export function getWorkflowDashboard(institutionId: string) { return request<WorkflowDashboard>(`/api/v1/workflow/dashboard/${institutionId}`) }

@@ -23,6 +23,7 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 - Central Platform Owner identity, ready-college provisioning and college-specific `/c/{slug}` portals.
 - Invitation-only College Administrator onboarding with email and offline/manual one-time-key activation paths.
 - Hierarchical role assignments, delegated institution access and secure server-validated Acting as contexts.
+- Versioned timetable drafts, independent review, publication history and role-scoped workflow dashboards.
 - Accessible controls, focus states and keyboard-friendly dialogs.
 - Institution-branded A4 landscape print preview with a legacy saved header/signature editor and a gated pdfme visual template designer, using browser-side Print / Save as PDF and generated PDF workflows.
 - Deterministic OR-Tools timetable generation from persisted weekly requirements, teacher availability, room suitability and existing bookings.
