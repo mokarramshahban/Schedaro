@@ -6,6 +6,7 @@ export type TextAlign = 'left' | 'center' | 'right'
 export type PrintElement = { id: string; kind: LayoutElementKind; field?: LayoutField; text?: string; x: number; y: number; width: number; height: number; align: TextAlign; fontSize: number; bold: boolean; visible: boolean }
 export type SignatureElement = { id: string; label: string; secondaryText?: string; x: number; y: number; width: number; height: number; align: TextAlign; showLine: boolean }
 export type PrintLayout = { headerElements: PrintElement[]; footerElements: SignatureElement[]; logoDataUrl?: string | null; id?: string; institutionId?: string; version?: number; updatedAt?: string }
+export type PdfmeTemplateRecord = { id: string; institutionId: string; name: string; template: Record<string, unknown>; version: number; active: boolean; isDefault: boolean; createdAt: string; updatedAt: string }
 
 export function defaultPrintLayout(): PrintLayout {
   return {

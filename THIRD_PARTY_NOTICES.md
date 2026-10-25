@@ -19,6 +19,10 @@ Verified from the running Schedaro frontend dependency environment and lockfile:
 | Tailwind CSS | 4.3.3 | MIT | Build-time dependency. |
 | `@tailwindcss/vite` | 4.3.3 | MIT | Build-time dependency. |
 | Vitest | 5.0.5 | MIT | Test-time dependency; patched release used for deterministic tests. |
+| `@pdfme/common` | 6.2.8 | MIT | PDF template types and A4 blank-page geometry. |
+| `@pdfme/ui` | 6.2.8 | MIT | Official Designer UI; standalone browser bundle. |
+| `@pdfme/generator` | 6.2.8 | MIT | Browser PDF generation from validated templates. |
+| `@pdfme/schemas` | 6.2.8 | MIT | Explicit text, image, line, and shape plugins. |
 
 ## Installed backend dependencies
 

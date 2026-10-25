@@ -1,7 +1,8 @@
 import { Printer, X } from 'lucide-react'
-import { useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { lazy, Suspense, useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { AcademicTerm, ClassGroup, Department, Institution, Resource, Semester } from '../../lib/api'
 import { getPrintLayout, savePrintLayout } from '../../lib/managementApi'
+const PdfmeTemplateDesigner = lazy(() => import('./PdfmeTemplateDesigner').then((module) => ({ default: module.PdfmeTemplateDesigner })))
 import { DAY_LABELS, DAYS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, timeLabelPosition, timeToMinutes, type TimetableSession } from '../../lib/timetable'
 import { clampElement, clampSignature, defaultPrintLayout, resolveField, type LayoutField, type PrintElement, type PrintLayout, type SignatureElement, type TextAlign } from '../../lib/printLayout'
 
@@ -43,6 +44,7 @@ export function TimetablePrintView({ institution, department, semester, group, t
   const [layout, setLayout] = useState<PrintLayout>(defaultPrintLayout)
   const [savedLayout, setSavedLayout] = useState<PrintLayout>(defaultPrintLayout)
   const [editing, setEditing] = useState(false)
+  const [pdfmeOpen, setPdfmeOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [customText, setCustomText] = useState('')
   const [dynamicField, setDynamicField] = useState<LayoutField>('institution_type')
@@ -145,13 +147,16 @@ export function TimetablePrintView({ institution, department, semester, group, t
     const reader = new FileReader(); reader.onload = () => setLayout((current) => { const hasLogo = current.headerElements.some((item) => item.kind === 'logo'); const headerElements = hasLogo ? current.headerElements : [...current.headerElements.map((item) => item.id === 'institution' && item.x === 5 && item.width === 90 ? { ...item, x: 22, width: 73, align: 'left' as const } : item), { id: `logo-${Date.now()}`, kind: 'logo', x: 4, y: 4, width: 14, height: 18, align: 'center', fontSize: 8, bold: false, visible: true } as PrintElement]; return { ...current, logoDataUrl: String(reader.result), headerElements } }); reader.readAsDataURL(file)
   }
 
-  return <div className="print-preview-backdrop" role="presentation">
+  return <>
+  <div className="print-preview-backdrop" role="presentation">
     <div className="print-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="print-preview-title">
-      <div className="print-preview-toolbar"><div><p className="section-kicker">A4 landscape preview</p><h2 id="print-preview-title">Print / Save PDF</h2></div><div className="print-preview-actions"><button type="button" className="button button--secondary" onClick={() => setEditing((value) => !value)}>{editing ? 'Preview document' : 'Customize Layout'}</button><button type="button" className="button button--primary" onClick={() => window.print()}><Printer size={16} />Print / Save as PDF</button><button type="button" className="dialog-close" onClick={onClose} aria-label="Close print preview"><X size={19} /></button></div></div>
+      <div className="print-preview-toolbar"><div><p className="section-kicker">A4 landscape preview</p><h2 id="print-preview-title">Print / Save PDF</h2></div><div className="print-preview-actions"><button type="button" className="button button--secondary" onClick={() => setEditing((value) => !value)}>{editing ? 'Preview document' : 'Customize Layout'}</button><button type="button" className="button button--secondary" onClick={() => setPdfmeOpen(true)}>Visual Designer (pdfme)</button><button type="button" className="button button--primary" onClick={() => window.print()}><Printer size={16} />Print / Save as PDF</button><button type="button" className="dialog-close" onClick={onClose} aria-label="Close print preview"><X size={19} /></button></div></div>
       {editing && <EditorToolbar layout={layout} selectedId={selectedId} customText={customText} dynamicField={dynamicField} signatureLabel={signatureLabel} saving={savingTemplate} onCustomTextChange={setCustomText} onDynamicFieldChange={setDynamicField} onAddDynamic={() => addDynamicElement(dynamicField)} onSignatureLabelChange={setSignatureLabel} onAddCustom={addCustomElement} onAddSignature={addSignature} onPreset={applySignaturePreset} onAlign={(align) => updateSelected({ align })} onRemove={removeSelected} onMove={moveSelected} onBold={() => { const selected = layout.headerElements.find((item) => item.id === selectedId); if (selected) updateSelected({ bold: !selected.bold }) }} onFontSize={(fontSize) => updateSelected({ fontSize })} onResetSaved={resetSaved} onResetDefault={resetDefault} onSave={() => void saveTemplate()} onLogo={selectLogo} notice={notice} />}
       <div className="print-preview-scroll">{loadingTemplate ? <div className="print-editor-loading">Loading institution print template…</div> : <PrintableDocument context={context} layout={layout} sessions={sessions} resources={resources} displayDays={displayDays} exceptionDays={exceptionDays} editing={editing} selectedId={selectedId} onSelect={setSelectedId} onDrag={startDrag} subjectName={subjectName} teacherName={teacherName} roomName={roomName} />}</div>
     </div>
   </div>
+  {pdfmeOpen && <Suspense fallback={<div className="pdfme-designer-backdrop"><div className="pdfme-designer-loading">Loading visual designer…</div></div>}><PdfmeTemplateDesigner institutionId={institution.id} institution={institution} department={department} semester={semester} group={group} term={term} resources={resources} sessions={sessions} workingDays={workingDays} onClose={() => setPdfmeOpen(false)} /></Suspense>}
+  </>
 }
 
 type EditorToolbarProps = { layout: PrintLayout; selectedId: string | null; customText: string; dynamicField: LayoutField; signatureLabel: string; saving: boolean; notice: string | null; onCustomTextChange: (value: string) => void; onDynamicFieldChange: (value: LayoutField) => void; onAddDynamic: () => void; onSignatureLabelChange: (value: string) => void; onAddCustom: () => void; onAddSignature: () => void; onPreset: (count: number) => void; onAlign: (align: TextAlign) => void; onRemove: () => void; onMove: (dx: number, dy: number) => void; onBold: () => void; onFontSize: (size: number) => void; onResetSaved: () => void; onResetDefault: () => void; onSave: () => void; onLogo: (file: File | undefined) => void }

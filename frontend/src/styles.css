@@ -303,6 +303,29 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .print-editor-input input { min-width:110px; padding:5px 7px; border:1px solid #d7dce8; border-radius:6px; background:#fff; }
 .print-editor-notice { flex-basis:100%; margin:0; color:#4f46e5; font-size:12px; }
 .print-editor-loading { padding:40px; text-align:center; color:#667085; }
+.pdfme-designer-backdrop { position:fixed; inset:0; z-index:140; display:grid; place-items:center; padding:18px; background:rgba(17,24,39,.55); }
+.pdfme-designer-dialog { display:flex; width:min(1500px,100%); height:min(94vh,920px); flex-direction:column; overflow:hidden; border:1px solid #dfe3ed; border-radius:16px; background:#f5f7fb; box-shadow:0 28px 80px rgba(21,30,54,.3); }
+.pdfme-designer-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 18px; background:#fff; border-bottom:1px solid #e1e5ee; }
+.pdfme-designer-toolbar h2 { margin:0; font-size:18px; color:#273247; }
+.pdfme-designer-actions { display:flex; align-items:center; gap:7px; }
+.pdfme-designer-workspace { display:grid; min-height:0; flex:1; grid-template-columns:210px minmax(0,1fr) 220px; }
+.pdfme-designer-panel { min-width:0; overflow:auto; padding:15px; background:#fff; color:#344054; font-size:12px; }
+.pdfme-designer-panel--left { border-right:1px solid #e1e5ee; }
+.pdfme-designer-panel--right { border-left:1px solid #e1e5ee; }
+.pdfme-designer-panel strong { display:block; margin:0 0 9px; color:#273247; font-size:12px; }
+.pdfme-designer-panel label { display:grid; gap:4px; margin:0 0 14px; color:#667085; }
+.pdfme-designer-panel input, .pdfme-designer-panel select { width:100%; box-sizing:border-box; padding:7px; border:1px solid #d7dce8; border-radius:6px; background:#fff; }
+.pdfme-upload { display:flex !important; align-items:center; padding:8px; border:1px dashed #9aa2d6; border-radius:7px; color:#4f46e5 !important; cursor:pointer; }
+.pdfme-upload input { display:none; }
+.pdfme-signature-buttons { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:16px; }
+.pdfme-designer-loading { padding:40px 60px; border-radius:12px; background:#fff; color:#344054; box-shadow:0 18px 50px rgba(21,30,54,.22); }
+.pdfme-designer-canvas { min-width:0; overflow:hidden; background:#eef1f7; }
+.pdfme-designer-canvas > div { height:100%; }
+.pdfme-designer-panel dl { margin:0 0 14px; }
+.pdfme-designer-panel dt { margin-top:8px; color:#8a93a5; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
+.pdfme-designer-panel dd { margin:2px 0; overflow-wrap:anywhere; }
+.pdfme-help { color:#667085; font-size:11px; line-height:1.5; }
+.pdf-editor-notice { padding:8px; border-radius:6px; background:#eef2ff; color:#4338ca; font-size:11px; }
 
 .print-document__identity { min-width: 0; flex: 1; }
 .print-document__eyebrow { margin: 0 0 2mm; color: #5c55c4; font-size: 8pt; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
@@ -393,7 +416,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
   body > #root > .app-shell > .app-main > main > .timetable-page > :not(.print-preview-backdrop) { display: none !important; }
   .print-preview-backdrop { position: static; display: block; padding: 0; background: #fff; }
   .print-preview-dialog { display: block; width: auto; height: 190mm; max-height: none; overflow: visible; border: 0; border-radius: 0; background: #fff; box-shadow: none; }
-  .print-preview-toolbar, .print-editor-toolbar { display: none !important; }
+  .print-preview-toolbar, .print-editor-toolbar, .pdfme-designer-backdrop { display: none !important; }
   .print-preview-scroll { overflow: visible; padding: 0; }
   .print-layout-region--editable { outline: none; background: transparent; }
   .print-layout-element--selected { outline: none; }

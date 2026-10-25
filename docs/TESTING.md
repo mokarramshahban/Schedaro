@@ -143,13 +143,13 @@ Every future implementation must be built and made live before completion. Valid
 
 ## Stage 6 verification record
 
-- OR-Tools CP-SAT unit tests, requirement-count, selection, weekly-distribution and print-template integration: PASS — 23 backend tests covering variable durations, shared resources, unavailable teachers, incompatible laboratories, existing bookings, exact scheduled/remaining counts, duration/teacher mismatches, scope filtering, five/six-day restrictions, workload balancing, subject spreading, earlier-clock-time semantics, institution-specific settings, manual Saturday enforcement and preserved exception records.
-- Backend pytest: PASS — 23 tests.
-- Frontend Vitest: PASS — 30 tests; TypeScript and production build: PASS.
+- OR-Tools CP-SAT unit tests, requirement-count, selection, weekly-distribution, legacy print-template, and pdfme-template integration: PASS — 25 backend tests covering variable durations, shared resources, unavailable teachers, incompatible laboratories, existing bookings, exact scheduled/remaining counts, duration/teacher mismatches, scope filtering, five/six-day restrictions, workload balancing, subject spreading, earlier-clock-time semantics, institution-specific settings, manual Saturday enforcement and preserved exception records.
+- Backend pytest: PASS — 25 tests.
+- Frontend Vitest: PASS — 32 tests; TypeScript and production build: PASS. pdfme POC generated actual `%PDF-` output and exercised 0/1/3/5/7/10 signature templates.
 - Rust validator: PASS — 7 tests; generated candidates are independently validated before proposal staging and approval.
-- Alembic migration `20260305_0006`: PASS — applied against `schedaro_db`, head verified.
+- Alembic migrations `20260305_0006` and `20260305_0007`: PASS — applied against `schedaro_db`, head verified.
 - Docker Compose config, backend image with pinned OR-Tools 9.12.4544, service refresh and health checks: PASS; PostgreSQL named volume preserved.
-- Controlled live API: PASS — independent institution settings loaded from PostgreSQL; Monday–Friday generation ignored a client Saturday override, produced no Saturday proposals, rejected new Saturday manual sessions, and preserved existing Saturday exceptions with warnings. Print-template API persisted institution-scoped layouts, rejected unsafe logos/out-of-bounds coordinates, and reset cleanly.
+- Controlled live API: PASS — independent institution settings loaded from PostgreSQL; Monday–Friday generation ignored a client Saturday override, produced no Saturday proposals, rejected new Saturday manual sessions, and preserved existing Saturday exceptions with warnings. Legacy and pdfme print-template APIs persisted institution-scoped layouts, enforced A4/schema safety and isolation, and reset/deactivated cleanly.
 - Browser UI and Firefox candidate/PDF visual verification: NOT TESTED in Harness; owner review remains required.
 - Known limitations: advanced persisted break/holiday calendars, alternate eligible-teacher sets, authentication/rate limiting, and direct browser automation remain future/deployment work.
 

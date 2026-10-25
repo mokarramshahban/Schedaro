@@ -1,4 +1,5 @@
 import base64
+import json
 import re
 from datetime import date, datetime
 from typing import Literal
@@ -372,6 +373,63 @@ class PrintLayoutTemplateRead(PrintLayoutPayload):
     id: str
     institution_id: str
     version: int
+    updated_at: datetime
+
+
+class PdfmeTemplatePayload(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    template: dict = Field(min_length=1)
+    is_default: bool = False
+    active: bool = True
+
+    @field_validator("template")
+    @classmethod
+    def validate_template(cls, value: dict):
+        if len(json.dumps(value, separators=(",", ":"))) > 2_000_000:
+            raise ValueError("pdfme template must be 2 MB or smaller")
+        assets = value.get("__schedaroAssets")
+        if assets is not None:
+            if not isinstance(assets, dict) or set(assets) - {"letterhead"}:
+                raise ValueError("pdfme assets are invalid")
+            letterhead = assets.get("letterhead")
+            if letterhead is not None:
+                match = re.fullmatch(r"data:image/(png|jpeg);base64,([A-Za-z0-9+/=]+)", letterhead)
+                if not match:
+                    raise ValueError("letterhead must be a PNG or JPEG data URL")
+                try:
+                    decoded = base64.b64decode(match.group(2), validate=True)
+                except ValueError as error:
+                    raise ValueError("letterhead data is not valid base64") from error
+                if len(decoded) > 1_000_000:
+                    raise ValueError("letterhead must be 1 MB or smaller")
+                if match.group(1) == "png" and not decoded.startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise ValueError("letterhead PNG signature is invalid")
+                if match.group(1) == "jpeg" and not decoded.startswith(b"\xff\xd8\xff"):
+                    raise ValueError("letterhead JPEG signature is invalid")
+        base = value.get("basePdf")
+        if not isinstance(base, dict) or base.get("width") != 297 or base.get("height") != 210:
+            raise ValueError("pdfme templates must use A4 landscape dimensions")
+        pages = value.get("schemas")
+        if not isinstance(pages, list) or not pages or len(pages) > 10:
+            raise ValueError("pdfme template must contain one to ten pages")
+        allowed_types = {"text", "image", "line", "rectangle"}
+        for page in pages:
+            if not isinstance(page, list) or len(page) > 500:
+                raise ValueError("pdfme template pages are invalid or too large")
+            for schema in page:
+                if not isinstance(schema, dict) or schema.get("type") not in allowed_types:
+                    raise ValueError("unsupported or unsafe pdfme schema type")
+                name = schema.get("name")
+                if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", name):
+                    raise ValueError("pdfme schema names must use safe identifiers")
+        return value
+
+
+class PdfmeTemplateRead(PdfmeTemplatePayload):
+    id: str
+    institution_id: str
+    version: int
+    created_at: datetime
     updated_at: datetime
 
 
