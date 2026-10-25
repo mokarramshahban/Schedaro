@@ -165,7 +165,7 @@ Every future implementation must be built and made live before completion. Valid
 - Authentication: PASS — 12+ character scrypt password hash, HttpOnly SameSite session cookie, idempotent development-only owner bootstrap, logout/session revocation code, and unauthenticated `/auth/me`, `/platform/overview`, and academic route rejection tests. Backend suite: 29 passed, 3 persisted-fixture skips.
 - Platform overview: PASS — live owner login returned actual registry counts (4 institutions, 3 active, 4 ready) and central audit events; no domain rows were exposed in overview.
 - Tenant foundation: PASS — two empty development tenant databases (`schedaro_tenant_a` and `schedaro_tenant_b`) were provisioned with separate schemas and registry entries; owner workspace summaries resolved each trusted database and invalid identifiers returned 404. Full ordinary-user membership routing and legacy per-record tenant migration remain incomplete and are explicitly not production-ready.
-- Frontend: PASS — neutral universal Schedaro login copy, authenticated shell, Platform Overview, role-aware existing institution selector, cookie credentials, logout control, TypeScript/build, and 66-test suite.
+- Frontend: PASS — responsive Admina-inspired universal Schedaro login layout, show/hide password control, safe error/loading states, authenticated shell, Platform Overview, role-aware existing institution selector, cookie credentials, logout control, TypeScript/build, and 66-test suite.
 - Docker/live: PASS — Compose configuration, backend/frontend refresh, `http://localhost:5174`, `/health/live`, and `/health/ready` returned successfully. Browser click-through and screenshot capture: NOT TESTED because Harness has no browser automation.
 
 ## Later planned tests
