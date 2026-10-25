@@ -2,10 +2,11 @@ import type { LucideIcon } from 'lucide-react'
 import { CalendarDays, ChevronRight, CircleHelp, DoorOpen, GraduationCap, LayoutGrid, Settings2, Shapes, UsersRound, X } from 'lucide-react'
 import { StatusDot } from '../ui/StatusDot'
 
-export type WorkspaceView = 'timetable' | 'subjects' | 'teachers' | 'rooms' | 'classes' | 'access' | 'settings'
+export type WorkspaceView = 'dashboard' | 'timetable' | 'subjects' | 'teachers' | 'rooms' | 'classes' | 'access' | 'settings'
 type NavItem = { label: string; icon: LucideIcon; view: WorkspaceView }
 
 const navItems: NavItem[] = [
+  { label: 'Dashboard', icon: LayoutGrid, view: 'dashboard' },
   { label: 'Timetable', icon: CalendarDays, view: 'timetable' },
   { label: 'Subjects', icon: Shapes, view: 'subjects' },
   { label: 'Teachers', icon: UsersRound, view: 'teachers' },

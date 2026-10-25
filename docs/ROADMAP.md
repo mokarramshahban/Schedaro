@@ -44,6 +44,9 @@ The Stage 7C.1 branch adds manual activation URL/key generation, one-time hashed
 ## Stage 7D — Hierarchical Roles & Scoped Access — IMPLEMENTED ON FEATURE BRANCH, INCOMPLETE
 Stage 7D adds explicit role assignments, permission definitions, organization scope validation, delegated user/invitation management, server-side acting-as context and revocation invalidation. Full permission coverage across every legacy academic endpoint, browser verification, student publication visibility and production hardening remain incomplete. Stage 7E dashboards were not started.
 
+## Combined Stage 7E + 7F — Role Dashboards & Timetable Workflow — IMPLEMENTED ON FEATURE BRANCH, INCOMPLETE
+Combined Stage 7E/7F adds role-aware workflow dashboards, HOD/Class In-Charge scoped draft creation, versioned timetable records, independent review, publication and published-only retrieval. Full editor/version synchronization, configurable approval-policy management, complete role dashboards, browser verification and the existing scheduling regression remain incomplete. Stage 7G was not started.
+
 ## Stage 7 — Deployment — NOT STARTED
 Vercel frontend, Render API, managed PostgreSQL. Depends on production security and testing.
 

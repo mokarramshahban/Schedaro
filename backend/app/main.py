@@ -11,6 +11,7 @@ from app.api.auth import router as auth_router
 from app.api.platform import router as platform_router
 from app.api.invitations import router as invitations_router
 from app.api.rbac import router as rbac_router
+from app.api.workflow import router as workflow_router
 from app.db.platform import ensure_platform_database, ensure_platform_schema
 from app.db.session import check_database_connection
 from app.services.scheduling import engine_available
@@ -34,6 +35,7 @@ app.include_router(auth_router)
 app.include_router(platform_router)
 app.include_router(invitations_router)
 app.include_router(rbac_router)
+app.include_router(workflow_router)
 
 
 @app.on_event("startup")

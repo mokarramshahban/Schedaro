@@ -16,5 +16,7 @@ The ADRs below record significant decisions that contributors should preserve. H
 | [ADR-0010](decisions/ADR-0010-role-scope-authorization.md) | Explicit role and organizational scope authorization | Accepted | Authorization |
 | [ADR-0011](decisions/ADR-0011-acting-as-context.md) | Secure acting-as authorization context | Accepted | Authorization |
 | [ADR-0012](decisions/ADR-0012-identity-academic-linking.md) | Central identities distinct from academic records | Accepted | Authentication |
+| [ADR-0013](decisions/ADR-0013-versioned-timetable-workflow.md) | Versioned timetable workflow | Accepted | Academic Scheduling |
+| [ADR-0014](decisions/ADR-0014-shared-timetable-creation-scopes.md) | Shared timetable creation with role-specific scope | Accepted | Academic Scheduling |
 
 [ADR-TEMPLATE](decisions/ADR-TEMPLATE.md) is the required format for future decisions.

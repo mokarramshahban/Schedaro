@@ -36,6 +36,8 @@ Stage 7C.1 adds manual invitations alongside email invitations. A ready institut
 
 Stage 7D adds explicit role assignments, a permission catalog, institution/department/semester/section scope validation, delegated role management and a server-side active assignment context. Roles are not reduced to a numeric rank. Platform Owner grants remain protected; role revocation clears matching session context. Central login identities remain distinct from tenant Teacher/Student records.
 
+Combined Stage 7E/7F adds role-aware workflow dashboards and versioned timetable workflow records. HOD department assignments and Class In-Charge section assignments both use the shared timetable workflow for draft creation; review and publication are separate server-side actions. A creator cannot review their own submission, approved/published versions are preserved, and student retrieval is limited to published versions. Full legacy editor-to-version synchronization and configurable multi-step policy administration remain incomplete.
+
 See [ADR-0001](decisions/ADR-0001-multi-tenant-databases.md), [ADR-0002](decisions/ADR-0002-central-authentication.md), [ADR-0003](decisions/ADR-0003-college-portal-urls.md), [ADR-0005](decisions/ADR-0005-manual-invitation-fallback.md), [ADR-0006](decisions/ADR-0006-owner-approval-manual-activation.md), [ADR-0010](decisions/ADR-0010-role-scope-authorization.md), [ADR-0011](decisions/ADR-0011-acting-as-context.md) and [ADR-0012](decisions/ADR-0012-identity-academic-linking.md).
 
 ## Academic scope
