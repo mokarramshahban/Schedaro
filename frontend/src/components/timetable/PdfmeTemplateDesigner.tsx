@@ -11,7 +11,7 @@ import { DAY_LABELS, DAYS, type TimetableSession } from '../../lib/timetable'
 const pdfmePlugins = { text, image, line, rectangle }
 const PAGE_WIDTH = 297
 const PAGE_HEIGHT = 210
-const PROTECTED_PREFIXES = ['day_', 'time_', 'session_']
+const PROTECTED_PREFIXES = ['day_', 'time_', 'session_', 'timetable_grid_']
 const dynamicLabels: Record<string, string> = { institution_name: 'College name', department_name: 'Department', timetable_title: 'Timetable title', semester_section: 'Semester and section', academic_term: 'Academic term' }
 type PdfmeSchema = { name: string; type: string; position: { x: number; y: number }; width: number; height: number; [key: string]: unknown }
 type DesignerContext = { institution: Institution; department: Department; semester: Semester; group: ClassGroup; term?: AcademicTerm; resources: { subjects: Resource[]; teachers: Resource[]; rooms: Resource[] }; sessions: TimetableSession[]; workingDays: TimetableSession['day'][] }
@@ -22,6 +22,8 @@ type PersistedPdfmeTemplate = Template & { __schedaroAssets?: { letterhead?: str
 function schema(name: string, type: string, x: number, y: number, width: number, height: number, extra: Record<string, unknown> = {}): PdfmeSchema { return { name, type, position: { x, y }, width, height, ...extra } }
 function resourceName(items: Resource[], id: string, fallback: string) { return items.find((item) => item.id === id)?.name ?? fallback }
 function minutes(value: string) { const [hours, mins] = value.split(':').map(Number); return hours * 60 + mins }
+export type TimetableGeometry = { left: number; top: number; width: number; timeWidth: number; dayWidth: number; headerHeight: number; gridTop: number; gridHeight: number; startMinutes: number; endMinutes: number }
+export function timetableGeometry(workingDays: TimetableSession['day'][]): TimetableGeometry { const timeWidth = 18; const width = 267; const headerHeight = 7; const gridTop = 58; const gridHeight = 101; return { left: 15, top: 50, width, timeWidth, dayWidth: (width - timeWidth) / Math.max(workingDays.length, 1), headerHeight, gridTop, gridHeight, startMinutes: 8 * 60, endMinutes: 17 * 60 } }
 function isProtected(item: PdfmeSchema) { return PROTECTED_PREFIXES.some((prefix) => item.name.startsWith(prefix)) || item.name === 'time_header' }
 function schemaLabel(item: PdfmeSchema) { if (dynamicLabels[item.name]) return dynamicLabels[item.name]; if (item.name === 'letterhead') return 'College letterhead'; if (item.name.startsWith('signature_label_')) return 'Signature label'; if (item.name.startsWith('signature_secondary_')) return 'Signature details'; if (item.name.startsWith('signature_line_')) return 'Signature line'; if (item.name.startsWith('custom_text_')) return 'Custom text'; if (item.type === 'image') return 'Image / logo'; if (item.type === 'line') return 'Divider line'; return 'Text' }
 
@@ -36,17 +38,24 @@ export function createPdfmeTemplate(context: DesignerContext, signatureCount = 0
   addText('timetable_title', 'Weekly Academic Timetable', 15, letterheadData ? 52 : 31, 267, 7, { fontSize: 11, alignment: 'center', readOnly: false })
   addText('semester_section', `${semester.label} — ${group.sectionName}`, 15, letterheadData ? 60 : 40, 130, 6, { fontSize: 8, readOnly: false })
   addText('academic_term', term ? `${term.academicYear} · ${term.term}` : 'Academic term not configured', 152, letterheadData ? 60 : 40, 130, 6, { fontSize: 8, alignment: 'right', readOnly: false })
-  const top = letterheadData ? 70 : 50
-  const left = 15
-  const timeWidth = 18
-  const dayWidth = 249 / Math.max(workingDays.length, 1)
-  addText('time_header', 'Time', left, top, timeWidth, 7, { fontSize: 7, alignment: 'center', readOnly: true })
-  workingDays.forEach((day, index) => addText(`day_${day}`, DAY_LABELS[day], left + timeWidth + index * dayWidth, top, dayWidth, 7, { fontSize: 7, alignment: 'center', readOnly: true }))
-  const start = 8 * 60
-  const end = 17 * 60
-  const gridTop = top + 8
-  const gridHeight = 101
+  const geometry = timetableGeometry(workingDays)
+  const { left, top, timeWidth, dayWidth, headerHeight, gridTop, gridHeight, startMinutes, endMinutes } = geometry
+  addText('time_header', 'Time', left, top, timeWidth, headerHeight, { fontSize: 7, alignment: 'center', readOnly: true })
+  workingDays.forEach((day, index) => addText(`day_${day}`, DAY_LABELS[day], left + timeWidth + index * dayWidth, top, dayWidth, headerHeight, { fontSize: 7, alignment: 'center', readOnly: true }))
   for (let index = 0; index <= 9; index += 1) addText(`time_${index}`, `${String(8 + index).padStart(2, '0')}:00`, left, gridTop + (index / 9) * gridHeight - 2, timeWidth, 5, { fontSize: 5, alignment: 'center', readOnly: true })
+  const gridRight = left + geometry.width
+  const gridBottom = gridTop + gridHeight
+  const addGridLine = (name: string, x: number, y: number, width: number, height: number, color = '#aeb6c2', lineWidth = 0.5) => schemas.push(schema(`timetable_grid_${name}`, 'line', x, y, width, height, { color, lineWidth, readOnly: true }))
+  addGridLine('outer-top', left, top, geometry.width, 0.2)
+  addGridLine('outer-bottom', left, gridBottom, geometry.width, 0.2)
+  addGridLine('outer-left', left, top, 0.2, gridBottom - top)
+  addGridLine('outer-right', gridRight, top, 0.2, gridBottom - top)
+  addGridLine('header-bottom', left, gridTop, geometry.width, 0.2, '#7d8795', 0.6)
+  addGridLine('time-gutter', left + timeWidth, top, 0.2, gridBottom - top, '#7d8795', 0.6)
+  workingDays.forEach((_, index) => addGridLine(`day-${index}`, left + timeWidth + index * dayWidth, top, 0.2, gridBottom - top))
+  for (let index = 1; index < 9; index += 1) addGridLine(`hour-${index}`, left + timeWidth, gridTop + (index / 9) * gridHeight, geometry.width - timeWidth, 0.2, '#c8ced6', 0.35)
+  const start = startMinutes
+  const end = endMinutes
   sessions.filter((session) => workingDays.includes(session.day)).forEach((session) => {
     const dayIndex = workingDays.indexOf(session.day)
     const y = gridTop + ((minutes(session.startTime) - start) / (end - start)) * gridHeight

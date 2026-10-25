@@ -356,7 +356,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .pdfme-simple-canvas { display:grid; min-width:0; min-height:0; overflow:auto; place-items:center; padding:24px; background:#e9edf5; }
 .pdfme-paper { position:relative; width:min(100%, 1080px); aspect-ratio:297 / 210; overflow:hidden; background:#fff; box-shadow:0 12px 32px rgba(31,41,55,.18); }
 .pdfme-paper__protected { position:absolute; left:5.05%; top:23.8%; width:89.9%; height:48.1%; z-index:1; pointer-events:none; }
-.pdfme-protected-timetable { display:flex; width:100%; height:100%; color:#273247; font-size:clamp(5px,.7vw,9px); }
+.pdfme-protected-timetable { display:flex; width:100%; height:100%; box-sizing:border-box; border:1px solid #aeb6c2; color:#273247; font-size:clamp(5px,.7vw,9px); }
 .pdfme-protected-time { position:relative; width:6.7%; border-right:1px solid #cbd5e1; }
 .pdfme-protected-time span { position:absolute; right:2px; transform:translateY(-50%); color:#667085; font-size:.8em; }
 .pdfme-protected-day { min-width:0; flex:1; border-right:1px solid #cbd5e1; }
