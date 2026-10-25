@@ -40,7 +40,7 @@ The idempotent platform initializer runs at application startup and attempts to 
 docker compose -p schedaro exec backend python -m app.provision_tenant --database schedaro_tenant_a --institution-id test-inst-a --name "Stage 7A Test College A"
 ```
 
-Production provisioning and complete per-institution migration orchestration are intentionally deferred until the owner reviews backup/recovery, membership authorization, and tenant routing. Never drop or truncate `schedaro_db` or `schedaro_pgdata`.
+Production provisioning and complete per-institution migration orchestration are intentionally deferred until the owner reviews backup/recovery, membership authorization, and tenant routing. Platform Owner setup is manual: run `docker compose -p schedaro exec backend python -m app.bootstrap_owner` and choose credentials interactively; for an existing local owner, use `docker compose -p schedaro exec backend python -m app.reset_owner` and follow the explicit confirmation prompts. Never drop or truncate `schedaro_db` or `schedaro_pgdata`.
 
 ## Migrations and development data
 
