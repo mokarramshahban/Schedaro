@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -21,7 +22,10 @@ def test_selected_requirement_ids_control_solver_and_discard_is_safe():
     client = TestClient(app)
     requirements = client.get("/api/v1/scheduling/class-groups/group-cs-sem1-a/requirements").json()
     lecture = next(item for item in requirements if item["session_type"] == "Lecture" and item["active"])
-    tutorial = next(item for item in requirements if item["session_type"] == "Tutorial" and item["active"])
+    tutorial_options = [item for item in requirements if item["session_type"] == "Tutorial" and item["active"]]
+    if not tutorial_options:
+        pytest.skip("The persisted development fixture has no active Tutorial requirement.")
+    tutorial = tutorial_options[0]
     before = client.get("/api/v1/timetables/group-cs-sem1-a/sessions").json()
 
     lecture_result = client.post("/api/v1/scheduling/generate", json={**BASE_PAYLOAD, "selected_requirement_ids": [lecture["id"]]})

@@ -138,7 +138,17 @@ def _quality_warnings(candidates: list[dict], working_days: list[str]) -> list[s
         ordered = sorted(sessions, key=lambda item: item["start_minute"])
         adjacent += sum(left["end_minute"] == right["start_minute"] for left, right in zip(ordered, ordered[1:]))
     days_used = len({candidate["day"] for candidate in candidates if candidate["day"] in working_days})
-    return [f"Quality diagnostics: new sessions use {days_used} working day(s); repeated subject-day placements: {repeated}; consecutive identical-subject pairs: {adjacent}."]
+    by_day: dict[str, list[dict]] = {}
+    for candidate in candidates:
+        by_day.setdefault(candidate["day"], []).append(candidate)
+    day_metrics = []
+    for day, sessions in sorted(by_day.items()):
+        ordered = sorted(sessions, key=lambda item: item["start_minute"])
+        minutes = sum(item["end_minute"] - item["start_minute"] for item in sessions)
+        morning = sum(max(0, min(item["end_minute"], 720) - item["start_minute"]) for item in sessions)
+        gaps = sum(max(0, right["start_minute"] - left["end_minute"]) for left, right in zip(ordered, ordered[1:]))
+        day_metrics.append(f"{day[:3]} {minutes}m/{clock_value(ordered[0]['start_minute'])}–{clock_value(ordered[-1]['end_minute'])}, morning {morning}m, gaps {gaps}m")
+    return [f"Quality diagnostics: new sessions use {days_used} working day(s); repeated subject-day placements: {repeated}; consecutive identical-subject pairs: {adjacent}; " + "; ".join(day_metrics) + "."]
 
 
 @router.post("/generate", response_model=GenerateTimetableResponse)

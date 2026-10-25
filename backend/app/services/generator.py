@@ -151,7 +151,7 @@ def _greedy_candidate(requirements: list[SchedulingRequirement], existing: list[
             elif config.preference == "gaps":
                 options.sort(key=lambda item: (item["gap_cost"], item["start_minute"], item["day_index"], item["room_id"]))
             else:
-                options.sort(key=lambda item: (loads[(item["class_group_id"], item["day"])] + (item["end_minute"] - item["start_minute"]) + item["same_subject_day"] * 120 + item["adjacent_subject"] * 500, item["same_subject_day"], item["adjacent_subject"], max(0, 720 - item["start_minute"]), item["day_index"], item["start_minute"], item["room_id"]))
+                options.sort(key=lambda item: (loads[(item["class_group_id"], item["day"])] + (item["end_minute"] - item["start_minute"]) + item["same_subject_day"] * 120 + item["adjacent_subject"] * 500 + item["gap_cost"] * 2, item["same_subject_day"], item["adjacent_subject"], item["gap_cost"], item["start_minute"], item["day_index"], item["room_id"]))
             selected = options[0]
             chosen.append(selected)
             loads[(selected["class_group_id"], selected["day"])] += selected["end_minute"] - selected["start_minute"]
@@ -230,10 +230,10 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
         if config.preference == "earlier":
             start_weight = (placement["start_minute"] - config.daily_start) * 10
         elif config.preference == "balanced":
-            start_weight = abs(placement["start_minute"] - 720)
+            start_weight = max(0, placement["start_minute"] - config.daily_start)
         else:
             start_weight = 0
-        gap_weight = placement["gap_cost"] * (10 if config.preference == "gaps" else 0)
+        gap_weight = placement["gap_cost"] * (10 if config.preference == "gaps" else 2 if config.preference == "balanced" else 0)
         objective_terms.append((start_weight + gap_weight, variable))
     subject_day_choices: dict[tuple[str, str, str], list[Any]] = {}
     for variable, placement in all_choices:
@@ -254,6 +254,21 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
             model.Add(adjacent <= right_var)
             model.Add(adjacent >= left_var + right_var - 1)
             objective_terms.append((repeat_weight * 2, adjacent))
+    for left_index, (left_var, left) in enumerate(all_choices):
+        for right_var, right in all_choices[left_index + 1:]:
+            if left["class_group_id"] != right["class_group_id"] or left["day"] != right["day"]:
+                continue
+            if left["end_minute"] < right["start_minute"]:
+                gap = right["start_minute"] - left["end_minute"]
+            elif right["end_minute"] < left["start_minute"]:
+                gap = left["start_minute"] - right["end_minute"]
+            else:
+                continue
+            gap_pair = model.NewBoolVar(f"group_gap_{left_var.Name()}_{right_var.Name()}")
+            model.Add(gap_pair <= left_var)
+            model.Add(gap_pair <= right_var)
+            model.Add(gap_pair >= left_var + right_var - 1)
+            objective_terms.append((gap * (2 if config.preference == "balanced" else 10 if config.preference == "gaps" else 0), gap_pair))
     groups = {requirement.class_group_id for requirement in requirements}
     for group_id in groups:
         loads = []

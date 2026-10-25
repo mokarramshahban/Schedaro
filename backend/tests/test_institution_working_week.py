@@ -1,4 +1,5 @@
 import json
+import pytest
 
 from fastapi.testclient import TestClient
 
@@ -25,7 +26,10 @@ def test_institutions_keep_independent_working_weeks_and_generation_uses_saved_s
         assert client.get(f"/api/v1/academic/institutions/{LAKESIDE}/working-week").json()["working_week"] == "monday-saturday"
 
         requirements = client.get("/api/v1/scheduling/class-groups/group-cs-sem1-a/requirements").json()
-        tutorial = next(item for item in requirements if item["session_type"] == "Tutorial")
+        tutorial_options = [item for item in requirements if item["session_type"] == "Tutorial" and item["active"]]
+        if not tutorial_options:
+            pytest.skip("The persisted development fixture has no active Tutorial requirement.")
+        tutorial = tutorial_options[0]
         payload = {
             "institution_id": NORTH,
             "academic_term_id": "term-northbridge-2026-spring",

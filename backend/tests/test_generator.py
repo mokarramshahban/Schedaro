@@ -36,6 +36,19 @@ def test_generator_rejects_unavailable_teacher_window():
     assert result["status"] == "INFEASIBLE"
 
 
+def test_balanced_preference_uses_morning_when_teacher_is_available_then():
+    afternoon_only = SimpleNamespace(teacher_id="t1", day_of_week="monday", start_minute=720, end_minute=900, available=True)
+    result = generate_candidate(None, [requirement()], [], [afternoon_only], [room()], config(working_days=["monday"], daily_end=900, preference="balanced"))
+    assert result["status"] in {"OPTIMAL", "FEASIBLE"}
+    assert result["sessions"][0]["start_minute"] >= 720
+
+
+def test_balanced_preference_starts_early_when_morning_is_available():
+    result = generate_candidate(None, [requirement()], [], [], [room()], config(working_days=["monday"], daily_end=900, preference="balanced"))
+    assert result["status"] in {"OPTIMAL", "FEASIBLE"}
+    assert result["sessions"][0]["start_minute"] == 540
+
+
 def test_generator_requires_compatible_laboratory():
     result = generate_candidate(None, [requirement(room_type="laboratory")], [], [], [room(room_type="classroom")], config())
     assert result["status"] == "INFEASIBLE"
