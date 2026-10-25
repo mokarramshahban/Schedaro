@@ -209,6 +209,20 @@ class PrintLayoutTemplate(Base):
     institution: Mapped[Institution] = relationship()
 
 
+class PdfmePrintTemplate(Base):
+    __tablename__ = "pdfme_print_templates"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    template: Mapped[dict] = mapped_column(JSON, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    institution: Mapped[Institution] = relationship()
+
+
 class TimetableProposal(Base):
     __tablename__ = "timetable_proposals"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
