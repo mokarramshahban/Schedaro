@@ -15,13 +15,14 @@ import { ResourceManagementPage } from './pages/ResourceManagementPage'
 import { TimetablePage } from './pages/TimetablePage'
 import { UsersAccessPage } from './pages/UsersAccessPage'
 import { RoleDashboardPage } from './pages/RoleDashboardPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { listRoleAssignments, getRoleContext, selectRoleContext, type RoleAssignment, type RoleContext } from './lib/platformApi'
 
 type Status = { application: string; environment: string; service: string; database_available: boolean; rust_engine_available?: boolean }
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 const pageTitles: Record<WorkspaceView, string> = { dashboard: 'Dashboard', timetable: 'Timetable', subjects: 'Subjects', teachers: 'Teachers', rooms: 'Rooms & labs', classes: 'Classes', access: 'Users & Access', settings: 'Institution settings' }
 
-function App() { const activation = window.location.pathname.match(/^\/c\/([^/]+)\/activate\/([^/]+)/); if (activation) return <ManualActivationPage slug={activation[1]} invitationId={activation[2]} />; return <AuthProvider><AuthenticatedRoot /></AuthProvider> }
+function App() { const activation = window.location.pathname.match(/^\/c\/([^/]+)\/activate\/([^/]+)/); if (activation) return <ManualActivationPage slug={activation[1]} invitationId={activation[2]} />; const portalReset = window.location.pathname.match(/^\/c\/([^/]+)\/reset-password\/?$/); const hashReset = window.location.pathname === '/login' && window.location.hash.startsWith('#reset-token=') ? decodeURIComponent(window.location.hash.slice('#reset-token='.length)) : undefined; if (portalReset) return <ResetPasswordPage slug={portalReset[1]} />; if (hashReset) return <ResetPasswordPage initialToken={hashReset} />; return <AuthProvider><AuthenticatedRoot /></AuthProvider> }
 
 function AuthenticatedRoot() {
   const { user, loading } = useAuth()

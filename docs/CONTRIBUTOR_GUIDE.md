@@ -62,6 +62,8 @@ Frontend: http://localhost:5174. API: http://localhost:8001. Run `docker compose
 
 Never run `docker compose down -v`; preserve `schedaro_pgdata` and existing academic data.
 
+Local institution-specific fixtures are explicit, deterministic and ignored. Keep their scripts, records, backups and reports under `.local/test-data/`; review a guarded dry run before execution. Generic reset helpers must use explicit allow-lists and must never be generalized to wildcard database names. Back up affected databases before any reset; do not store generated passwords, invitation keys, manual reset keys or institution-specific records in Git. The guarded `python -m app.manual_reset` command issues a one-time development reset key only for an existing non-owner account and refuses production.
+
 ## Security rules
 
 Never trust a portal slug or browser-selected institution as authorization. Preserve central identity uniqueness, membership checks, HttpOnly server-side sessions, password hashing, hashed expiring invitation/recovery secrets, owner-only provisioning and manual-activation approval. Do not log or document passwords, raw keys, recovery tokens, credentials or connection strings. Treat known gaps in [SECURITY](SECURITY.md) as real limitations, not completed controls.

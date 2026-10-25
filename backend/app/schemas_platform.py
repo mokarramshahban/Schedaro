@@ -186,6 +186,28 @@ class PasswordResetRequest(BaseModel):
     password: str = Field(min_length=12, max_length=256)
 
 
+class ManualPasswordResetCreate(BaseModel):
+    confirmation: str = Field(min_length=4, max_length=16)
+    expiration_minutes: int = Field(default=30, ge=5, le=120)
+    institution_id: str | None = Field(default=None, min_length=1, max_length=36)
+
+    @field_validator("confirmation")
+    @classmethod
+    def validate_confirmation(cls, value: str) -> str:
+        if value.strip().upper() != "RESET":
+            raise ValueError("Type RESET to confirm the manual password reset.")
+        return "RESET"
+
+
+class ManualPasswordResetCreated(BaseModel):
+    reset_id: str
+    user_id: str
+    email: str
+    reset_url: str
+    reset_key: str
+    expires_at: datetime
+
+
 class PlatformInstitutionRead(BaseModel):
     id: str
     name: str

@@ -2,12 +2,12 @@ import getpass
 import os
 import sys
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.core.config import get_settings
 from app.db.platform import PlatformSessionLocal, ensure_platform_schema
-from app.db.platform_models import PlatformUser
-from app.services.platform import hash_password
+from app.db.platform_models import PlatformSession, PlatformUser
+from app.services.platform import audit, hash_password
 
 
 def main() -> int:
@@ -36,7 +36,9 @@ def main() -> int:
         except ValueError as error:
             print(str(error), file=sys.stderr)
             return 2
+        db.execute(delete(PlatformSession).where(PlatformSession.user_id == user.id))
         db.commit()
+        audit(db, "platform.owner_password_reset.completed", user.id)
     print("Platform Owner password reset completed.")
     return 0
 

@@ -93,6 +93,26 @@ def validate_scope(platform_db: Session, institution_id: str, scope_type: str, s
         return getattr(record, "name", None) or getattr(record, "label", None) or getattr(record, "section_name", None)
 
 
+def scope_label(platform_db: Session, institution_id: str, scope_type: str, scope_id: str | None) -> str | None:
+    if scope_type == "institution" or not scope_id:
+        return None
+    institution = trusted_institution(platform_db, institution_id)
+    with tenant_session(institution.database_name) as tenant_db:
+        if scope_type == "department":
+            record = tenant_db.get(Department, scope_id)
+            return (record.code or record.name) if record else None
+        if scope_type == "semester":
+            record = tenant_db.get(Semester, scope_id)
+            department = tenant_db.get(Department, record.department_id) if record else None
+            return f"{department.code or department.name} · {record.label}" if record and department else None
+        if scope_type == "section":
+            record = tenant_db.get(ClassGroup, scope_id)
+            department = tenant_db.get(Department, record.department_id) if record else None
+            semester = tenant_db.get(Semester, record.semester_id) if record else None
+            return f"{department.code or department.name} · {semester.label} · {record.section_name}" if record and department and semester else None
+    return None
+
+
 def actor_can(db: Session, actor: PlatformUser, institution_id: str, permission: str, target_role: str | None = None, scope_type: str = "institution", scope_id: str | None = None) -> bool:
     if actor.role == "platform_owner": return True
     membership = db.scalar(select(PlatformMembership).where(PlatformMembership.user_id == actor.id, PlatformMembership.institution_id == institution_id, PlatformMembership.active.is_(True)))

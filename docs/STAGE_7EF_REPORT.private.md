@@ -2,7 +2,7 @@
 
 ## Status
 
-**INCOMPLETE.** Role-aware workflow dashboards, scoped HOD/Class In-Charge draft creation and basic versioned review/publication APIs are implemented. Complete acceptance is blocked by incomplete editor/version synchronization, missing configurable policy administration, incomplete role dashboards, browser unavailability and an existing scheduling regression.
+**INCOMPLETE.** Role-aware workflow dashboards, scoped HOD/Class In-Charge draft creation and basic versioned review/publication APIs are implemented. Complete acceptance remains blocked by incomplete editor/version synchronization, missing configurable policy administration, incomplete role dashboards and browser unavailability.
 
 ## Implemented
 
@@ -24,7 +24,8 @@
 - Workflow test: 1 passed.
 - RBAC tests: 3 passed.
 - Manual invitation tests: 4 passed.
-- Full backend suite: 40 passed, 3 skipped, 1 existing scheduling regression failed with `UNKNOWN`.
+- Historical full backend suite before stabilization: 40 passed, 3 skipped, 1 scheduling `UNKNOWN` regression.
+- Stabilized isolated backend suite: 46 passed, 0 skipped, 0 failed; seven legacy fixture assumptions were replaced with generated per-test PostgreSQL fixtures and the bounded solver now has a deterministic feasibility-first fallback.
 - Frontend tests: 66 passed.
 - Frontend build: passed.
 - Backend compile: passed.

@@ -291,6 +291,10 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
     elapsed = int((monotonic() - started) * 1000)
     status_name = solver.StatusName(result)
     if status_name not in {"OPTIMAL", "FEASIBLE"}:
+        if status_name == "UNKNOWN":
+            fallback = _greedy_candidate(requirements, existing, availability, rooms, config)
+            if fallback is not None:
+                return {"status": "FEASIBLE", "message": "The bounded solver reached UNKNOWN; a deterministic feasibility-first fallback produced a valid timetable for review.", "sessions": [{key: placement[key] for key in ("id", "class_group_id", "subject_id", "teacher_id", "room_id", "session_type", "day", "start_minute", "end_minute")} for placement in fallback], "objective_value": None, "solve_time_ms": elapsed}
         message = {"INFEASIBLE": "No timetable satisfies the active requirements, existing sessions, availability, and room constraints.", "MODEL_INVALID": "The automatic timetable model is invalid and could not be solved.", "UNKNOWN": "The solver time limit was reached without a usable timetable."}.get(status_name, f"Solver returned {status_name}.")
         return {"status": status_name if status_name in {"INFEASIBLE", "MODEL_INVALID", "UNKNOWN"} else "UNKNOWN", "message": message, "sessions": [], "objective_value": None, "solve_time_ms": elapsed}
 

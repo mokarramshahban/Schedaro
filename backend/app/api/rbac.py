@@ -10,14 +10,18 @@ from app.db.platform import get_platform_db
 from app.db.platform_models import PlatformAuditEvent, PlatformInstitution, PlatformMembership, PlatformRoleAssignment, PlatformSession, PlatformUser
 from app.schemas_platform import PermissionDefinition, RoleAssignmentCreate, RoleAssignmentRead, RoleContextRead, RoleContextSelect
 from app.services.platform import audit
-from app.services.rbac import DELEGABLE, PERMISSIONS, ROLE_PERMISSIONS, ROLES, actor_can, assignment_permissions, canonical_role, active_assignments, validate_scope
+from app.services.rbac import DELEGABLE, PERMISSIONS, ROLE_PERMISSIONS, ROLES, actor_can, assignment_permissions, canonical_role, active_assignments, scope_label, validate_scope
 
 router = APIRouter(tags=["authorization"])
 
 
 def _read_assignment(db: Session, item: PlatformRoleAssignment) -> RoleAssignmentRead:
     target = db.get(PlatformUser, item.user_id)
-    return RoleAssignmentRead(id=item.id, user_id=item.user_id, user_email=target.email if target else None, institution_id=item.institution_id, role=canonical_role(item.role), scope_type=item.scope_type, scope_id=item.scope_id, designation=item.designation, status=item.status, granted_by=item.granted_by, created_at=item.created_at)
+    try:
+        label = scope_label(db, item.institution_id, item.scope_type, item.scope_id)
+    except Exception:
+        label = None
+    return RoleAssignmentRead(id=item.id, user_id=item.user_id, user_email=target.email if target else None, institution_id=item.institution_id, role=canonical_role(item.role), scope_type=item.scope_type, scope_id=item.scope_id, scope_label=label, designation=item.designation, status=item.status, granted_by=item.granted_by, created_at=item.created_at)
 
 
 def _assignment_for_user(db: Session, user_id: str, assignment_id: str) -> PlatformRoleAssignment:

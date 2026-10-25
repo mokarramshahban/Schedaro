@@ -1,8 +1,8 @@
 import { FormEvent, useState } from 'react'
-import { apiUrl } from '../lib/api'
 import { BookOpenCheck, Eye, EyeOff, GraduationCap, ShieldCheck } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../lib/AuthContext'
+import { requestPasswordRecovery } from '../lib/authApi'
 
 export const loginCopy = { brand: 'Schedaro', title: 'Sign in to your account', description: 'Enter your credentials to continue.', emailLabel: 'Email address', passwordLabel: 'Password', action: 'Sign in' } as const
 
@@ -18,7 +18,7 @@ export function LoginPage({ portalName }: { portalName?: string } = {}) {
 
   async function requestRecovery(event: FormEvent) {
     event.preventDefault(); setRecoverySent(false)
-    await fetch(`${apiUrl}/api/v1/auth/password/forgot`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail }) })
+    try { await requestPasswordRecovery(recoveryEmail) } catch { /* Keep the response generic to avoid account enumeration. */ }
     setRecoverySent(true)
   }
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added guidance for guarded, development-only synthetic fixture workflows. Institution-specific fixture records, scripts, backups and reports remain outside tracked source.
+- Added generic central manual password recovery: owner-authorized one-time reset keys, digest-only storage, expiry, revocation, replay protection, session invalidation and a branded reset page without SMTP dependency.
 - Added Stage 7D hierarchical authorization foundations: explicit role assignments, scoped permissions, delegated invitations and role management, server-validated acting-as context, revocation invalidation and RBAC audit events. Full legacy endpoint permission coverage remains in progress.
 - Added the permanent architecture decision index, ADR template and verified ADRs for tenant isolation, central authentication, portals, invitation onboarding, manual activation approval, provisioning, proposal review and owner-controlled Git publication.
 - Added the contributor guide and living documentation policy, including documentation-impact review and read-only consistency checks.

@@ -1,7 +1,7 @@
 # Schedaro Agent Guide
 
 ## Project and current stage
-Schedaro is the Smart Academic Timetable Builder. Stage 7C.1 manual/offline invitations are implemented on the owner-controlled feature branch with documented security and verification limitations. Stage 7D is not started. Read [docs/CONTRIBUTOR_GUIDE.md](docs/CONTRIBUTOR_GUIDE.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/SECURITY.md](docs/SECURITY.md), [docs/DATABASE.md](docs/DATABASE.md), and [docs/DOCUMENTATION_POLICY.md](docs/DOCUMENTATION_POLICY.md) before significant work.
+Schedaro is the Smart Academic Timetable Builder. Stage 7E/7F timetable workflow foundations are merged into `main`; the current maintenance branch contains guarded development-only synthetic fixture/reset tooling kept outside tracked source. Stage 7G is not started. Read [docs/CONTRIBUTOR_GUIDE.md](docs/CONTRIBUTOR_GUIDE.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/SECURITY.md](docs/SECURITY.md), [docs/DATABASE.md](docs/DATABASE.md), and [docs/DOCUMENTATION_POLICY.md](docs/DOCUMENTATION_POLICY.md) before significant work.
 
 ## Product scope
 Keep the product focused on institution settings, classes, subjects, teachers, rooms, weekly timetables, validation, persistence, accessibility, and printing. Do not expand it into an unrelated institutional ERP.
@@ -10,7 +10,7 @@ Keep the product focused on institution settings, classes, subjects, teachers, r
 React + TypeScript + Vite frontend, FastAPI + Pydantic + SQLAlchemy + Alembic backend, PostgreSQL 18, and Docker Compose. Local development is Docker-first.
 
 ## Public development workflow
-For Stage 7A and every later Stage 7 phase, Harness may inspect Git, fetch, safely pull `main`, and create the owner-requested feature branch. Harness must never run `git add`, `git commit`, `git push`, `git merge`, `git rebase`, `git reset --hard`, `git clean`, or `git stash`. The owner performs staging, commits, publication, merging, and release review.
+For Stage 7A and every later Stage 7 phase, Harness may inspect Git, fetch, safely pull `main`, and create the owner-requested feature branch. Harness must never run `git add`, `git commit`, `git push`, `git merge`, `git rebase`, `git reset --hard`, `git clean`, or `git stash`. The owner performs staging, commits, publication, merging, and release review. Development-only manual password reset keys may be issued through the protected owner UI or `python -m app.manual_reset`; never record the one-time key in source, logs or tracked reports.
 
 Before implementation:
 
