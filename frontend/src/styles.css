@@ -355,16 +355,21 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .pdfme-academic-fields button { border:0; background:transparent; color:#4f46e5; font-size:11px; text-align:left; cursor:pointer; }
 .pdfme-simple-canvas { display:grid; min-width:0; min-height:0; overflow:auto; place-items:center; padding:24px; background:#e9edf5; }
 .pdfme-paper { position:relative; width:min(100%, 1080px); aspect-ratio:297 / 210; overflow:hidden; background:#fff; box-shadow:0 12px 32px rgba(31,41,55,.18); }
-.pdfme-paper__protected { position:absolute; left:5.05%; top:23.8%; width:89.9%; height:48.1%; z-index:1; pointer-events:none; }
-.pdfme-protected-timetable { display:flex; width:100%; height:100%; box-sizing:border-box; border:1px solid #aeb6c2; color:#273247; font-size:clamp(5px,.7vw,9px); }
-.pdfme-protected-time { position:relative; width:6.7%; border-right:1px solid #cbd5e1; }
-.pdfme-protected-time span { position:absolute; right:2px; transform:translateY(-50%); color:#667085; font-size:.8em; }
-.pdfme-protected-day { min-width:0; flex:1; border-right:1px solid #cbd5e1; }
-.pdfme-protected-day > strong { display:block; height:7%; padding:2px; border-bottom:1px solid #a5b4fc; background:#eef2ff; color:#3730a3; font-size:.85em; text-align:center; }
-.pdfme-protected-day__body { position:relative; height:93%; background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(11.11% - 1px), #e5e7eb calc(11.11% - 1px), #e5e7eb 11.11%); }
-.pdfme-protected-session { position:absolute; right:1px; left:1px; overflow:hidden; padding:2px; border:1px solid #a5b4fc; border-radius:2px; background:#eef2ff; font-size:.78em; line-height:1.15; }
-.pdfme-protected-session b, .pdfme-protected-session span, .pdfme-protected-session small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.pdfme-protected-session small { color:#667085; font-size:.85em; }
+.pdfme-paper__protected { position:absolute; z-index:1; pointer-events:none; }
+.pdfme-protected-timetable { display:flex; width:100%; height:100%; box-sizing:border-box; border:1px solid #9aa5b3; color:#273247; font-size:clamp(7px,.78vw,9px); }
+.pdfme-protected-time { position:relative; width:6.7%; border-right:1px solid #b8c0ca; background:#fbfcfd; }
+.pdfme-protected-time span { position:absolute; right:3px; transform:translateY(-50%); color:#5b6472; font-size:.82em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.pdfme-protected-day { min-width:0; flex:1; border-right:1px solid #b8c0ca; }
+.pdfme-protected-day > strong { display:block; height:7.4%; box-sizing:border-box; padding:2px; border-bottom:1px solid #929eac; background:#f5f7fa; color:#334155; font-size:.9em; font-weight:700; text-align:center; }
+.pdfme-protected-day__body { position:relative; height:92.6%; background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(12.5% - .7px), #dce1e7 calc(12.5% - .7px), #dce1e7 12.5%); }
+.pdfme-protected-session { position:absolute; right:1px; left:1px; box-sizing:border-box; overflow:hidden; padding:2px 2px 2px 3px; border:1px solid #8b98a8; border-left:3px solid #465467; border-radius:2px; background:#f1f4f8; font-size:.82em; line-height:1.12; }
+.pdfme-protected-session--lecture { border-color:#8d7bc7; border-left-color:#5d49a8; background:#f4f1ff; }
+.pdfme-protected-session--laboratory { border-color:#79ad88; border-left-color:#35734a; background:#eef8f1; }
+.pdfme-protected-session--tutorial { border-color:#d2a256; border-left-color:#986517; background:#fff7e8; }
+.pdfme-protected-session b, .pdfme-protected-session span, .pdfme-protected-session small { display:block; overflow:hidden; }
+.pdfme-protected-session b { margin-bottom:1px; font-size:1.08em; font-weight:750; line-height:1.05; overflow-wrap:anywhere; }
+.pdfme-protected-session span { color:#3f4a59; font-size:.82em; font-variant-numeric:tabular-nums; }
+.pdfme-protected-session small { color:#536071; font-size:.78em; line-height:1.05; overflow-wrap:anywhere; }
 .pdfme-canvas-element { position:absolute; z-index:3; display:flex; align-items:center; overflow:hidden; box-sizing:border-box; padding:2px; border:1px solid transparent; color:#172033; line-height:1.15; white-space:pre-wrap; overflow-wrap:anywhere; cursor:move; }
 .pdfme-canvas-element--image { padding:0; }
 .pdfme-canvas-element--image img { width:100%; height:100%; object-fit:contain; pointer-events:none; }
