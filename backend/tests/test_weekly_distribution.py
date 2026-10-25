@@ -11,8 +11,8 @@ def room():
     return SimpleNamespace(id="room-1", room_type="classroom")
 
 
-def run(requirements, days, existing=None, preference="balanced"):
-    return generate_candidate(None, requirements, existing or [], [], [room()], GenerationConfig(working_days=days, daily_start=540, daily_end=660, quantum=30, time_limit_seconds=5, preference=preference))
+def run(requirements, days, existing=None, preference="balanced", daily_end=660):
+    return generate_candidate(None, requirements, existing or [], [], [room()], GenerationConfig(working_days=days, daily_start=540, daily_end=daily_end, quantum=30, time_limit_seconds=5, preference=preference))
 
 
 def test_balanced_six_sessions_use_six_working_days():
@@ -42,3 +42,16 @@ def test_earlier_preference_uses_clock_time_not_weekday_order():
     assert result["status"] in {"OPTIMAL", "FEASIBLE"}
     assert {item["day"] for item in result["sessions"]} == set(days)
     assert all(item["start_minute"] == 540 for item in result["sessions"])
+
+
+def test_balanced_preference_discourages_consecutive_same_subject_sessions():
+    result = run([req(count=6)], ["monday", "tuesday", "wednesday"], preference="balanced", daily_end=900)
+    assert result["status"] in {"OPTIMAL", "FEASIBLE"}
+    by_day = {}
+    for session in result["sessions"]:
+        by_day.setdefault(session["day"], []).append(session)
+    assert all(len(sessions) == 2 for sessions in by_day.values())
+    assert any(session["start_minute"] != 540 for session in result["sessions"])
+    for sessions in by_day.values():
+        ordered = sorted(sessions, key=lambda item: item["start_minute"])
+        assert all(left["end_minute"] != right["start_minute"] for left, right in zip(ordered, ordered[1:]))

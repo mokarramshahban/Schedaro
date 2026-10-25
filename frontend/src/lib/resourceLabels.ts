@@ -5,7 +5,15 @@ export function subjectDisplayLabel(subject: SubjectLabelSource | undefined): st
   const code = subject.code?.trim() ?? ''
   const name = subject.name.trim()
   if (!code) return name
-  if (name === code) return code
-  if (name.startsWith(`${code} ·`)) return `${code} · ${name.slice(code.length).replace(/^\s*·\s*/, '')}`
-  return `${code} · ${name}`
+  let cleanName = name
+  while (cleanName.startsWith(`${code} ·`)) cleanName = cleanName.slice(code.length).replace(/^\s*·\s*/, '')
+  if (!cleanName) return code
+  return `${code} · ${cleanName}`
+}
+
+export function sessionCardContent(subject: string, time: string, type: string, metadata: string, height: number): string[] {
+  if (height <= 34) return [subject]
+  if (height <= 64) return [subject, time]
+  if (height <= 96) return [subject, time, type]
+  return [subject, time, type, metadata]
 }

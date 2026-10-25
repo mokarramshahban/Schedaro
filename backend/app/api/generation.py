@@ -123,6 +123,24 @@ def _distribution(working_days: list[str], existing: list[TimetableSession], can
     return distribution
 
 
+def _quality_warnings(candidates: list[dict], working_days: list[str]) -> list[str]:
+    if not candidates:
+        return []
+    subject_days: dict[tuple[str, str, str], int] = {}
+    by_subject_day: dict[tuple[str, str, str], list[dict]] = {}
+    for candidate in candidates:
+        key = (candidate["class_group_id"], candidate["subject_id"], candidate["day"])
+        subject_days[key] = subject_days.get(key, 0) + 1
+        by_subject_day.setdefault(key, []).append(candidate)
+    repeated = sum(max(0, count - 1) for count in subject_days.values())
+    adjacent = 0
+    for sessions in by_subject_day.values():
+        ordered = sorted(sessions, key=lambda item: item["start_minute"])
+        adjacent += sum(left["end_minute"] == right["start_minute"] for left, right in zip(ordered, ordered[1:]))
+    days_used = len({candidate["day"] for candidate in candidates if candidate["day"] in working_days})
+    return [f"Quality diagnostics: new sessions use {days_used} working day(s); repeated subject-day placements: {repeated}; consecutive identical-subject pairs: {adjacent}."]
+
+
 @router.post("/generate", response_model=GenerateTimetableResponse)
 def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(get_db)):
     term = _require_institution_term(db, payload.institution_id, payload.academic_term_id)
@@ -188,6 +206,7 @@ def generate_timetable(payload: GenerateTimetableRequest, db: Session = Depends(
             raise HTTPException(status_code=503, detail={"message": str(error)}) from error
     if result["status"] not in {"OPTIMAL", "FEASIBLE"}:
         return GenerateTimetableResponse(status=result["status"], message=result["message"], working_days=working_days, preference=payload.preference, warnings=warnings, distribution=distribution, requirement_summaries=response_summaries, sessions=[], preserved_sessions=preserved, objective_value=result["objective_value"], solve_time_ms=result["solve_time_ms"])
+    warnings.extend(_quality_warnings(candidates, working_days))
     base = datetime.now(timezone.utc)
     proposal = TimetableProposal(institution_id=payload.institution_id, academic_term_id=term.id, class_group_ids=payload.class_group_ids, candidate_sessions=candidates, base_updated_at=base)
     db.add(proposal); db.commit(); db.refresh(proposal)

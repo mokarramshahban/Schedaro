@@ -137,7 +137,10 @@ def _greedy_candidate(requirements: list[SchedulingRequirement], existing: list[
                     for room in sorted(rooms, key=lambda item: item.id):
                         if not compatible_room(room, requirement.room_type):
                             continue
-                        placement = {"id": new_id(), "class_group_id": requirement.class_group_id, "subject_id": requirement.subject_id, "teacher_id": requirement.teacher_id, "room_id": room.id, "session_type": requirement.session_type, "day": day, "day_index": day_index, "start_minute": start, "end_minute": end, "gap_cost": _gap_cost(requirement.class_group_id, day, start, end, existing + [_as_session_stub(item) for item in chosen])}
+                        occupied = existing + [_as_session_stub(item) for item in chosen]
+                        same_subject_day = sum(session.class_group_id == requirement.class_group_id and session.subject_id == requirement.subject_id and session.day_of_week == day for session in occupied)
+                        adjacent_subject = sum(session.class_group_id == requirement.class_group_id and session.subject_id == requirement.subject_id and session.day_of_week == day and (session.end_minute == start or session.start_minute == end) for session in occupied)
+                        placement = {"id": new_id(), "class_group_id": requirement.class_group_id, "subject_id": requirement.subject_id, "teacher_id": requirement.teacher_id, "room_id": room.id, "session_type": requirement.session_type, "day": day, "day_index": day_index, "start_minute": start, "end_minute": end, "gap_cost": _gap_cost(requirement.class_group_id, day, start, end, occupied), "same_subject_day": same_subject_day, "adjacent_subject": adjacent_subject}
                         if _placement_conflicts_existing(placement, existing) or any(_placement_conflicts(placement, item) for item in chosen):
                             continue
                         options.append(placement)
@@ -148,7 +151,7 @@ def _greedy_candidate(requirements: list[SchedulingRequirement], existing: list[
             elif config.preference == "gaps":
                 options.sort(key=lambda item: (item["gap_cost"], item["start_minute"], item["day_index"], item["room_id"]))
             else:
-                options.sort(key=lambda item: (loads[(item["class_group_id"], item["day"])] + (item["end_minute"] - item["start_minute"]), loads[(item["class_group_id"], item["day"])], item["day_index"], item["start_minute"], item["room_id"]))
+                options.sort(key=lambda item: (loads[(item["class_group_id"], item["day"])] + (item["end_minute"] - item["start_minute"]) + item["same_subject_day"] * 120 + item["adjacent_subject"] * 500, item["same_subject_day"], item["adjacent_subject"], max(0, 720 - item["start_minute"]), item["day_index"], item["start_minute"], item["room_id"]))
             selected = options[0]
             chosen.append(selected)
             loads[(selected["class_group_id"], selected["day"])] += selected["end_minute"] - selected["start_minute"]
@@ -156,7 +159,7 @@ def _greedy_candidate(requirements: list[SchedulingRequirement], existing: list[
 
 
 def _as_session_stub(placement: dict[str, Any]) -> Any:
-    return type("PlacementSession", (), {"class_group_id": placement["class_group_id"], "teacher_id": placement["teacher_id"], "room_id": placement["room_id"], "day_of_week": placement["day"], "start_minute": placement["start_minute"], "end_minute": placement["end_minute"]})()
+    return type("PlacementSession", (), {"class_group_id": placement["class_group_id"], "subject_id": placement["subject_id"], "teacher_id": placement["teacher_id"], "room_id": placement["room_id"], "day_of_week": placement["day"], "start_minute": placement["start_minute"], "end_minute": placement["end_minute"]})()
 
 
 def generate_candidate(db: Session, requirements: list[SchedulingRequirement], existing: list[TimetableSession], availability: list[TeacherAvailability], rooms: list[Room], config: GenerationConfig) -> dict[str, Any]:
@@ -224,21 +227,33 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
     balance_weight = 10000 if config.preference == "balanced" else 100 if config.preference == "gaps" else 0
     repeat_weight = 1000 if config.preference == "balanced" else 400
     for variable, placement in all_choices:
-        start_weight = (placement["start_minute"] - config.daily_start) * (10 if config.preference == "earlier" else 1)
+        if config.preference == "earlier":
+            start_weight = (placement["start_minute"] - config.daily_start) * 10
+        elif config.preference == "balanced":
+            start_weight = abs(placement["start_minute"] - 720)
+        else:
+            start_weight = 0
         gap_weight = placement["gap_cost"] * (10 if config.preference == "gaps" else 0)
         objective_terms.append((start_weight + gap_weight, variable))
-    for occurrences in requirement_occurrences:
-        for left_index, left_choices in enumerate(occurrences):
-            for right_choices in occurrences[left_index + 1:]:
-                for left_var, left in left_choices:
-                    for right_var, right in right_choices:
-                        if left["day"] != right["day"]:
-                            continue
-                        same_day = model.NewBoolVar(f"same_day_{left_var.Name()}_{right_var.Name()}")
-                        model.Add(same_day <= left_var)
-                        model.Add(same_day <= right_var)
-                        model.Add(same_day >= left_var + right_var - 1)
-                        objective_terms.append((repeat_weight, same_day))
+    subject_day_choices: dict[tuple[str, str, str], list[Any]] = {}
+    for variable, placement in all_choices:
+        subject_day_choices.setdefault((placement["class_group_id"], placement["subject_id"], placement["day"]), []).append(variable)
+    for key, variables in subject_day_choices.items():
+        repeated = model.NewIntVar(0, len(variables), f"repeated_subject_{key[0]}_{key[1]}_{key[2]}")
+        model.Add(repeated >= sum(variables) - 1)
+        model.Add(repeated >= 0)
+        objective_terms.append((repeat_weight, repeated))
+    for left_index, (left_var, left) in enumerate(all_choices):
+        for right_var, right in all_choices[left_index + 1:]:
+            if left["class_group_id"] != right["class_group_id"] or left["subject_id"] != right["subject_id"] or left["day"] != right["day"]:
+                continue
+            if left["end_minute"] != right["start_minute"] and right["end_minute"] != left["start_minute"]:
+                continue
+            adjacent = model.NewBoolVar(f"adjacent_subject_{left_var.Name()}_{right_var.Name()}")
+            model.Add(adjacent <= left_var)
+            model.Add(adjacent <= right_var)
+            model.Add(adjacent >= left_var + right_var - 1)
+            objective_terms.append((repeat_weight * 2, adjacent))
     groups = {requirement.class_group_id for requirement in requirements}
     for group_id in groups:
         loads = []
