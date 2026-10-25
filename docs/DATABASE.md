@@ -40,7 +40,7 @@ The idempotent platform initializer runs at application startup and attempts to 
 docker compose -p schedaro exec backend python -m app.provision_tenant --database schedaro_tenant_a --institution-id test-inst-a --name "Stage 7A Test College A"
 ```
 
-Production provisioning and complete per-institution migration orchestration are intentionally deferred until the owner reviews backup/recovery, membership authorization, and tenant routing. Platform Owner setup is manual: run `docker compose -p schedaro exec backend python -m app.bootstrap_owner` and choose credentials interactively; for an existing local owner, use `docker compose -p schedaro exec backend python -m app.reset_owner` and follow the explicit confirmation prompts. Never drop or truncate `schedaro_db` or `schedaro_pgdata`.
+Stage 7B adds owner-controlled onboarding through `/api/v1/platform/institutions`. A request is registered with an idempotency key, receives a generated `schedaro_tenant_<opaque-id>` database name, runs the existing Alembic academic migrations, initializes the tenant institution and optional departments, then becomes `ready` only after tenant connection verification. Failed work remains `provisioning_failed`; retry never deletes a database or silently marks it ready. Profile and schedule defaults remain in the central registry while academic records remain in the tenant database. Platform Owner setup is manual: run `docker compose -p schedaro exec backend python -m app.bootstrap_owner` and choose credentials interactively; for an existing local owner, use `docker compose -p schedaro exec backend python -m app.reset_owner` and follow the explicit confirmation prompts. Never drop or truncate `schedaro_db` or `schedaro_pgdata`.
 
 ## Migrations and development data
 

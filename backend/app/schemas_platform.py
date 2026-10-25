@@ -1,4 +1,10 @@
-from pydantic import BaseModel, Field, field_validator
+from datetime import datetime
+from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+WorkingWeek = Literal["monday-friday", "monday-saturday"]
 
 
 class PlatformLoginRequest(BaseModel):
@@ -33,10 +39,91 @@ class PlatformInstitutionRead(BaseModel):
     id: str
     name: str
     short_name: str | None = None
+    institution_type: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    address: str | None = None
+    timezone: str = "UTC"
+    working_week: WorkingWeek = "monday-saturday"
+    daily_start_time: str = "09:00"
+    daily_end_time: str = "17:00"
     status: str
     schema_version: str | None = None
     active: bool
     database_ready: bool
+    provisioning_operation_id: str | None = None
+    registered_at: datetime | None = None
+
+
+class PlatformInstitutionCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    short_name: str | None = Field(default=None, max_length=32)
+    institution_type: str | None = Field(default=None, max_length=80)
+    contact_email: str | None = Field(default=None, max_length=180)
+    contact_phone: str | None = Field(default=None, max_length=40)
+    address: str | None = Field(default=None, max_length=240)
+    timezone: str = Field(default="UTC", min_length=1, max_length=64)
+    working_week: WorkingWeek = "monday-saturday"
+    daily_start_time: str = "09:00"
+    daily_end_time: str = "17:00"
+    initial_departments: list[str] = Field(default_factory=list, max_length=30)
+    idempotency_key: str = Field(min_length=8, max_length=120)
+
+    @field_validator("name", "short_name", "institution_type", "address")
+    @classmethod
+    def trim_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("timezone")
+    @classmethod
+    def valid_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except ZoneInfoNotFoundError as error:
+            raise ValueError("Timezone must be a valid IANA timezone.") from error
+        return value
+
+    @field_validator("daily_start_time", "daily_end_time")
+    @classmethod
+    def valid_clock(cls, value: str) -> str:
+        try:
+            hour, minute = (int(part) for part in value.split(":"))
+        except (ValueError, AttributeError) as error:
+            raise ValueError("Time must use HH:MM format.") from error
+        if not 0 <= hour <= 23 or minute not in {0, 10, 20, 30, 40, 50}:
+            raise ValueError("Time must use a valid 10-minute clock value.")
+        return f"{hour:02d}:{minute:02d}"
+
+    @field_validator("initial_departments")
+    @classmethod
+    def valid_departments(cls, values: list[str]) -> list[str]:
+        normalized = [value.strip() for value in values if value.strip()]
+        if len(set(value.casefold() for value in normalized)) != len(normalized):
+            raise ValueError("Initial department names must be unique.")
+        return normalized
+
+    @model_validator(mode="after")
+    def end_after_start(self):
+        start = int(self.daily_start_time[:2]) * 60 + int(self.daily_start_time[3:])
+        end = int(self.daily_end_time[:2]) * 60 + int(self.daily_end_time[3:])
+        if end <= start:
+            raise ValueError("Teaching day end must be after its start.")
+        return self
+
+
+class PlatformProvisioningRead(BaseModel):
+    id: str
+    institution_id: str
+    status: str
+    error_message: str | None = None
+    attempts: int
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class PlatformInstitutionCreateResponse(BaseModel):
+    institution: PlatformInstitutionRead
+    provisioning: PlatformProvisioningRead
 
 
 class PlatformWorkspaceSummaryRead(BaseModel):
