@@ -7,6 +7,7 @@ import { Card, CardBody } from './components/ui/Card'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import { InstitutionProvider, useInstitution } from './lib/InstitutionContext'
 import { LoginPage } from './pages/LoginPage'
+import { PortalLoginPage } from './pages/PortalLoginPage'
 import { PlatformOverviewPage } from './pages/PlatformOverviewPage'
 import { InstitutionSetupPage } from './pages/InstitutionSetupPage'
 import { ResourceManagementPage } from './pages/ResourceManagementPage'
@@ -20,12 +21,13 @@ function App() { return <AuthProvider><AuthenticatedRoot /></AuthProvider> }
 
 function AuthenticatedRoot() {
   const { user, loading } = useAuth()
+  const portalSlug = window.location.pathname.match(/^\/c\/([^/]+)/)?.[1]
   if (loading) return <div className="page-content"><p className="muted-copy">Checking secure session…</p></div>
-  if (!user) return <LoginPage />
-  return <InstitutionProvider><AppShell /></InstitutionProvider>
+  if (!user) return portalSlug ? <PortalLoginPage slug={portalSlug} /> : <LoginPage />
+  return <InstitutionProvider><AppShell portalSlug={portalSlug} /></InstitutionProvider>
 }
 
-function AppShell() {
+function AppShell({ portalSlug }: { portalSlug?: string }) {
   const { activeInstitutions, activeInstitutionId, loading: institutionLoading, error: institutionError, setActiveInstitutionId } = useInstitution()
   const { user, logout } = useAuth()
   const [status, setStatus] = useState<Status | null>(null)
@@ -34,6 +36,9 @@ function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [view, setView] = useState<WorkspaceView>('timetable')
   const isOwner = user?.role === 'platform_owner'
+  const portalInstitution = portalSlug ? activeInstitutions.find((institution) => institution.portalSlug === portalSlug) : undefined
+  useEffect(() => { if (portalInstitution && activeInstitutionId !== portalInstitution.id) setActiveInstitutionId(portalInstitution.id) }, [activeInstitutionId, portalInstitution, setActiveInstitutionId])
+  const portalDenied = Boolean(portalSlug && !institutionLoading && !portalInstitution)
 
   const loadStatus = useCallback(() => { setLoading(true); setError(null); fetch(`${apiUrl}/api/v1/status`, { credentials: 'include' }).then((response) => { if (!response.ok) throw new Error('Backend request failed'); return response.json() as Promise<Status> }).then(setStatus).catch((reason: Error) => { setStatus(null); setError(reason.message) }).finally(() => setLoading(false)) }, [])
   useEffect(() => { loadStatus() }, [loadStatus])
@@ -42,7 +47,7 @@ function AppShell() {
   const noActiveInstitution = !institutionLoading && !institutionError && activeInstitutions.length === 0
   const needsInstitutionChoice = !isOwner && !institutionLoading && view !== 'settings' && activeInstitutions.length > 1 && !activeInstitutionId
   const platformOverview = isOwner && !activeInstitutionId
-  const content = platformOverview ? <PlatformOverviewPage /> : noActiveInstitution ? <InstitutionSetupPage /> : needsInstitutionChoice ? <InstitutionChoicePage /> : view === 'timetable' ? <TimetablePage connected={connected} environment={status?.environment} error={error} /> : <ResourceManagementPage mode={view} connected={connected} />
+  const content = portalDenied ? <div className="page-content"><Card className="institution-choice-card"><CardBody><p className="eyebrow">Access denied</p><h1>Institution access unavailable</h1><p>Your account is not authorized for this college portal.</p></CardBody></Card></div> : platformOverview ? <PlatformOverviewPage /> : noActiveInstitution ? <InstitutionSetupPage /> : needsInstitutionChoice ? <InstitutionChoicePage /> : view === 'timetable' ? <TimetablePage connected={connected} environment={status?.environment} error={error} /> : <ResourceManagementPage mode={view} connected={connected} />
   return <div className="app-shell"><AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} connected={connected} currentView={view} onNavigate={setView} platformOverview={platformOverview} /><div className="app-main"><AppHeader pageTitle={platformOverview ? 'Platform Overview' : noActiveInstitution ? 'Institution setup' : pageTitles[view]} onMenuOpen={() => setSidebarOpen(true)} onOpenInstitutionSettings={() => setView('settings')} connected={connected} loading={loading} onRefresh={loadStatus} platformOwner={isOwner} onLogout={() => void logout()} /><main>{content}</main></div></div>
 }
 

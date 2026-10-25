@@ -17,6 +17,12 @@ from app.db.platform_models import PlatformAuditEvent, PlatformInstitution, Plat
 
 settings = get_settings()
 TRUSTED_DATABASE_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
+PORTAL_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def slugify_portal(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-") or "college"
+    return slug[:72].strip("-")
 
 
 def hash_password(password: str) -> str:

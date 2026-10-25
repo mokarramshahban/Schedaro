@@ -11,7 +11,7 @@ from app.db.platform_models import PlatformInstitution, PlatformProvisioningOper
 from app.db.session import SessionLocal
 from app.db.models import Department, Institution, Room, Subject, Teacher, TimetableSession
 from app.schemas_platform import PlatformInstitutionCreate, PlatformInstitutionCreateResponse, PlatformInstitutionRead, PlatformOverviewRead, PlatformProvisioningRead, PlatformWorkspaceSummaryRead
-from app.services.platform import audit, sync_legacy_institutions, tenant_institution_exists, trusted_institution
+from app.services.platform import audit, slugify_portal, sync_legacy_institutions, tenant_institution_exists, trusted_institution
 from app.services.provisioning import provision_operation, safe_database_name
 
 router = APIRouter(prefix="/api/v1/platform", tags=["platform"])
@@ -23,7 +23,7 @@ def _sync(db: Session) -> list[PlatformInstitution]:
 
 
 def _read(record: PlatformInstitution, operation: PlatformProvisioningOperation | None = None) -> PlatformInstitutionRead:
-    return PlatformInstitutionRead(id=record.id, name=record.name, short_name=record.short_name, institution_type=record.institution_type, contact_email=record.contact_email, contact_phone=record.contact_phone, address=record.address, timezone=record.timezone, working_week=record.working_week, daily_start_time=f"{record.daily_start_minute // 60:02d}:{record.daily_start_minute % 60:02d}", daily_end_time=f"{record.daily_end_minute // 60:02d}:{record.daily_end_minute % 60:02d}", status=record.status, schema_version=record.schema_version, active=record.active, database_ready=record.status == "ready" and check_tenant_database(record.database_name) and tenant_institution_exists(record), provisioning_operation_id=operation.id if operation else None, registered_at=record.created_at)
+    return PlatformInstitutionRead(id=record.id, name=record.name, short_name=record.short_name, portal_slug=record.portal_slug, institution_type=record.institution_type, contact_email=record.contact_email, contact_phone=record.contact_phone, address=record.address, timezone=record.timezone, working_week=record.working_week, daily_start_time=f"{record.daily_start_minute // 60:02d}:{record.daily_start_minute % 60:02d}", daily_end_time=f"{record.daily_end_minute // 60:02d}:{record.daily_end_minute % 60:02d}", status=record.status, schema_version=record.schema_version, active=record.active, database_ready=record.status == "ready" and check_tenant_database(record.database_name) and tenant_institution_exists(record), provisioning_operation_id=operation.id if operation else None, registered_at=record.created_at)
 
 
 def _operation_read(operation: PlatformProvisioningOperation) -> PlatformProvisioningRead:
@@ -57,7 +57,13 @@ def create_institution(payload: PlatformInstitutionCreate, db: Session = Depends
     if payload.short_name and db.scalar(select(PlatformInstitution).where(func.lower(PlatformInstitution.short_name) == payload.short_name.casefold())):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "An institution with this code already exists."})
     institution_id = str(uuid4())
-    institution = PlatformInstitution(id=institution_id, stable_key=f"provisioned:{institution_id}", name=payload.name, short_name=payload.short_name, institution_type=payload.institution_type, contact_email=payload.contact_email, contact_phone=payload.contact_phone, address=payload.address, timezone=payload.timezone, working_week=payload.working_week, daily_start_minute=int(payload.daily_start_time[:2]) * 60 + int(payload.daily_start_time[3:]), daily_end_minute=int(payload.daily_end_time[:2]) * 60 + int(payload.daily_end_time[3:]), database_name=safe_database_name(institution_id), status="provisioning", schema_version=None, active=False)
+    slug_base = slugify_portal(payload.short_name or payload.name)
+    portal_slug = slug_base
+    suffix = 2
+    while db.scalar(select(PlatformInstitution).where(PlatformInstitution.portal_slug == portal_slug)):
+        portal_slug = f"{slug_base[:70]}-{suffix}"
+        suffix += 1
+    institution = PlatformInstitution(id=institution_id, stable_key=f"provisioned:{institution_id}", name=payload.name, short_name=payload.short_name, portal_slug=portal_slug, institution_type=payload.institution_type, contact_email=payload.contact_email, contact_phone=payload.contact_phone, address=payload.address, timezone=payload.timezone, working_week=payload.working_week, daily_start_minute=int(payload.daily_start_time[:2]) * 60 + int(payload.daily_start_time[3:]), daily_end_minute=int(payload.daily_end_time[:2]) * 60 + int(payload.daily_end_time[3:]), database_name=safe_database_name(institution_id), status="provisioning", schema_version=None, active=False)
     operation = PlatformProvisioningOperation(id=str(uuid4()), institution_id=institution_id, idempotency_key=payload.idempotency_key, status="provisioning", attempts=0, requested_departments=payload.initial_departments)
     db.add_all([institution, operation])
     try:

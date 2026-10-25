@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     auth_cookie_secure: bool = False
     auth_session_hours: int = 8
     allowed_cors_origins: str = "http://localhost:5174"
+    public_app_url: str = "http://localhost:5174"
+    email_backend: str = "local"
+    invitation_expiry_hours: int = 72
 
     model_config = SettingsConfigDict(case_sensitive=False, extra="ignore")
 

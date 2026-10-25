@@ -8,7 +8,7 @@ from app.db.models import Institution
 from app.db.platform_models import PlatformInstitution, PlatformMembership, PlatformUser
 from app.schemas_platform import PlatformMembershipRead
 from app.schemas_platform import PlatformLoginRequest, PlatformUserRead
-from app.services.platform import create_session, revoke_session, user_for_session, verify_password
+from app.services.platform import create_session, has_institution_access, revoke_session, user_for_session, verify_password
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 settings = get_settings()
@@ -24,6 +24,13 @@ def current_user(request: Request, db: Session = Depends(get_platform_db)) -> Pl
 def require_platform_owner(user: PlatformUser = Depends(current_user)) -> PlatformUser:
     if user.role != "platform_owner":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Platform Owner access is required."})
+    return user
+
+
+def require_academic_access(request: Request, db: Session = Depends(get_platform_db), user: PlatformUser = Depends(current_user)) -> PlatformUser:
+    institution_id = request.path_params.get("institution_id") or request.query_params.get("institution_id")
+    if user.role != "platform_owner" and (not institution_id or not has_institution_access(db, user, institution_id)):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Institution membership is required."})
     return user
 
 
@@ -68,5 +75,5 @@ def my_institutions(db: Session = Depends(get_platform_db), user: PlatformUser =
                 working_week = tenant_record.working_week if tenant_record else working_week
         except Exception:
             pass
-        result.append(PlatformMembershipRead(institution_id=institution.id, institution_name=institution.name, working_week=working_week, role=role, active=active))
+        result.append(PlatformMembershipRead(institution_id=institution.id, institution_name=institution.name, portal_slug=institution.portal_slug, working_week=working_week, role=role, active=active))
     return result

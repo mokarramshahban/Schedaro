@@ -1,16 +1,26 @@
 import { FormEvent, useState } from 'react'
+import { apiUrl } from '../lib/api'
 import { BookOpenCheck, Eye, EyeOff, GraduationCap, ShieldCheck } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../lib/AuthContext'
 
 export const loginCopy = { brand: 'Schedaro', title: 'Sign in to your account', description: 'Enter your credentials to continue.', emailLabel: 'Email address', passwordLabel: 'Password', action: 'Sign in' } as const
 
-export function LoginPage() {
+export function LoginPage({ portalName }: { portalName?: string } = {}) {
   const { login, error } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [recoveryOpen, setRecoveryOpen] = useState(false)
+  const [recoveryEmail, setRecoveryEmail] = useState('')
+  const [recoverySent, setRecoverySent] = useState(false)
+
+  async function requestRecovery(event: FormEvent) {
+    event.preventDefault(); setRecoverySent(false)
+    await fetch(`${apiUrl}/api/v1/auth/password/forgot`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail }) })
+    setRecoverySent(true)
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -21,7 +31,7 @@ export function LoginPage() {
   return <main className="login-page">
     <section className="login-brand-panel" aria-label="About Schedaro">
       <div className="login-brand-panel__inner">
-        <div className="login-brand-lockup"><span className="login-brand-mark">S</span><span>{loginCopy.brand}</span></div>
+        <div className="login-brand-lockup"><span className="login-brand-mark">S</span><span>{portalName || loginCopy.brand}</span></div>
         <div className="login-intro"><p className="login-kicker">Smart academic workspace</p><h1>Make every academic day easier to plan.</h1><p>Bring institutions, people and timetables into one calm, focused workspace.</p></div>
         <div className="login-visual" aria-hidden="true">
           <div className="login-visual__glow" />
@@ -35,13 +45,15 @@ export function LoginPage() {
     </section>
     <section className="login-form-panel">
       <div className="login-form-wrap">
-        <div className="login-form-heading"><p className="login-kicker">Welcome back</p><h2>{loginCopy.title}</h2><p>{loginCopy.description}</p></div>
+        <div className="login-form-heading"><p className="login-kicker">{portalName ? `Welcome to ${portalName}` : 'Welcome back'}</p><h2>{portalName ? 'Sign in to your institution' : loginCopy.title}</h2><p>{portalName ? 'Use your Schedaro account to continue.' : loginCopy.description}</p></div>
         {error && <div className="login-error" role="alert"><strong>We couldn't sign you in.</strong><span>{error}</span></div>}
         <form className="login-form" onSubmit={submit}>
           <label className="login-field"><span>{loginCopy.emailLabel}</span><input type="email" autoComplete="username" autoFocus required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
           <label className="login-field"><span>{loginCopy.passwordLabel}</span><span className="login-password-wrap"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" required minLength={12} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" /><button type="button" className="login-password-toggle" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span></label>
           <Button type="submit" className="login-submit" disabled={submitting}>{submitting ? 'Signing in…' : loginCopy.action}</Button>
         </form>
+        <button type="button" className="login-forgot" onClick={() => setRecoveryOpen((open) => !open)}>Forgot password?</button>
+        {recoveryOpen && <form className="login-recovery" onSubmit={(event) => void requestRecovery(event)}><label className="login-field"><span>Account email</span><input type="email" required value={recoveryEmail} onChange={(event) => setRecoveryEmail(event.target.value)} /></label><Button type="submit" variant="secondary">Send recovery link</Button>{recoverySent && <p role="status">If the account is eligible, recovery instructions have been sent.</p>}</form>}
         <p className="login-security-note"><ShieldCheck size={15} /> Your session is protected by Schedaro's secure sign-in.</p>
       </div>
     </section>

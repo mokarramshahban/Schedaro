@@ -187,5 +187,23 @@ Every future implementation must be built and made live before completion. Valid
 - Browser click-through/screenshots: NOT TESTED — browser automation is unavailable. Manual acceptance remains required for 375px, 768px and 1440px wizard flow, institution switching, details and workspace opening.
 - Existing demo data/volume: preserved; no destructive Docker or database command was used.
 
+## Stage 7C verification record
+
+- Branch base: PASS — Stage 7B merged into `main` at `f90c131`; Stage 7C branch created cleanly.
+- Frontend Vitest: PASS — 66 tests.
+- Backend pytest: PASS — 33 passed, 3 skipped before Stage 7C-specific tests.
+- Frontend TypeScript/production build: PASS.
+- Docker Compose validation, backend/frontend builds and refresh: PASS.
+- Frontend/backend liveness/readiness: PASS — HTTP 200.
+- Public portal slug resolution: PASS through the live API.
+- Invitation creation and local email capture: PASS through the live API/TestClient path.
+- Invitation inspection and activation: PASS; replayed token rejected.
+- Generic password-recovery response: PASS — HTTP 202.
+- Unauthenticated provisioning/invitation authorization: existing owner-only dependency remains enforced; browser credentialed flow was not available.
+- Browser portal/login/invitation click-through and screenshots: NOT TESTED — browser automation is unavailable.
+- External email deliverability: NOT TESTED; implementation uses persisted local development capture, not SMTP.
+- Full cross-tenant child-record isolation: NOT VERIFIED; legacy route/session architecture remains a documented blocker.
+- Existing PostgreSQL records and named volume: preserved.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.

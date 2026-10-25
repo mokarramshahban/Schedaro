@@ -32,8 +32,11 @@ Persisted scheduling requirements, teacher availability windows, locked-session 
 ## Stage 7A — Platform Foundation — COMPLETE IN MAIN
 Central `schedaro_platform` registry, secure development-only Platform Owner bootstrap, HttpOnly server-side sessions, owner-only platform overview, trusted tenant database registry, isolated development tenant provisioning command, authenticated legacy academic routes, universal login, and role-aware Platform Overview/institution selector foundation are merged to `main` at the Stage 7A merge. Existing `schedaro_db` academic records and named volumes were preserved. Ordinary-user membership routing, MFA, production CSRF/rate limiting and browser visual verification remain known limitations.
 
-## Stage 7B — College Onboarding & Provisioning — IMPLEMENTED ON FEATURE BRANCH, OWNER REVIEW REQUIRED
-The Stage 7B branch adds a Platform Owner institution registry dashboard, five-step onboarding wizard, validated profile and academic defaults, generated isolated PostgreSQL tenant databases, existing Alembic migration application, optional initial departments, persisted idempotent provisioning operations, readiness checks, failure state and safe retry endpoint, details view, and Active Institution refresh. College administrator invitations and identity handoff remain deferred to Stage 7C. Owner must review, manually stage/commit/merge, and complete browser click-through before proceeding.
+## Stage 7B — College Onboarding & Provisioning — COMPLETE IN MAIN
+The Stage 7B implementation is merged to `main`: Platform Owner institution registry dashboard, five-step onboarding wizard, validated profile and academic defaults, generated isolated PostgreSQL tenant databases, existing Alembic migration application, optional initial departments, persisted idempotent provisioning operations, readiness checks, failure state and safe retry endpoint, details view, and Active Institution refresh. Browser click-through remains owner-side.
+
+## Stage 7C — Invitation Authentication & College Portals — IMPLEMENTED ON FEATURE BRANCH, INCOMPLETE
+The Stage 7C branch adds stable college portal slugs, shared portal branding/login, central invitation and membership activation, hashed expiring single-use tokens, local email capture, password-recovery backend, invitation management UI, and initial membership guards. External email delivery, complete child-record tenant authorization, browser verification and full password-recovery UI remain incomplete. Stage 7D was not started.
 
 ## Stage 7 — Deployment — NOT STARTED
 Vercel frontend, Render API, managed PostgreSQL. Depends on production security and testing.
