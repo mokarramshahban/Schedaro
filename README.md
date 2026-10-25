@@ -20,6 +20,8 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 - Client-side feedback with authoritative server-side conflict validation.
 - Responsive desktop, tablet and mobile timetable layout.
 - FastAPI, PostgreSQL and Rust scheduling-engine health indicators.
+- Central Platform Owner identity, ready-college provisioning and college-specific `/c/{slug}` portals.
+- Invitation-only College Administrator onboarding with email and offline/manual one-time-key activation paths.
 - Accessible controls, focus states and keyboard-friendly dialogs.
 - Institution-branded A4 landscape print preview with a legacy saved header/signature editor and a gated pdfme visual template designer, using browser-side Print / Save as PDF and generated PDF workflows.
 - Deterministic OR-Tools timetable generation from persisted weekly requirements, teacher availability, room suitability and existing bookings.
@@ -77,7 +79,9 @@ Never use `docker compose down -v`.
 
 ## Development
 
-Keep changes focused on the timetable product. Run the relevant frontend tests and TypeScript checks before committing. For implementation changes, build the affected image, refresh the required container, verify the live application and review the complete diff for secrets, restricted assets and licensing concerns. Documentation-only changes do not require a Docker rebuild.
+Keep changes focused on the timetable product. Run the relevant frontend tests and TypeScript checks before reporting work. For implementation changes, build the affected image, refresh the required container, verify the live application and review the complete diff for secrets, restricted assets and licensing concerns. Documentation-only changes do not require a Docker rebuild.
+
+Read the [Contributor Guide](docs/CONTRIBUTOR_GUIDE.md), [Architecture](docs/ARCHITECTURE.md), [Security](docs/SECURITY.md), [Database](docs/DATABASE.md), [Testing](docs/TESTING.md), [Roadmap](docs/ROADMAP.md), [Decision Index](docs/DECISION_INDEX.md) and [Documentation Policy](docs/DOCUMENTATION_POLICY.md). Run `python scripts/check_docs.py` after documentation changes. Every meaningful implementation task includes a documentation-impact review.
 
 ## License
 

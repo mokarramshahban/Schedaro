@@ -39,7 +39,7 @@ The Stage 7B implementation is merged to `main`: Platform Owner institution regi
 The Stage 7C branch adds stable college portal slugs, shared portal branding/login, central invitation and membership activation, hashed expiring single-use tokens, local email capture, password-recovery backend, invitation management UI, and initial membership guards. External email delivery, complete child-record tenant authorization, browser verification and full password-recovery UI remain incomplete. Stage 7D was not started.
 
 ## Stage 7C.1 — Manual / Offline Invitations — IMPLEMENTED ON FEATURE BRANCH, INCOMPLETE
-The Stage 7C.1 branch adds manual activation URL/key generation, one-time hashed keys, pending owner approval, activation and replay protection, manual invitation UI and a no-email fallback. Browser verification, final email regression and full cross-tenant authorization remain incomplete. Stage 7D was not started.
+The Stage 7C.1 branch adds manual activation URL/key generation, one-time hashed keys, pending owner approval, activation and replay protection, manual invitation UI and a no-email fallback. Browser verification, final email regression and full cross-tenant authorization remain incomplete. Architecture decisions and living documentation governance are recorded in [DECISION_INDEX](DECISION_INDEX.md), [CONTRIBUTOR_GUIDE](CONTRIBUTOR_GUIDE.md) and [DOCUMENTATION_POLICY](DOCUMENTATION_POLICY.md). Stage 7D was not started.
 
 ## Stage 7 — Deployment — NOT STARTED
 Vercel frontend, Render API, managed PostgreSQL. Depends on production security and testing.

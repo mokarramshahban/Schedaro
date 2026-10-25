@@ -1,7 +1,7 @@
 # Schedaro Agent Guide
 
 ## Project and current stage
-Schedaro is the Smart Academic Timetable Builder. **Stage 7A — Platform Foundation — is implemented on a feature branch pending owner review.** Do not begin Stage 7B or later.
+Schedaro is the Smart Academic Timetable Builder. Stage 7C.1 manual/offline invitations are implemented on the owner-controlled feature branch with documented security and verification limitations. Stage 7D is not started. Read [docs/CONTRIBUTOR_GUIDE.md](docs/CONTRIBUTOR_GUIDE.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/SECURITY.md](docs/SECURITY.md), [docs/DATABASE.md](docs/DATABASE.md), and [docs/DOCUMENTATION_POLICY.md](docs/DOCUMENTATION_POLICY.md) before significant work.
 
 ## Product scope
 Keep the product focused on institution settings, classes, subjects, teachers, rooms, weekly timetables, validation, persistence, accessibility, and printing. Do not expand it into an unrelated institutional ERP.
@@ -23,12 +23,11 @@ After implementation:
 
 1. Run relevant automated tests.
 2. Review the complete working-tree diff and privacy/provenance implications.
-3. Confirm ignored files, credentials, restricted assets, and private documents cannot be staged.
-4. Stage only approved changes and inspect the staged file list and diff.
-5. Commit locally with a meaningful message.
-6. Never run `git push`, `git push --force`, or `git push --force-with-lease`. The owner performs publication manually.
+3. Confirm ignored files, credentials, restricted assets and private documents remain protected.
+4. Run `python scripts/check_docs.py` after documentation changes.
+5. Report the complete unstaged file list and suggested commit message to the owner.
 
-Use only safe, targeted index operations for approved privacy cleanup. Do not rewrite history automatically.
+Harness never stages, commits, pushes, merges, rebases, stashes, hard-resets or cleans. Do not rewrite history or modify the index.
 
 ## Privacy and licensing
 Do not add secrets, generated runtime data, or restricted third-party assets. Review public documentation for sensitive information. Keep restricted design material local and excluded through the root `.gitignore`; never copy or publish it without verified redistribution rights. The MIT license applies only to original Schedaro code and assets that Schedaro has the right to license.
