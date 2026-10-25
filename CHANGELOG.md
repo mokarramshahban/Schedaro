@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Clarified Manage Requirements editing with one inline, visibly highlighted editor per saved record, full subject/type/teacher identity, stable-ID updates, safe unsaved-change switching, clear save/cancel actions, and deactivate/reactivate controls.
+
 - Completed Stage 1 UI Design Foundation with a responsive timetable-first shell.
 - Added reusable navigation, header, button, card, status, and empty-workspace components.
 - Added FastAPI health/status endpoints and PostgreSQL-backed readiness checks.
