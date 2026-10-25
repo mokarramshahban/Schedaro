@@ -27,6 +27,9 @@ def test_owner_issues_single_use_manual_key_and_reset_invalidates_sessions():
         issued = client.post(f"/api/v1/platform/users/{target_id}/manual-password-reset", json={"confirmation": "RESET", "expiration_minutes": 30})
         assert issued.status_code == 201, issued.text
         body = issued.json(); raw_key = body["reset_key"]
+        replacement = client.post(f"/api/v1/platform/users/{target_id}/manual-password-reset", json={"confirmation": "RESET", "expiration_minutes": 30})
+        assert replacement.status_code == 201 and replacement.json()["replaced_previous"] is True
+        body = replacement.json(); raw_key = body["reset_key"]
         with PlatformSessionLocal() as db:
             record = db.get(PlatformManualPasswordReset, body["reset_id"])
             assert record is not None and record.key_hash != raw_key and record.key_hash
