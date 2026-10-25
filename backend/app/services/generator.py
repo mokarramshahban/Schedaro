@@ -116,6 +116,49 @@ def _gap_cost(group_id: str, day: str, start: int, end: int, existing: list[Time
     return min(min(abs(start - session.end_minute), abs(session.start_minute - end)) for session in same_day)
 
 
+def _estimated_choice_count(requirements: list[SchedulingRequirement], config: GenerationConfig, rooms: list[Room]) -> int:
+    slots = max(0, (config.daily_end - config.daily_start) // max(config.quantum, 1))
+    return sum(requirement.weekly_count * len(config.working_days) * slots * sum(compatible_room(room, requirement.room_type) for room in rooms) for requirement in requirements)
+
+
+def _greedy_candidate(requirements: list[SchedulingRequirement], existing: list[TimetableSession], availability: list[TeacherAvailability], rooms: list[Room], config: GenerationConfig) -> list[dict[str, Any]] | None:
+    chosen: list[dict[str, Any]] = []
+    group_ids = {requirement.class_group_id for requirement in requirements}
+    loads = {(group_id, day): sum(session.end_minute - session.start_minute for session in existing if session.class_group_id == group_id and session.day_of_week == day) for group_id in group_ids for day in config.working_days}
+    ordered_requirements = sorted(requirements, key=lambda item: (len(config.working_days), -item.duration_minutes, item.id))
+    for requirement in ordered_requirements:
+        for _ in range(requirement.weekly_count):
+            options: list[dict[str, Any]] = []
+            for day_index, day in enumerate(config.working_days):
+                for start in range(config.daily_start, config.daily_end - requirement.duration_minutes + 1, config.quantum):
+                    end = start + requirement.duration_minutes
+                    if not teacher_permitted(requirement.teacher_id, day, start, end, availability):
+                        continue
+                    for room in sorted(rooms, key=lambda item: item.id):
+                        if not compatible_room(room, requirement.room_type):
+                            continue
+                        placement = {"id": new_id(), "class_group_id": requirement.class_group_id, "subject_id": requirement.subject_id, "teacher_id": requirement.teacher_id, "room_id": room.id, "session_type": requirement.session_type, "day": day, "day_index": day_index, "start_minute": start, "end_minute": end, "gap_cost": _gap_cost(requirement.class_group_id, day, start, end, existing + [_as_session_stub(item) for item in chosen])}
+                        if _placement_conflicts_existing(placement, existing) or any(_placement_conflicts(placement, item) for item in chosen):
+                            continue
+                        options.append(placement)
+            if not options:
+                return None
+            if config.preference == "earlier":
+                options.sort(key=lambda item: (item["start_minute"], item["day_index"], item["room_id"]))
+            elif config.preference == "gaps":
+                options.sort(key=lambda item: (item["gap_cost"], item["start_minute"], item["day_index"], item["room_id"]))
+            else:
+                options.sort(key=lambda item: (loads[(item["class_group_id"], item["day"])] + (item["end_minute"] - item["start_minute"]), loads[(item["class_group_id"], item["day"])], item["day_index"], item["start_minute"], item["room_id"]))
+            selected = options[0]
+            chosen.append(selected)
+            loads[(selected["class_group_id"], selected["day"])] += selected["end_minute"] - selected["start_minute"]
+    return chosen
+
+
+def _as_session_stub(placement: dict[str, Any]) -> Any:
+    return type("PlacementSession", (), {"class_group_id": placement["class_group_id"], "teacher_id": placement["teacher_id"], "room_id": placement["room_id"], "day_of_week": placement["day"], "start_minute": placement["start_minute"], "end_minute": placement["end_minute"]})()
+
+
 def generate_candidate(db: Session, requirements: list[SchedulingRequirement], existing: list[TimetableSession], availability: list[TeacherAvailability], rooms: list[Room], config: GenerationConfig) -> dict[str, Any]:
     if cp_model is None:
         raise GeneratorUnavailable("OR-Tools is unavailable in the backend image.")
@@ -123,6 +166,25 @@ def generate_candidate(db: Session, requirements: list[SchedulingRequirement], e
         return {"status": "INFEASIBLE", "message": "No active scheduling requirements are configured for the selected class group(s).", "sessions": [], "objective_value": None, "solve_time_ms": 0}
     if config.daily_end <= config.daily_start:
         return {"status": "MODEL_INVALID", "message": "The daily end time must be later than the daily start time.", "sessions": [], "objective_value": None, "solve_time_ms": 0}
+    if not config.working_days or len(set(config.working_days)) != len(config.working_days) or any(day not in DAYS for day in config.working_days):
+        return {"status": "MODEL_INVALID", "message": "The selected working days are invalid or duplicated.", "sessions": [], "objective_value": None, "solve_time_ms": 0}
+    if config.quantum < 5 or config.quantum > 60:
+        return {"status": "MODEL_INVALID", "message": "The start-time resolution must be between 5 and 60 minutes.", "sessions": [], "objective_value": None, "solve_time_ms": 0}
+    if any(requirement.duration_minutes <= 0 or requirement.duration_minutes > config.daily_end - config.daily_start for requirement in requirements):
+        return {"status": "INFEASIBLE", "message": "At least one requirement duration does not fit inside the selected daily window.", "sessions": [], "objective_value": None, "solve_time_ms": 0}
+    for requirement in requirements:
+        if not any(compatible_room(room, requirement.room_type) for room in rooms):
+            return {"status": "INFEASIBLE", "message": f"No active room satisfies the {requirement.room_type} requirement for {requirement.session_type}.", "sessions": [], "objective_value": None, "solve_time_ms": 0}
+        if not any(teacher_permitted(requirement.teacher_id, day, start, start + requirement.duration_minutes, availability) for day in config.working_days for start in range(config.daily_start, config.daily_end - requirement.duration_minutes + 1, config.quantum)):
+            return {"status": "INFEASIBLE", "message": f"Teacher availability leaves no valid slot for {requirement.session_type} sessions.", "sessions": [], "objective_value": None, "solve_time_ms": 0}
+
+    estimated_choices = _estimated_choice_count(requirements, config, rooms)
+    if estimated_choices >= 2000:
+        started = monotonic()
+        greedy = _greedy_candidate(requirements, existing, availability, rooms, config)
+        if greedy is not None:
+            elapsed = int((monotonic() - started) * 1000)
+            return {"status": "FEASIBLE", "message": "A valid timetable was generated with feasibility-first placement; review it before approval.", "sessions": [{key: placement[key] for key in ("id", "class_group_id", "subject_id", "teacher_id", "room_id", "session_type", "day", "start_minute", "end_minute")} for placement in greedy], "objective_value": None, "solve_time_ms": elapsed}
 
     model = cp_model.CpModel()
     choice_groups: list[list[tuple[Any, dict[str, Any]]]] = []

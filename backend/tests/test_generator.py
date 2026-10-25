@@ -46,3 +46,18 @@ def test_generator_preserves_existing_shared_resource_booking():
     result = generate_candidate(None, [requirement()], [existing], [], [room()], config(working_days=["monday"], daily_end=660))
     assert result["status"] in {"OPTIMAL", "FEASIBLE"}
     assert result["sessions"][0]["start_minute"] >= 600
+
+
+def test_large_owner_like_request_returns_feasible_without_waiting_for_balanced_optimum():
+    requirements = [requirement("lecture", teacher="t1", subject="s1", count=7), requirement("tutorial", teacher="t1", subject="s1", count=2), requirement("database", teacher="t2", subject="s2", count=5)]
+    result = generate_candidate(None, requirements, [], [], [room("room1"), room("room2"), room("room3")], config(working_days=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], daily_end=1020, quantum=30, preference="balanced", time_limit_seconds=10))
+    assert result["status"] == "FEASIBLE"
+    assert len(result["sessions"]) == 14
+    assert all(item["end_minute"] - item["start_minute"] == 60 for item in result["sessions"])
+
+
+def test_ten_minute_resolution_preserves_consecutive_forty_minute_periods():
+    result = generate_candidate(None, [requirement(duration=40, count=2)], [], [], [room()], config(working_days=["monday"], daily_end=660, quantum=10))
+    assert result["status"] in {"OPTIMAL", "FEASIBLE"}
+    assert all(item["end_minute"] - item["start_minute"] == 40 for item in result["sessions"])
+    assert all(item["start_minute"] % 10 == 0 for item in result["sessions"])

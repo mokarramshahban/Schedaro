@@ -177,8 +177,8 @@ class GenerateTimetableRequest(BaseModel):
     selected_requirement_ids: list[str] = Field(min_length=1, max_length=100)
     daily_start_time: str = Field(default="09:00", pattern=r"^\d{2}:\d{2}$")
     daily_end_time: str = Field(default="17:00", pattern=r"^\d{2}:\d{2}$")
-    quantum_minutes: int = Field(default=30, ge=5, le=60)
-    time_limit_seconds: int = Field(default=10, ge=1, le=30)
+    quantum_minutes: int = Field(default=10, ge=5, le=60)
+    time_limit_seconds: int = Field(default=30, ge=1, le=60)
     preference: Literal["balanced", "earlier", "gaps"] = "balanced"
     preserve_existing: bool = True
 
