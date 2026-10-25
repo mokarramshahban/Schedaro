@@ -205,5 +205,23 @@ Every future implementation must be built and made live before completion. Valid
 - Full cross-tenant child-record isolation: NOT VERIFIED; legacy route/session architecture remains a documented blocker.
 - Existing PostgreSQL records and named volume: preserved.
 
+## Stage 7C.1 verification record
+
+- Branch base: PASS — Stage 7C merged into `main` at `25f4378`.
+- Manual invitation creation: PASS — Platform Owner dependency and ready-institution checks enforced.
+- Key strength/storage: PASS — 32-byte URL-safe random source; only SHA-256 digest persisted.
+- Activation URL: PASS — contains institution slug and nonsecret invitation ID; key is separate.
+- One-time display: PASS by API contract; creation response returns the key, list/refresh responses do not.
+- SMTP unavailable fallback: PASS — manual creation does not depend on email capture.
+- Activation: PASS — creates inactive membership with pending owner approval.
+- Replay: PASS — second redemption rejected HTTP 400.
+- Approval: PASS — owner approval activated the intended membership.
+- Backend pytest: PASS — 37 passed, 3 skipped.
+- Frontend build: PASS.
+- Docker/live health: PASS before final UI refresh; final affected-service refresh pending after this increment.
+- Browser click-through/screenshots: NOT TESTED — browser automation unavailable.
+- Existing email invitation regression: not re-run after manual additions; local email path remains unchanged.
+- Existing academic data and PostgreSQL volume: preserved.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.

@@ -63,6 +63,8 @@ class InvitationRead(BaseModel):
     institution_name: str
     portal_slug: str | None = None
     role: str
+    method: str = "email"
+    approval_status: str = "not_required"
     status: str
     delivery_status: str
     expires_at: datetime
@@ -76,6 +78,42 @@ class InvitationInspectRead(BaseModel):
     portal_slug: str | None = None
     role: str
     expires_at: datetime
+
+
+class ManualInvitationCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=180)
+    expiration_hours: int = Field(default=168, ge=1, le=720)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_manual_email(cls, value: str) -> str:
+        value = value.strip().lower()
+        if "@" not in value:
+            raise ValueError("A valid email address is required.")
+        return value
+
+
+class ManualInvitationCreated(BaseModel):
+    invitation: InvitationRead
+    activation_url: str
+    activation_key: str
+    expires_at: datetime
+
+
+class ManualActivationRequest(BaseModel):
+    invitation_id: str
+    activation_key: str = Field(min_length=20, max_length=300)
+    email: str = Field(min_length=3, max_length=180)
+    password: str = Field(min_length=12, max_length=256)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_manual_activation_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class InvitationApprovalRequest(BaseModel):
+    decision: str = Field(pattern="^(approve|reject)$")
 
 
 class InvitationTokenRequest(BaseModel):
