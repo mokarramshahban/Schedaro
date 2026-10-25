@@ -44,8 +44,9 @@ MEMORY.md                Private internal handoff record
 5. **Email invitations:** an owner invites an administrator through the central invitation service and configured/local email delivery.
 6. **Manual invitations:** an owner generates a separate activation URL and one-time key. The key is shown once, stored only as a digest, and does not appear in the URL.
 7. **Activation:** a new identity receives an inactive membership pending owner approval. Approval activates the intended membership; rejection preserves inactive history.
-8. **Generation:** requirements and availability are validated, a bounded OR-Tools proposal is produced, Rust independently validates it, and the owner explicitly approves persistence.
-9. **Printing:** persisted institution data is rendered in the institution-branded print/PDF flow; protected academic records remain server-backed.
+8. **Role management:** authorized administrators use explicit role assignments, validated organizational scopes and delegated permissions; the header Acting as selector chooses an existing server-verified assignment rather than impersonating another identity.
+9. **Generation:** requirements and availability are validated, a bounded OR-Tools proposal is produced, Rust independently validates it, and the owner explicitly approves persistence.
+10. **Printing:** persisted institution data is rendered in the institution-branded print/PDF flow; protected academic records remain server-backed.
 
 ## Local development
 

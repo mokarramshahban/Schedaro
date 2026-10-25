@@ -67,6 +67,9 @@ def ensure_platform_schema() -> None:
         connection.execute(text("ALTER TABLE platform_provisioning_operations ADD COLUMN IF NOT EXISTS requested_departments JSON NOT NULL DEFAULT '[]'"))
         for column, definition in {"method": "VARCHAR(16) NOT NULL DEFAULT 'email'", "approval_status": "VARCHAR(24) NOT NULL DEFAULT 'not_required'", "claimed_user_id": "VARCHAR(36)"}.items():
             connection.execute(text(f"ALTER TABLE platform_invitations ADD COLUMN IF NOT EXISTS {column} {definition}"))
+        connection.execute(text("ALTER TABLE platform_sessions ADD COLUMN IF NOT EXISTS active_assignment_id VARCHAR(36)"))
+        for column, definition in {"scope_type": "VARCHAR(24) NOT NULL DEFAULT 'institution'", "scope_id": "VARCHAR(36)"}.items():
+            connection.execute(text(f"ALTER TABLE platform_invitations ADD COLUMN IF NOT EXISTS {column} {definition}"))
         connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_platform_institutions_portal_slug ON platform_institutions (portal_slug) WHERE portal_slug IS NOT NULL"))
         connection.execute(text("UPDATE platform_institutions SET portal_slug = trim(both '-' from regexp_replace(lower(coalesce(nullif(short_name, ''), name)), '[^a-z0-9]+', '-', 'g')) || '-' || left(replace(id, '-', ''), 6) WHERE portal_slug IS NULL"))
         connection.execute(text("INSERT INTO platform_schema_versions (version) VALUES ('20260306_0001'), ('20260307_0002') ON CONFLICT (version) DO NOTHING"))

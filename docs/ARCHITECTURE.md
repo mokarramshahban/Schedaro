@@ -34,7 +34,9 @@ The central platform database owns stable institution `portal_slug` values, invi
 
 Stage 7C.1 adds manual invitations alongside email invitations. A ready institution owner receives a nonsecret activation URL containing the invitation ID and a separately displayed high-entropy activation key. The raw key is not embedded in URLs or persisted. Redemption creates an inactive membership pending Platform Owner approval; approval activates the membership and rejection preserves inactive history. This path does not prove email ownership and therefore cannot bypass approval. Full legacy per-route tenant session routing, production CSRF/rate limiting, existing-user authenticated attachment, password-recovery UI and external email deliverability remain known limitations.
 
-See [ADR-0001](decisions/ADR-0001-multi-tenant-databases.md), [ADR-0002](decisions/ADR-0002-central-authentication.md), [ADR-0003](decisions/ADR-0003-college-portal-urls.md), [ADR-0005](decisions/ADR-0005-manual-invitation-fallback.md) and [ADR-0006](decisions/ADR-0006-owner-approval-manual-activation.md).
+Stage 7D adds explicit role assignments, a permission catalog, institution/department/semester/section scope validation, delegated role management and a server-side active assignment context. Roles are not reduced to a numeric rank. Platform Owner grants remain protected; role revocation clears matching session context. Central login identities remain distinct from tenant Teacher/Student records.
+
+See [ADR-0001](decisions/ADR-0001-multi-tenant-databases.md), [ADR-0002](decisions/ADR-0002-central-authentication.md), [ADR-0003](decisions/ADR-0003-college-portal-urls.md), [ADR-0005](decisions/ADR-0005-manual-invitation-fallback.md), [ADR-0006](decisions/ADR-0006-owner-approval-manual-activation.md), [ADR-0010](decisions/ADR-0010-role-scope-authorization.md), [ADR-0011](decisions/ADR-0011-acting-as-context.md) and [ADR-0012](decisions/ADR-0012-identity-academic-linking.md).
 
 ## Academic scope
 

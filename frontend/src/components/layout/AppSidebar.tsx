@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import { CalendarDays, ChevronRight, CircleHelp, DoorOpen, GraduationCap, LayoutGrid, Settings2, Shapes, UsersRound, X } from 'lucide-react'
 import { StatusDot } from '../ui/StatusDot'
 
-export type WorkspaceView = 'timetable' | 'subjects' | 'teachers' | 'rooms' | 'classes' | 'settings'
+export type WorkspaceView = 'timetable' | 'subjects' | 'teachers' | 'rooms' | 'classes' | 'access' | 'settings'
 type NavItem = { label: string; icon: LucideIcon; view: WorkspaceView }
 
 const navItems: NavItem[] = [
@@ -11,6 +11,7 @@ const navItems: NavItem[] = [
   { label: 'Teachers', icon: UsersRound, view: 'teachers' },
   { label: 'Rooms', icon: DoorOpen, view: 'rooms' },
   { label: 'Classes', icon: GraduationCap, view: 'classes' },
+  { label: 'Users & Access', icon: UsersRound, view: 'access' },
 ]
 
 type AppSidebarProps = { open: boolean; onClose: () => void; connected: boolean; currentView: WorkspaceView; onNavigate: (view: WorkspaceView) => void; platformOverview?: boolean }

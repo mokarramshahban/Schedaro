@@ -13,5 +13,8 @@ The ADRs below record significant decisions that contributors should preserve. H
 | [ADR-0007](decisions/ADR-0007-provisioning-state-machine.md) | Recoverable institution provisioning states | Accepted | Databases |
 | [ADR-0008](decisions/ADR-0008-proposal-before-timetable-persistence.md) | Review scheduling proposals before persistence | Accepted | Academic Scheduling |
 | [ADR-0009](decisions/ADR-0009-manual-git-governance.md) | Owner-controlled Git publication | Accepted | Development Workflow |
+| [ADR-0010](decisions/ADR-0010-role-scope-authorization.md) | Explicit role and organizational scope authorization | Accepted | Authorization |
+| [ADR-0011](decisions/ADR-0011-acting-as-context.md) | Secure acting-as authorization context | Accepted | Authorization |
+| [ADR-0012](decisions/ADR-0012-identity-academic-linking.md) | Central identities distinct from academic records | Accepted | Authentication |
 
 [ADR-TEMPLATE](decisions/ADR-TEMPLATE.md) is the required format for future decisions.

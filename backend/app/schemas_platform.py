@@ -36,6 +36,48 @@ class PlatformMembershipRead(BaseModel):
     active: bool
 
 
+class RoleAssignmentRead(BaseModel):
+    id: str
+    user_id: str
+    user_email: str | None = None
+    institution_id: str
+    role: str
+    scope_type: str
+    scope_id: str | None = None
+    scope_label: str | None = None
+    designation: str | None = None
+    status: str
+    granted_by: str
+    created_at: datetime | None = None
+
+
+class RoleAssignmentCreate(BaseModel):
+    user_id: str
+    institution_id: str
+    role: str
+    scope_type: str = "institution"
+    scope_id: str | None = None
+    designation: str | None = Field(default=None, max_length=120)
+
+
+class RoleContextRead(BaseModel):
+    assignment_id: str | None = None
+    institution_id: str | None = None
+    role: str | None = None
+    scope_type: str | None = None
+    scope_id: str | None = None
+    permissions: list[str] = Field(default_factory=list)
+
+
+class RoleContextSelect(BaseModel):
+    assignment_id: str
+
+
+class PermissionDefinition(BaseModel):
+    key: str
+    description: str
+
+
 class PortalPublicRead(BaseModel):
     name: str
     portal_slug: str
@@ -45,7 +87,9 @@ class PortalPublicRead(BaseModel):
 
 class InvitationCreate(BaseModel):
     email: str = Field(min_length=3, max_length=180)
-    role: str = Field(default="institution_admin", pattern="^institution_admin$")
+    role: str = Field(default="institution_admin", pattern="^(institution_admin|college_administrator|director|dean|registrar|hod|academic_coordinator|class_in_charge|faculty|student)$")
+    scope_type: str = "institution"
+    scope_id: str | None = None
 
     @field_validator("email")
     @classmethod
@@ -63,6 +107,8 @@ class InvitationRead(BaseModel):
     institution_name: str
     portal_slug: str | None = None
     role: str
+    scope_type: str = "institution"
+    scope_id: str | None = None
     method: str = "email"
     approval_status: str = "not_required"
     status: str

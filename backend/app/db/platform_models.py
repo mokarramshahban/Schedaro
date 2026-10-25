@@ -73,6 +73,23 @@ class PlatformMembership(PlatformBase):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class PlatformRoleAssignment(PlatformBase):
+    __tablename__ = "platform_role_assignments"
+    __table_args__ = (Index("ix_platform_role_assignment_user_institution", "user_id", "institution_id"), Index("ix_platform_role_assignment_scope", "institution_id", "scope_type", "scope_id"))
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    institution_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    role: Mapped[str] = mapped_column(String(40), nullable=False)
+    scope_type: Mapped[str] = mapped_column(String(24), nullable=False, default="institution", server_default="institution")
+    scope_id: Mapped[str | None] = mapped_column(String(36))
+    designation: Mapped[str | None] = mapped_column(String(120))
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="active", server_default="active")
+    granted_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class PlatformInvitation(PlatformBase):
     __tablename__ = "platform_invitations"
     __table_args__ = (Index("ix_platform_invitation_email", "recipient_email"), Index("ix_platform_invitation_institution", "institution_id"),)
@@ -80,7 +97,9 @@ class PlatformInvitation(PlatformBase):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     recipient_email: Mapped[str] = mapped_column(String(180), nullable=False)
     institution_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    role: Mapped[str] = mapped_column(String(32), nullable=False, default="institution_admin", server_default="institution_admin")
+    role: Mapped[str] = mapped_column(String(40), nullable=False, default="institution_admin", server_default="institution_admin")
+    scope_type: Mapped[str] = mapped_column(String(24), nullable=False, default="institution", server_default="institution")
+    scope_id: Mapped[str | None] = mapped_column(String(36))
     inviter_user_id: Mapped[str] = mapped_column(String(36), nullable=False)
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     method: Mapped[str] = mapped_column(String(16), nullable=False, default="email", server_default="email")
@@ -125,6 +144,7 @@ class PlatformSession(PlatformBase):
     user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    active_assignment_id: Mapped[str | None] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
