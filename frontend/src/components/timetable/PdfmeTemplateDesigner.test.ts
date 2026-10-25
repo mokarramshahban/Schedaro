@@ -111,6 +111,13 @@ describe('pdfme timetable template POC', () => {
     expect((exportablePdfmeTemplate(result.template).schemas[0][0] as Record<string, unknown>).readOnly).toBeUndefined()
     expect(result.template.schemas[0].some((item) => item.name === 'session_subject_session-1')).toBe(true)
     expect(result.template.schemas[0].some((item) => item.name === 'session_card_session-1')).toBe(true)
+    const grid = timetableGeometry(populated.workingDays)
+    const firstCard = result.template.schemas[0].find((item) => item.name === 'session_card_session-1') as any
+    const firstAccent = result.template.schemas[0].find((item) => item.name === 'session_accent_session-1') as any
+    expect(firstCard.position.y).toBe(grid.gridTop + 1)
+    expect(firstCard.position.y + firstCard.height).toBeLessThan(grid.gridBottom)
+    expect(firstAccent.position.x).toBe(firstCard.position.x)
+    expect(firstAccent.position.y).toBe(firstCard.position.y)
     expect(result.inputs['session_subject_session-1']).toContain('Algorithms')
     expect(new TextDecoder().decode(pdf.slice(0, 5))).toBe('%PDF-')
   })

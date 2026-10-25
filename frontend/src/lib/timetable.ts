@@ -61,6 +61,14 @@ export function timeLabelY(minutes: number, origin: number, end: number, topMm: 
   return topMm + ratio * (bottomMm - topMm) - labelHeightMm / 2
 }
 
+export type SessionCardGeometry = { x: number; y: number; width: number; height: number; insetMm: number }
+
+/** Inner visual card geometry; the outer interval remains the exact schedule rectangle. */
+export function sessionCardGeometry(x: number, y: number, width: number, height: number, preferredInsetMm = 1): SessionCardGeometry {
+  const insetMm = Math.min(preferredInsetMm, Math.max(0.35, (height - 4) / 2))
+  return { x: x + insetMm, y: y + insetMm, width: Math.max(1, width - insetMm * 2), height: Math.max(2, height - insetMm * 2), insetMm }
+}
+
 export function minutesToPosition(minutes: number, origin = SCHEDULE_START_MINUTES, pixelsPerHour = PIXELS_PER_HOUR): number {
   return ((minutes - origin) / 60) * pixelsPerHour
 }

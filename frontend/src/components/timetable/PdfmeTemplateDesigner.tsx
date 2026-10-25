@@ -6,7 +6,7 @@ import { image, line, rectangle, text } from '@pdfme/schemas'
 import type { AcademicTerm, ClassGroup, Department, Institution, Resource, Semester } from '../../lib/api'
 import { createPdfmeTemplate as createPdfmeTemplateRecord, listPdfmeTemplates, updatePdfmeTemplate } from '../../lib/managementApi'
 import type { PdfmeTemplateRecord } from '../../lib/printLayout'
-import { DAY_LABELS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, timeLabelY, type TimetableSession } from '../../lib/timetable'
+import { DAY_LABELS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, sessionCardGeometry, timeLabelY, type TimetableSession } from '../../lib/timetable'
 import { resolveHeaderLayout, type HeaderLayoutConfig } from '../../lib/pdfHeaderLayout'
 
 const pdfmePlugins = { text, image, line, rectangle }
@@ -66,10 +66,12 @@ export function createPdfmeTemplate(context: DesignerContext, signatureCount = 0
     const sessionStart = Math.max(start, minutes(session.startTime))
     const sessionEnd = Math.min(end, minutes(session.endTime))
     if (sessionEnd <= sessionStart) return
-    const x = left + timeWidth + dayIndex * dayWidth + 1.2
-    const y = gridTop + ((sessionStart - start) / (end - start)) * gridHeight
-    const h = Math.max(5.8, ((sessionEnd - sessionStart) / (end - start)) * gridHeight)
-    const cardWidth = dayWidth - 2.4
+    const outerX = left + timeWidth + dayIndex * dayWidth
+    const outerY = gridTop + ((sessionStart - start) / (end - start)) * gridHeight
+    const outerHeight = Math.max(5.8, ((sessionEnd - sessionStart) / (end - start)) * gridHeight)
+    const outerWidth = dayWidth
+    const card = sessionCardGeometry(outerX, outerY, outerWidth, outerHeight)
+    const { x, y, width: cardWidth, height: h } = card
     const style = sessionPresentation(session.type)
     const subject = resourceName(resources.subjects, session.subjectId, 'Subject unavailable')
     const teacher = resourceName(resources.teachers, session.teacherId, 'Teacher unavailable')

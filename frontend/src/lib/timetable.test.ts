@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoSessions } from '../data/timetableDemo'
-import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, timeLabelY, workingDaysForWeek, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
+import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, sessionCardGeometry, timeLabelY, workingDaysForWeek, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
 
 const baseSession: TimetableSession = {
   id: 'test-session',
@@ -51,6 +51,14 @@ describe('shared timetable coordinate model', () => {
     expect(timeLabelY(600, 540, 1020, top, bottom)).toBeCloseTo(60.5, 3)
     expect(minutesToPosition(540)).toBe(0)
     expect(minutesToPosition(1020)).toBe(672)
+  })
+
+  it('insets visual cards without changing the outer interval', () => {
+    expect(sessionCardGeometry(10, 20, 40, 60)).toEqual({ x: 11, y: 21, width: 38, height: 58, insetMm: 1 })
+    const short = sessionCardGeometry(10, 20, 40, 5.8)
+    expect(short.insetMm).toBeLessThan(1)
+    expect(short.y).toBeGreaterThan(20)
+    expect(short.y + short.height).toBeLessThan(25.8)
   })
 
   it('treats boundary-touching intervals as consecutive, not overlapping', () => {
