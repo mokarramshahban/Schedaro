@@ -35,6 +35,11 @@ describe('pdfme timetable template POC', () => {
     expect(timetableGeometry(context.workingDays, true).gridBottom).toBe(159)
     expect(timetableGeometry(context.workingDays, true, 'compact').top).toBe(68)
     expect(timetableGeometry(context.workingDays, true, 'spacious').top).toBe(74)
+    const compactTemplate = { ...createPdfmeTemplate(context, 0, 'data:image/png;base64,iVBORw0KGgo=', 'compact').template, __schedaroAssets: { letterhead: 'data:image/png;base64,iVBORw0KGgo=' } }
+    const spacious = materializePdfmeTemplate({ ...compactTemplate, __schedaroLayout: { headerSpacing: 'spacious' } } as any, context)
+    const compactDay = compactTemplate.schemas[0].find((item) => item.name === 'day_monday') as any
+    const spaciousDay = spacious.schemas[0].find((item) => item.name === 'day_monday') as any
+    expect(spaciousDay.position.y - compactDay.position.y).toBe(6)
     expect(timetableGeometry([...context.workingDays, 'saturday']).dayWidth).toBe(41.5)
     expect(fiveDay.some((item) => item.name === 'timetable_grid_hour-1')).toBe(true)
     const gridLine = createPdfmeTemplate(context, 0).template.schemas[0].find((item) => item.name === 'timetable_grid_outer-top') as Record<string, unknown>

@@ -171,7 +171,7 @@ export function PdfmeTemplateDesigner({ institutionId, initialTemplateId, onClos
   })
 
   function updateSchema(nameToUpdate: string, patch: Partial<PdfmeSchema>) { setTemplate((current) => ({ ...current, schemas: [[...(current.schemas[0] as PdfmeSchema[]).map((item) => item.name === nameToUpdate ? { ...item, ...patch } : item)]] })) }
-  function setHeaderSpacing(value: HeaderSpacing) { setTemplate((current) => ({ ...current, __schedaroLayout: { ...(current as PersistedPdfmeTemplate).__schedaroLayout, headerSpacing: value } } as Template)) }
+  function setHeaderSpacing(value: HeaderSpacing) { const next = materializePdfmeTemplate({ ...template, __schedaroLayout: { ...(template as PersistedPdfmeTemplate).__schedaroLayout, headerSpacing: value } } as Template, context); setTemplate(next); setInputs(hydratePdfmeInputs(next, context, { letterhead: inputs.letterhead }, inputs)) }
   function startInteraction(event: ReactPointerEvent<HTMLElement>, item: PdfmeSchema, mode: Interaction['mode']) { event.preventDefault(); event.stopPropagation(); setSelectedName(item.name); if (canvasRef.current) interactionRef.current = { name: item.name, mode, startX: event.clientX, startY: event.clientY, original: item, canvas: canvasRef.current } }
   function updateInput(value: string) { if (!selected) return; setInputs((current) => ({ ...current, [selected.name]: value })) }
   function addText() { const nameToAdd = `custom_text_${Date.now()}`; const item = schema(nameToAdd, 'text', 30, 25, 100, 10, { fontSize: 11, alignment: 'left', readOnly: false }); setTemplate((current) => ({ ...current, schemas: [[...(current.schemas[0] as PdfmeSchema[]), item]] })); setInputs((current) => ({ ...current, [nameToAdd]: 'New text' })); setSelectedName(nameToAdd) }
