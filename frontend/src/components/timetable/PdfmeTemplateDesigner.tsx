@@ -23,7 +23,19 @@ type Interaction = { name: string; mode: 'move' | 'resize'; startX: number; star
 type PersistedPdfmeTemplate = Template & { __schedaroAssets?: { letterhead?: string }; __schedaroInputs?: Record<string, string>; __schedaroLayout?: HeaderLayoutConfig }
 
 function schema(name: string, type: string, x: number, y: number, width: number, height: number, extra: Record<string, unknown> = {}): PdfmeSchema { return { name, type, position: { x, y }, width, height, ...extra } }
-function resourceName(items: Resource[], id: string, fallback: string) { return items.find((item) => item.id === id)?.name ?? fallback }
+function resourceLabel(items: Resource[], id: string, fallback: string) { const item = items.find((entry) => entry.id === id); return item ? `${item.code ? `${item.code} · ` : ''}${item.name}` : fallback }
+export function fitPdfText(textValue: string, maxWidthMm: number, fontSize: number) { const maxChars = Math.max(1, Math.floor(maxWidthMm / Math.max(0.35, fontSize * 0.18))); if (textValue.length <= maxChars) return textValue; if (maxChars <= 1) return '…'; return `${textValue.slice(0, maxChars - 1).trimEnd()}…` }
+export type PdfSessionContent = { subject: string; subjectFontSize: number; subjectHeight: number; time?: string; type?: string; details?: string; timeOffset?: number; typeOffset?: number; detailsOffset?: number; detailsHeight?: number }
+export function pdfSessionContent(cardWidth: number, cardHeight: number, subject: string, type: string, time: string, teacher: string, room: string): PdfSessionContent {
+  const width = Math.max(8, cardWidth - 3.2)
+  const usableHeight = Math.max(0, cardHeight - 0.8)
+  const subjectFontSize = usableHeight < 5 ? 5.1 : usableHeight < 9 ? 5.6 : 6.4
+  const content: PdfSessionContent = { subject: fitPdfText(subject, width, subjectFontSize), subjectFontSize, subjectHeight: Math.min(2.8, Math.max(2.2, usableHeight - 0.2)) }
+  if (usableHeight >= 5) { content.time = fitPdfText(time, width, 4.8); content.timeOffset = 3.05 }
+  if (usableHeight >= 7.2) { content.type = type; content.typeOffset = 5.0 }
+  if (usableHeight >= 11.2) { content.details = `${fitPdfText(teacher, width, 4.5)} · ${fitPdfText(room, width, 4.5)}`; content.detailsOffset = 7.0; content.detailsHeight = Math.max(1.5, usableHeight - 7.2) }
+  return content
+}
 function minutes(value: string) { const [hours, mins] = value.split(':').map(Number); return hours * 60 + mins }
 export type HeaderSpacing = 'compact' | 'standard' | 'spacious'
 export const HEADER_GAPS: Record<HeaderSpacing, number> = { compact: 4, standard: 7, spacious: 10 }
@@ -76,22 +88,21 @@ export function createPdfmeTemplate(context: DesignerContext, signatureCount = 0
     const card = sessionCardGeometry(outerX, outerY, outerWidth, outerHeight)
     const { x, y, width: cardWidth, height: h } = card
     const style = sessionPresentation(session.type)
-    const subject = resourceName(resources.subjects, session.subjectId, 'Subject unavailable')
-    const teacher = resourceName(resources.teachers, session.teacherId, 'Teacher unavailable')
-    const room = resourceName(resources.rooms, session.roomId, 'Room unavailable')
+    const subject = resourceLabel(resources.subjects, session.subjectId, 'Subject unavailable')
+    const teacher = resourceLabel(resources.teachers, session.teacherId, 'Teacher unavailable')
+    const room = resourceLabel(resources.rooms, session.roomId, 'Room unavailable')
     schemas.push(schema(`session_card_${session.id}`, 'rectangle', x, y, cardWidth, h, { color: style.fill, borderColor: style.border, borderWidth: 0.35, opacity: 1, radius: 0.8, readOnly: true }))
     schemas.push(schema(`session_accent_${session.id}`, 'rectangle', x, y, 1.2, h, { color: style.accent, borderColor: style.accent, borderWidth: 0, opacity: 1, readOnly: true }))
-    const duration = sessionEnd - sessionStart
-    if (duration < 45) {
-      addText(`session_info_${session.id}`, `${subject}\n${session.startTime}–${session.endTime} · ${session.type}\n${teacher} · ${room}`, x + 2.2, y + 0.8, cardWidth - 3, h - 1.2, { fontSize: 4.5, alignment: 'left', lineHeight: 1.05, readOnly: true })
+    const content = pdfSessionContent(cardWidth, h, subject, session.type, `${session.startTime}–${session.endTime}`, teacher, room)
+    const textX = x + 2.2
+    const textWidth = cardWidth - 3.2
+    if (!content.time) {
+      addText(`session_info_${session.id}`, content.subject, textX, y + 0.4, textWidth, content.subjectHeight, { fontSize: content.subjectFontSize, alignment: 'left', lineHeight: 1, readOnly: true })
     } else {
-      const subjectHeight = Math.min(duration < 75 ? 6.8 : 6.2, h - 1)
-      const metaY = y + subjectHeight + 0.35
-      const detailsY = metaY + 2.55
-      const compactDetails = duration < 75
-      addText(`session_subject_${session.id}`, subject, x + 2.2, y + 0.8, cardWidth - 3, subjectHeight, { fontSize: duration < 75 ? 5.8 : TIMETABLE_PRESENTATION.subjectSize, alignment: 'left', lineHeight: 1.05, readOnly: true })
-      addText(`session_meta_${session.id}`, `${session.startTime}–${session.endTime} · ${session.type}`, x + 2.2, metaY, cardWidth - 3, 2.4, { fontSize: TIMETABLE_PRESENTATION.metaSize, alignment: 'left', readOnly: true })
-      addText(`session_details_${session.id}`, compactDetails ? `${teacher} · ${room}` : `${teacher}\n${room}`, x + 2.2, detailsY, cardWidth - 3, Math.max(1.6, h - (detailsY - y) - 0.6), { fontSize: compactDetails ? 4.8 : TIMETABLE_PRESENTATION.detailSize, alignment: 'left', lineHeight: 1.05, readOnly: true })
+      addText(`session_subject_${session.id}`, content.subject, textX, y + 0.4, textWidth, content.subjectHeight, { fontSize: content.subjectFontSize, alignment: 'left', lineHeight: 1, readOnly: true })
+      addText(`session_meta_${session.id}`, content.time, textX, y + (content.timeOffset ?? 3.05), textWidth, 1.8, { fontSize: 4.8, alignment: 'left', lineHeight: 1, readOnly: true })
+      if (content.type) addText(`session_type_${session.id}`, content.type, textX, y + (content.typeOffset ?? 5), textWidth, 1.8, { fontSize: 4.5, alignment: 'left', lineHeight: 1, readOnly: true })
+      if (content.details) addText(`session_details_${session.id}`, content.details, textX, y + (content.detailsOffset ?? 7), textWidth, content.detailsHeight ?? 1.5, { fontSize: 4.5, alignment: 'left', lineHeight: 1, readOnly: true })
     }
   })
   for (let index = 0; index < signatureCount; index += 1) {
@@ -150,8 +161,9 @@ export function materializePdfmeTemplate(template: Template, context: DesignerCo
 }
 
 export function hydratePdfmeInputs(template: Template, context: DesignerContext, assets?: { letterhead?: string }, savedInputs?: Record<string, string>): Record<string, string> {
-  const dynamic = createPdfmeTemplate(context, 0).inputs
-  const persisted = savedInputs ?? (template as PersistedPdfmeTemplate).__schedaroInputs
+  const persistedTemplate = template as PersistedPdfmeTemplate
+  const dynamic = createPdfmeTemplate(context, 0, persistedTemplate.__schedaroAssets?.letterhead, persistedTemplate.__schedaroLayout?.headerSpacing ?? 'standard').inputs
+  const persisted = savedInputs ?? persistedTemplate.__schedaroInputs
   const values: Record<string, string> = {}
   for (const page of template.schemas) for (const item of page as PdfmeSchema[]) values[item.name] = dynamic[item.name] ?? persisted?.[item.name] ?? String(item.content ?? '')
   if (assets?.letterhead) values.letterhead = assets.letterhead

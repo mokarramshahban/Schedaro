@@ -41,3 +41,4 @@
 - Added a print-only shared 1mm PDF/editor inner-card inset so first-row session surfaces clear grid boundaries while outer session intervals and durations remain exact; the main timetable website CSS is unchanged.
 - Added print-only header-row breathing space: Time/day header schemas are inset 1mm inside the top row while the grid, first time row, and session timeline remain unchanged.
 - Added website-only accessible session hover details: portal-mounted cards show complete loaded subject, type, schedule, teacher, room, and academic scope information without changing timetable geometry or PDF output; persisted editing remains available through an explicit Edit session action.
+- Corrected short-session readability: website cards show subject code/name before type metadata using height-aware CSS, while PDF cards use physical-size fitting to keep subject/time/type/details inside bounds and omit secondary text when space is insufficient.

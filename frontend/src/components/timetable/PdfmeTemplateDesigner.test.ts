@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { generate } from '@pdfme/generator'
 import { image, line, rectangle, text } from '@pdfme/schemas'
-import { createPdfmeTemplate, exportablePdfmeTemplate, generatePdfmePdf, hydratePdfmeInputs, materializePdfmeTemplate, persistableTemplate, timetableGeometry } from './PdfmeTemplateDesigner'
+import { createPdfmeTemplate, exportablePdfmeTemplate, generatePdfmePdf, hydratePdfmeInputs, materializePdfmeTemplate, pdfSessionContent, persistableTemplate, timetableGeometry } from './PdfmeTemplateDesigner'
 import type { TimetableSession } from '../../lib/timetable'
 
 const context = {
@@ -112,6 +112,24 @@ describe('pdfme timetable template POC', () => {
       expect(item.position.y + item.height).toBeLessThanOrEqual(geometry.gridBottom + 0.01)
     }
     expect(schemas.filter((item) => String(item.name).startsWith('signature_'))).toHaveLength(0)
+  })
+
+  it('fits short-session content by physical card height without overflowing', () => {
+    for (const duration of [30, 40, 45, 60, 90, 120, 180]) {
+      const content = pdfSessionContent(39.5, Math.max(4.25, duration / 4.8 - 2), 'CSE101 · Algorithms and Data Structures', 'Lecture', '09:00–09:40', 'Instructor One', 'ROOM-201 · Lecture Room 201')
+      expect(content.subject).toContain('CSE101')
+      expect(content.subject.length).toBeLessThanOrEqual(45)
+      if (duration < 45) expect(content.type).toBeUndefined()
+      if (duration >= 45) expect(content.time).toBe('09:00–09:40')
+    }
+    const short = createPdfmeTemplate({ ...context, resources: { subjects: [{ id: 's', code: 'CSE101', name: 'Algorithms and Data Structures', active: true }], teachers: [{ id: 't', name: 'Instructor One', active: true }], rooms: [{ id: 'r', code: 'ROOM-201', name: 'Lecture Room 201', active: true }] }, sessions: [{ id: 'forty', classGroupId: 'g', day: 'tuesday', startTime: '09:00', endTime: '09:40', subjectId: 's', teacherId: 't', roomId: 'r', type: 'Lecture' }] })
+    expect(short.inputs.session_subject_forty).toContain('CSE101')
+    const schemas = short.template.schemas[0] as any[]
+    const card = schemas.find((item) => item.name === 'session_card_forty') as any
+    for (const item of schemas.filter((schema) => String(schema.name).includes('session_') && schema.type === 'text')) {
+      expect(item.position.x + item.width).toBeLessThanOrEqual(card.position.x + card.width + 0.01)
+      expect(item.position.y + item.height).toBeLessThanOrEqual(card.position.y + card.height + 0.01)
+    }
   })
 
   it('renders protected timetable schemas into the generated PDF input model', async () => {
