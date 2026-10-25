@@ -25,7 +25,7 @@ function minutes(value: string) { const [hours, mins] = value.split(':').map(Num
 function isProtected(item: PdfmeSchema) { return PROTECTED_PREFIXES.some((prefix) => item.name.startsWith(prefix)) || item.name === 'time_header' }
 function schemaLabel(item: PdfmeSchema) { if (dynamicLabels[item.name]) return dynamicLabels[item.name]; if (item.name === 'letterhead') return 'College letterhead'; if (item.name.startsWith('signature_label_')) return 'Signature label'; if (item.name.startsWith('signature_secondary_')) return 'Signature details'; if (item.name.startsWith('signature_line_')) return 'Signature line'; if (item.name.startsWith('custom_text_')) return 'Custom text'; if (item.type === 'image') return 'Image / logo'; if (item.type === 'line') return 'Divider line'; return 'Text' }
 
-export function createPdfmeTemplate(context: DesignerContext, signatureCount = 3, letterheadData?: string): { template: Template; inputs: Record<string, string> } {
+export function createPdfmeTemplate(context: DesignerContext, signatureCount = 0, letterheadData?: string): { template: Template; inputs: Record<string, string> } {
   const { institution, department, semester, group, term, resources, sessions, workingDays } = context
   const schemas: PdfmeSchema[] = []
   const inputs: Record<string, string> = {}
@@ -67,11 +67,15 @@ export function createPdfmeTemplate(context: DesignerContext, signatureCount = 3
   return { template: { basePdf: { width: PAGE_WIDTH, height: PAGE_HEIGHT, padding: [8, 8, 8, 8] }, schemas: [schemas] } as Template, inputs }
 }
 
+function isLegacyDefaultSignature(item: PdfmeSchema, persisted: PersistedPdfmeTemplate) {
+  return !persisted.__schedaroInputs && /^signature_(line|label|secondary)_[0-2]$/.test(item.name)
+}
+
 export function materializePdfmeTemplate(template: Template, context: DesignerContext): Template {
   const persisted = template as PersistedPdfmeTemplate
   const generated = createPdfmeTemplate(context, 0, persisted.__schedaroAssets?.letterhead)
   const protectedSchemas = (generated.template.schemas[0] as PdfmeSchema[]).filter((item) => isProtected(item))
-  const editableSchemas = (template.schemas[0] as PdfmeSchema[]).filter((item) => !isProtected(item))
+  const editableSchemas = (template.schemas[0] as PdfmeSchema[]).filter((item) => !isProtected(item) && !isLegacyDefaultSignature(item, persisted))
   return { ...template, schemas: [[...editableSchemas, ...protectedSchemas]] }
 }
 
@@ -88,7 +92,11 @@ export function persistableTemplate(template: Template, inputs: Record<string, s
   return { ...(template as unknown as Record<string, unknown>), __schedaroAssets: inputs.letterhead ? { letterhead: inputs.letterhead } : undefined, __schedaroInputs: savedInputs }
 }
 
-export function generatePdfmePdf(template: Template, inputs: Record<string, string>) { return generate({ template, inputs: [inputs], plugins: pdfmePlugins }) }
+export function exportablePdfmeTemplate(template: Template): Template {
+  return { ...template, schemas: template.schemas.map((page) => page.map((item) => { const { readOnly: _readOnly, ...exported } = item as PdfmeSchema; return exported })) } as Template
+}
+
+export function generatePdfmePdf(template: Template, inputs: Record<string, string>) { return generate({ template: exportablePdfmeTemplate(template), inputs: [inputs], plugins: pdfmePlugins }) }
 
 function TimetableCanvas({ context }: { context: DesignerContext }) {
   const displayDays = [...context.workingDays, ...DAYS.filter((day) => !context.workingDays.includes(day) && context.sessions.some((session) => session.day === day))]
@@ -135,7 +143,7 @@ export function PdfmeTemplateDesigner({ institutionId, onClose, onSaved, ...cont
   function duplicateSelected() { if (!selected || isProtected(selected)) return; const nameToAdd = `${selected.name}_copy_${Date.now()}`; const copy = { ...selected, name: nameToAdd, position: { x: Math.min(PAGE_WIDTH - selected.width, selected.position.x + 5), y: Math.min(PAGE_HEIGHT - selected.height, selected.position.y + 5) } }; setTemplate((current) => ({ ...current, schemas: [[...(current.schemas[0] as PdfmeSchema[]), copy]] })); setInputs((current) => ({ ...current, [nameToAdd]: inputs[selected.name] ?? '' })); setSelectedName(nameToAdd) }
   function uploadImage(file: File | undefined) { if (!file || !['image/png', 'image/jpeg'].includes(file.type) || file.size > 1_000_000) { setNotice('Use an authorized PNG or JPEG image no larger than 1 MB.'); return } const reader = new FileReader(); reader.onload = () => { const nameToAdd = letterheadMode === 'header' ? 'letterhead' : `image_${Date.now()}`; const existing = schemas.find((item) => item.name === nameToAdd); const item = existing ?? schema(nameToAdd, 'image', 10, 6, letterheadMode === 'header' ? 277 : 277, letterheadMode === 'header' ? 24 : 194, { preserveAspectRatio: true }); setTemplate((current) => ({ ...current, schemas: [[...((current.schemas[0] as PdfmeSchema[]).filter((entry) => entry.name !== nameToAdd)), item]] })); setInputs((current) => ({ ...current, [nameToAdd]: String(reader.result) })); setSelectedName(nameToAdd); setNotice('Image added. Drag the selected image or adjust its numeric properties.'); }; reader.readAsDataURL(file) }
   async function save(useAsDefault = false) { setBusy(true); setNotice(null); try { const isDefault = useAsDefault || Boolean(record?.isDefault); const saved = record ? await updatePdfmeTemplate(institutionId, record.id, name, persistableTemplate(template, inputs), isDefault) : await createPdfmeTemplateRecord(institutionId, name, persistableTemplate(template, inputs), isDefault); setRecord(saved); setTemplates((items) => [...items.filter((item) => item.id !== saved.id).map((item) => isDefault ? { ...item, isDefault: false } : item), saved]); setNotice(isDefault ? 'Template saved and selected as the institution default.' : 'Template saved for this institution.'); onSaved?.(saved) } catch { setNotice('The template could not be saved.'); } finally { setBusy(false) } }
-  async function downloadPdf() { setBusy(true); setNotice(null); try { const pdf = await generate({ template, inputs: [inputs], plugins: pdfmePlugins }); const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'timetable'}.pdf`; anchor.click(); URL.revokeObjectURL(url); setNotice('PDF downloaded from the current layout.') } catch { setNotice('PDF generation failed. Check the selected image or text settings.') } finally { setBusy(false) } }
+  async function downloadPdf() { setBusy(true); setNotice(null); try { const pdf = await generatePdfmePdf(template, inputs); const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'timetable'}.pdf`; anchor.click(); URL.revokeObjectURL(url); setNotice('PDF downloaded from the current layout.') } catch { setNotice('PDF generation failed. Check the selected image or text settings.') } finally { setBusy(false) } }
   function reset() { const generated = createPdfmeTemplate(context); setRecord(null); setTemplate(generated.template); setInputs(generated.inputs); setSelectedName(null); setName('Standard academic timetable'); setNotice('Temporary changes reset.') }
   function duplicateTemplate() { setRecord(null); setName(`${name} copy`); setNotice('Template duplicated as a temporary copy. Save it to keep it.') }
   const canvasStyle = (item: PdfmeSchema) => ({ left: `${(item.position.x / PAGE_WIDTH) * 100}%`, top: `${(item.position.y / PAGE_HEIGHT) * 100}%`, width: `${(item.width / PAGE_WIDTH) * 100}%`, height: `${(item.height / PAGE_HEIGHT) * 100}%`, fontSize: `${Number(item.fontSize ?? 10) * 0.8}pt`, textAlign: item.alignment as 'left' | 'center' | 'right' })
