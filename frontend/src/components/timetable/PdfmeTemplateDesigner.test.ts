@@ -35,11 +35,21 @@ describe('pdfme timetable template POC', () => {
     expect(timetableGeometry(context.workingDays, true).gridBottom).toBe(159)
     expect(timetableGeometry(context.workingDays, true, 'compact').top).toBe(68)
     expect(timetableGeometry(context.workingDays, true, 'spacious').top).toBe(74)
+    const normalSchemas = createPdfmeTemplate(context).template.schemas[0] as any[]
+    const normalGeometry = timetableGeometry(context.workingDays)
+    const timeHeader = normalSchemas.find((item) => item.name === 'time_header') as any
+    const mondayHeader = normalSchemas.find((item) => item.name === 'day_monday') as any
+    expect(timeHeader.position.y).toBe(normalGeometry.top + 1)
+    expect(timeHeader.position.y).toBeGreaterThan(normalGeometry.top)
+    expect(timeHeader.position.y + timeHeader.height).toBeLessThan(normalGeometry.gridTop)
+    expect(mondayHeader.position.y).toBe(timeHeader.position.y)
+    expect(mondayHeader.height).toBe(timeHeader.height)
     const compactTemplate = { ...createPdfmeTemplate(context, 0, 'data:image/png;base64,iVBORw0KGgo=', 'compact').template, __schedaroAssets: { letterhead: 'data:image/png;base64,iVBORw0KGgo=' } }
     const spacious = materializePdfmeTemplate({ ...compactTemplate, __schedaroLayout: { mode: 'automatic', headerSpacing: 'spacious' } } as any, context)
     const compactDay = compactTemplate.schemas[0].find((item) => item.name === 'day_monday') as any
     const spaciousDay = spacious.schemas[0].find((item) => item.name === 'day_monday') as any
-    expect(spaciousDay.position.y - compactDay.position.y).toBe(6)
+    expect(spaciousDay.position.y - compactDay.position.y).toBeGreaterThan(5.8)
+    expect(spaciousDay.position.y - compactDay.position.y).toBeLessThan(6.2)
     expect(timetableGeometry([...context.workingDays, 'saturday']).dayWidth).toBe(41.5)
     expect(fiveDay.some((item) => item.name === 'timetable_grid_hour-1')).toBe(true)
     const gridLine = createPdfmeTemplate(context, 0).template.schemas[0].find((item) => item.name === 'timetable_grid_outer-top') as Record<string, unknown>

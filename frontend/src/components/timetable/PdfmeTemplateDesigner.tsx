@@ -27,6 +27,7 @@ function resourceName(items: Resource[], id: string, fallback: string) { return 
 function minutes(value: string) { const [hours, mins] = value.split(':').map(Number); return hours * 60 + mins }
 export type HeaderSpacing = 'compact' | 'standard' | 'spacious'
 export const HEADER_GAPS: Record<HeaderSpacing, number> = { compact: 4, standard: 7, spacious: 10 }
+export const PRINT_HEADER_ROW_INSET_MM = 1
 export type TimetableGeometry = { left: number; top: number; width: number; timeWidth: number; dayWidth: number; headerHeight: number; gridTop: number; gridHeight: number; gridBottom: number; startMinutes: number; endMinutes: number; headerGap: number }
 export function timetableGeometry(workingDays: TimetableSession['day'][], hasLetterhead = false, spacing: HeaderSpacing = 'standard'): TimetableGeometry { const timeWidth = 18; const width = 267; const headerHeight = 7; const headerBottom = hasLetterhead ? 64 : 44; const top = Math.max(50, headerBottom + HEADER_GAPS[spacing]); const gridTop = top + 8; const gridBottom = 159; const gridHeight = Math.max(62, gridBottom - gridTop); return { left: 15, top, width, timeWidth, dayWidth: (width - timeWidth) / Math.max(workingDays.length, 1), headerHeight, gridTop, gridHeight, gridBottom: gridTop + gridHeight, startMinutes: SCHEDULE_START_MINUTES, endMinutes: SCHEDULE_END_MINUTES, headerGap: HEADER_GAPS[spacing] } }
 function isProtected(item: PdfmeSchema) { return PROTECTED_PREFIXES.some((prefix) => item.name.startsWith(prefix)) || item.name === 'time_header' }
@@ -45,8 +46,10 @@ export function createPdfmeTemplate(context: DesignerContext, signatureCount = 0
   addText('academic_term', term ? `${term.academicYear} · ${term.term}` : 'Academic term not configured', 152, letterheadData ? 58 : 38, 130, 6, { fontSize: 8, alignment: 'right', readOnly: false })
   const geometry = timetableGeometry(workingDays, Boolean(letterheadData), 'standard')
   const { left, top, timeWidth, dayWidth, headerHeight, gridTop, gridHeight, gridBottom, startMinutes, endMinutes } = geometry
-  addText('time_header', 'Time', left, top, timeWidth, headerHeight, { fontSize: 7, alignment: 'center', readOnly: true })
-  workingDays.forEach((day, index) => addText(`day_${day}`, DAY_LABELS[day], left + timeWidth + index * dayWidth, top, dayWidth, headerHeight, { fontSize: 7.5, alignment: 'center', readOnly: true }))
+  const headerTextTop = top + PRINT_HEADER_ROW_INSET_MM
+  const headerTextHeight = headerHeight - PRINT_HEADER_ROW_INSET_MM * 2
+  addText('time_header', 'Time', left, headerTextTop, timeWidth, headerTextHeight, { fontSize: 7, alignment: 'center', readOnly: true })
+  workingDays.forEach((day, index) => addText(`day_${day}`, DAY_LABELS[day], left + timeWidth + index * dayWidth, headerTextTop, dayWidth, headerTextHeight, { fontSize: 7.5, alignment: 'center', readOnly: true }))
   for (let index = 0; index <= 8; index += 1) addText(`time_${index}`, `${String(9 + index).padStart(2, '0')}:00`, left, timeLabelY(SCHEDULE_START_MINUTES + index * 60, SCHEDULE_START_MINUTES, SCHEDULE_END_MINUTES, gridTop, gridBottom), timeWidth, 4, { fontSize: 6, alignment: 'center', readOnly: true })
   const gridRight = left + geometry.width
   const addGridLine = (name: string, x: number, y: number, width: number, height: number, color = '#aeb6c2', rotate = 0, opacity = 1) => schemas.push(schema(`timetable_grid_${name}`, 'line', x, y, width, height, { color, rotate, opacity, readOnly: true }))
