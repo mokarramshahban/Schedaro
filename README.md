@@ -22,6 +22,7 @@ Schedaro is a focused workspace for planning academic timetables across teaching
 - FastAPI, PostgreSQL and Rust scheduling-engine health indicators.
 - Central Platform Owner identity, ready-college provisioning and college-specific `/c/{slug}` portals.
 - Invitation-only College Administrator onboarding with email and offline/manual one-time-key activation paths.
+- Central email and authorized manual one-time password recovery with session invalidation and readable role-scope labels.
 - Hierarchical role assignments, delegated institution access and secure server-validated Acting as contexts.
 - Versioned timetable drafts, independent review, publication history and role-scoped workflow dashboards.
 - Accessible controls, focus states and keyboard-friendly dialogs.
@@ -84,6 +85,8 @@ Never use `docker compose down -v`.
 Keep changes focused on the timetable product. Run the relevant frontend tests and TypeScript checks before reporting work. For implementation changes, build the affected image, refresh the required container, verify the live application and review the complete diff for secrets, restricted assets and licensing concerns. Documentation-only changes do not require a Docker rebuild.
 
 Read the [Contributor Guide](docs/CONTRIBUTOR_GUIDE.md), [Architecture](docs/ARCHITECTURE.md), [Security](docs/SECURITY.md), [Database](docs/DATABASE.md), [Testing](docs/TESTING.md), [Roadmap](docs/ROADMAP.md), [Decision Index](docs/DECISION_INDEX.md) and [Documentation Policy](docs/DOCUMENTATION_POLICY.md). Run `python scripts/check_docs.py` after documentation changes. Every meaningful implementation task includes a documentation-impact review.
+
+For local-only synthetic fixtures, keep institution-specific scripts, records, backups and reports under the ignored `.local/test-data/` directory. Review a fixture's guarded dry run before execution; fixtures must never run automatically, reset the Platform Owner or remove PostgreSQL volumes. Reusable fixture procedures belong in generic development documentation; institution-specific details stay local.
 
 ## License
 

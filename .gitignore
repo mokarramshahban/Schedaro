@@ -285,7 +285,12 @@ blob-report/
 # 13. LOCAL DEVELOPMENT DATA
 # ==========================================
 
+# Institution-specific fixtures, backups, exports, reports and screenshots.
 .local/
+.local/test-data/
+.local/fixtures/
+.local/backups/
+.local/test-reports/
 local-data/
 
 *.local.json

@@ -167,6 +167,21 @@ class TimetableSession(Base):
     room: Mapped[Room] = relationship(back_populates="sessions")
 
 
+class Student(Base):
+    __tablename__ = "students"
+    __table_args__ = (UniqueConstraint("institution_id", "student_number", name="uq_student_institution_number"), Index("ix_student_class_group", "class_group_id"))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_number: Mapped[str] = mapped_column(String(40), nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(180))
+    department_id: Mapped[str] = mapped_column(ForeignKey("departments.id", ondelete="CASCADE"), nullable=False, index=True)
+    semester_id: Mapped[str] = mapped_column(ForeignKey("semesters.id", ondelete="CASCADE"), nullable=False, index=True)
+    class_group_id: Mapped[str] = mapped_column(ForeignKey("class_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class SchedulingRequirement(Base):
     __tablename__ = "scheduling_requirements"
     __table_args__ = (UniqueConstraint("class_group_id", "subject_id", "session_type", name="uq_requirement_group_subject_type"),)

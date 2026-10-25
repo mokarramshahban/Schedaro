@@ -24,3 +24,11 @@ export function getCurrentUser() {
 export function logout() {
   return request<void>('/api/v1/auth/logout', { method: 'POST' })
 }
+
+export function requestPasswordRecovery(email: string) {
+  return request<{ message: string }>('/api/v1/auth/password/forgot', { method: 'POST', body: JSON.stringify({ email }) })
+}
+
+export function resetPassword(token: string, password: string) {
+  return request<PlatformUser>('/api/v1/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, password }) })
+}

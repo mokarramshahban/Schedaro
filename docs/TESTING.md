@@ -150,7 +150,7 @@ Every future implementation must be built and made live before completion. Valid
 - Alembic migrations `20260305_0006` and `20260305_0007`: PASS — applied against `schedaro_db`, head verified.
 - Docker Compose config, backend image with pinned OR-Tools 9.12.4544, service refresh and health checks: PASS; PostgreSQL named volume preserved.
 - Controlled live API: PASS — independent institution settings loaded from PostgreSQL; Monday–Friday generation ignored a client Saturday override, produced no Saturday proposals, rejected new Saturday manual sessions, and preserved existing Saturday exceptions with warnings. Legacy and pdfme print-template APIs persisted institution-scoped layouts, enforced A4/schema safety and isolation, and reset/deactivated cleanly.
-- Generator reliability integration: PASS — the persisted Schedaro Demo College Computer Science Semester 1 Section A request (7 CSE101 lectures, 2 tutorials, 5 CSE102 lectures; 14 remaining sessions) returned FEASIBLE in 123ms with a five-day proposal distribution, preserved the three existing sessions, reported the two CSE101 duration/teacher mismatch causes and one CSE102 duration mismatch, and the proposal was discarded without saving sessions. A 10-minute quantum test preserved exact consecutive 40-minute durations.
+- Generator reliability integration: PASS — a persisted development fixture request returned FEASIBLE with a five-day proposal distribution, preserved existing sessions, reported duration/teacher mismatch causes, and the proposal was discarded without saving sessions. A 10-minute quantum test preserved exact consecutive 40-minute durations.
 - Website timetable hover details: session cards retain their exact absolute geometry and use a portal-mounted, viewport-aware detail popover for hover/focus/tap; the popover keeps pointer transit alive, supports Escape/outside dismissal, presents subject/type/day/time/duration/teacher/room/academic scope data from loaded records, and routes persisted-session editing through an explicit Edit session action. Website cards use subject-first container-height rules, while PDF cards fit measured/truncated subject, time, type, and secondary text to physical card bounds for 30/40/45/60/90/120/180-minute cases. A persisted 40-minute Tuesday A4 PDF was rasterized in normal and letterhead modes; print overflow checks passed. Print/PDF classes and schemas are otherwise untouched; browser interaction sign-off remains owner-side because no Harness browser automation is available.
 - Manage Requirements editing UX: PASS by TypeScript/build and API regression — one stable-ID requirement editor is rendered inline beneath the highlighted card, showing subject/type/teacher/count/duration identity; save/cancel actions, unsaved-switch/close confirmation, active/inactive lifecycle toggling, and 56 frontend tests were verified. Live browser click-through remains owner-side because Harness browser automation is unavailable.
 - Manage Requirements creation UX: PASS by TypeScript/build and regression tests — default list mode hides the form, `+ Add Requirement` opens a dedicated creation view with fresh defaults and Back navigation, 40-minute durations remain valid, stable-ID editing remains separate from creation, backend duplicate/scope validation is preserved, and the shared subject formatter prevents duplicated codes in list, form selectors, and generation selection. Frontend suite: 59 tests.
@@ -245,7 +245,28 @@ Every future implementation must be built and made live before completion. Valid
 - Multi-step configurable approval policy: NOT IMPLEMENTED; current workflow supports explicit review decisions but not policy configuration.
 - Student published-only API: implemented, broader student identity/enrollment linking remains incomplete.
 - Browser dashboard and approval click-through: NOT TESTED — browser automation unavailable.
-- Existing academic scheduling regression: remains failed with `UNKNOWN` as documented above.
+- Later stabilization resolved the bounded-solver `UNKNOWN` regression with a deterministic feasibility-first fallback; the current isolated suite passes.
+
+## Local synthetic fixture verification
+
+Institution-specific fixture records and reports remain under ignored `.local/test-data/` and are not part of the tracked test contract.
+
+- Guarded reset inventory and backup verification: PASS locally.
+- Platform Owner preservation: PASS by database identity/role/hash presence; password login: NOT TESTED by Harness.
+- Tenant provisioning, academic relationship checks and deterministic repeat seeding: PASS locally.
+- OR-Tools generation and Rust validation: PASS locally.
+- Workflow approval/publication and scoped student visibility: PASS locally.
+- Browser portal/dashboard/PDF walkthrough: NOT TESTED — browser automation unavailable.
+- Full isolated backend suite after replacing legacy fixture assumptions and adding recovery coverage: 46 passed, 0 skipped, 0 failed.
+- The test fixture factory creates a fresh PostgreSQL database per test session, truncates and reseeds it per test, uses generated institution/resource IDs, and drops the database at teardown.
+
+## Authentication recovery verification
+
+- Manual reset issuance, owner-only authorization, digest-only storage, one-time redemption, session invalidation, replay rejection and bounded invalid-key throttling: PASS — 2 backend tests.
+- Email recovery remains available through the existing generic forgot/reset endpoints; SMTP delivery remains a local capture backend.
+- Account-specific password login, role dashboard click-through and visual reset-page verification: NOT TESTED — owner-side browser verification required.
+- Current frontend suite after reset UI and readable scope-label work: 68 tests passed; TypeScript and production build passed.
+- Manual reset keys and local role-account readiness reports remain outside tracked source.
 
 ## Documentation validation
 

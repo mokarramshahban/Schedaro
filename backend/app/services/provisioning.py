@@ -72,7 +72,7 @@ def provision_operation(platform_db: Session, operation: PlatformProvisioningOpe
         operation.status = "ready"
         institution.status = "ready"
         institution.active = True
-        institution.schema_version = "20260305_0007"
+        institution.schema_version = "20260308_0009"
         platform_db.commit()
     except Exception as error:
         platform_db.rollback()
