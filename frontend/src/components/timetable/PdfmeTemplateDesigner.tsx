@@ -6,7 +6,7 @@ import { image, line, rectangle, text } from '@pdfme/schemas'
 import type { AcademicTerm, ClassGroup, Department, Institution, Resource, Semester } from '../../lib/api'
 import { createPdfmeTemplate as createPdfmeTemplateRecord, listPdfmeTemplates, updatePdfmeTemplate } from '../../lib/managementApi'
 import type { PdfmeTemplateRecord } from '../../lib/printLayout'
-import { DAY_LABELS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, type TimetableSession } from '../../lib/timetable'
+import { DAY_LABELS, SCHEDULE_END_MINUTES, SCHEDULE_START_MINUTES, timeLabelY, type TimetableSession } from '../../lib/timetable'
 import { resolveHeaderLayout, type HeaderLayoutConfig } from '../../lib/pdfHeaderLayout'
 
 const pdfmePlugins = { text, image, line, rectangle }
@@ -47,7 +47,7 @@ export function createPdfmeTemplate(context: DesignerContext, signatureCount = 0
   const { left, top, timeWidth, dayWidth, headerHeight, gridTop, gridHeight, gridBottom, startMinutes, endMinutes } = geometry
   addText('time_header', 'Time', left, top, timeWidth, headerHeight, { fontSize: 7, alignment: 'center', readOnly: true })
   workingDays.forEach((day, index) => addText(`day_${day}`, DAY_LABELS[day], left + timeWidth + index * dayWidth, top, dayWidth, headerHeight, { fontSize: 7.5, alignment: 'center', readOnly: true }))
-  for (let index = 0; index <= 8; index += 1) addText(`time_${index}`, `${String(9 + index).padStart(2, '0')}:00`, left, gridTop + (index / 8) * gridHeight - 1.5, timeWidth, 4, { fontSize: 6, alignment: 'center', readOnly: true })
+  for (let index = 0; index <= 8; index += 1) addText(`time_${index}`, `${String(9 + index).padStart(2, '0')}:00`, left, timeLabelY(SCHEDULE_START_MINUTES + index * 60, SCHEDULE_START_MINUTES, SCHEDULE_END_MINUTES, gridTop, gridBottom), timeWidth, 4, { fontSize: 6, alignment: 'center', readOnly: true })
   const gridRight = left + geometry.width
   const addGridLine = (name: string, x: number, y: number, width: number, height: number, color = '#aeb6c2', rotate = 0, opacity = 1) => schemas.push(schema(`timetable_grid_${name}`, 'line', x, y, width, height, { color, rotate, opacity, readOnly: true }))
   const addVerticalGridLine = (name: string, x: number, color = '#aeb6c2', opacity = 1) => { const length = gridBottom - top; addGridLine(name, x - length / 2, top + length / 2 - 0.25, length, 0.5, color, 90, opacity) }

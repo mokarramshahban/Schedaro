@@ -46,6 +46,13 @@ describe('pdfme timetable template POC', () => {
     expect(gridLine.color).toBe('#aeb6c2')
     expect(gridLine.opacity).toBe(1)
     expect(gridLine.height).toBe(0.7)
+    const fiveDaySchemas = createPdfmeTemplate(context, 0).template.schemas[0] as any[]
+    const timeStart = fiveDaySchemas.find((item) => item.name === 'time_0') as any
+    const timeEnd = fiveDaySchemas.find((item) => item.name === 'time_8') as any
+    expect(timeStart.position.y).toBeCloseTo(timetableGeometry(context.workingDays).gridTop + 0.8, 3)
+    expect(timeStart.position.y).toBeGreaterThan(timetableGeometry(context.workingDays).gridTop)
+    expect(timeEnd.position.y + timeEnd.height).toBeLessThan(timetableGeometry(context.workingDays).gridBottom)
+    expect(timeEnd.position.y).toBeCloseTo(timetableGeometry(context.workingDays).gridBottom - timeEnd.height - 0.8, 3)
     const leftBorder = createPdfmeTemplate(context, 0).template.schemas[0].find((item) => item.name === 'timetable_grid_outer-left') as any
     expect(leftBorder.rotate).toBe(90)
     expect(leftBorder.position.y).toBeCloseTo(104.75, 2)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoSessions } from '../data/timetableDemo'
-import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, workingDaysForWeek, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
+import { durationToHeight, findSessionConflicts, layoutDaySessions, minutesToPosition, timeLabelY, workingDaysForWeek, rangesOverlap, removeSession, sessionsForClassGroup, timeLabelPosition, timeToMinutes, upsertSession, validateSession, type TimetableSession } from './timetable'
 
 const baseSession: TimetableSession = {
   id: 'test-session',
@@ -41,6 +41,16 @@ describe('shared timetable coordinate model', () => {
     expect(timeLabelPosition(timeToMinutes('09:00')!)).toEqual({ topPercent: 0, transform: 'translateY(4px)' })
     expect(timeLabelPosition(timeToMinutes('17:00')!)).toEqual({ topPercent: 100, transform: 'translateY(calc(-100% - 4px))' })
     expect(timeLabelPosition(timeToMinutes('11:30')!)).toEqual({ topPercent: 31.25, transform: 'translateY(-50%)' })
+  })
+
+  it('keeps PDF endpoint labels inside the gutter without changing timeline coordinates', () => {
+    const top = 50
+    const bottom = 150
+    expect(timeLabelY(540, 540, 1020, top, bottom)).toBe(50.8)
+    expect(timeLabelY(1020, 540, 1020, top, bottom)).toBe(145.2)
+    expect(timeLabelY(600, 540, 1020, top, bottom)).toBeCloseTo(60.5, 3)
+    expect(minutesToPosition(540)).toBe(0)
+    expect(minutesToPosition(1020)).toBe(672)
   })
 
   it('treats boundary-touching intervals as consecutive, not overlapping', () => {

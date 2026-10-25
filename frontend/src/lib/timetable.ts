@@ -53,6 +53,14 @@ export function minutesToTime(minutes: number): string {
 
 export type TimeLabelPosition = { topPercent: number; transform: string }
 
+/** Physical label top inside a timetable gutter. Endpoint labels are inset from borders. */
+export function timeLabelY(minutes: number, origin: number, end: number, topMm: number, bottomMm: number, labelHeightMm = 4, edgeInsetMm = 0.8): number {
+  const ratio = Math.max(0, Math.min(1, (minutes - origin) / (end - origin)))
+  if (ratio <= 0) return topMm + edgeInsetMm
+  if (ratio >= 1) return bottomMm - labelHeightMm - edgeInsetMm
+  return topMm + ratio * (bottomMm - topMm) - labelHeightMm / 2
+}
+
 export function minutesToPosition(minutes: number, origin = SCHEDULE_START_MINUTES, pixelsPerHour = PIXELS_PER_HOUR): number {
   return ((minutes - origin) / 60) * pixelsPerHour
 }
