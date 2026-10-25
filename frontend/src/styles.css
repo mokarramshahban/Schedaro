@@ -280,6 +280,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .print-preview-toolbar h2 { margin: 0; color: #273247; font-size: 18px; }
 .print-preview-actions { display: flex; align-items: center; gap: 9px; }
 .print-preview-scroll { overflow: auto; padding: 28px; }
+.print-preview-dialog--pdfme { height: min(94vh, 980px); }
+.print-preview-context { margin: 4px 0 0; color: #667085; font-size: 11px; }
+.print-template-picker { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding:12px 20px; border-bottom:1px solid #e1e5ee; background:#fbfcff; }
+.print-template-picker label { display:grid; min-width:260px; gap:5px; color:#344054; font-size:12px; }
+.print-template-picker select { padding:8px 10px; border:1px solid #cfd5e2; border-radius:7px; background:#fff; color:#273247; }
+.print-template-picker__actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.print-template-owner { color:#667085; font-size:11px; }
+.pdfme-main-preview { display:grid; min-height:0; flex:1; place-items:center; padding:18px; background:#e9edf5; }
+.pdfme-main-preview__frame { width:100%; height:100%; min-height:520px; border:0; border-radius:8px; background:#fff; box-shadow:0 8px 30px rgba(31,41,55,.16); }
+.pdfme-main-preview__loading { display:flex; align-items:center; gap:10px; color:#667085; font-size:13px; }
 .print-document { width: 297mm; height: 210mm; margin: 0 auto; padding: 10mm; color: #172033; background: #fff; box-shadow: 0 8px 30px rgba(31, 41, 55, .12); }
 .print-document__header { position: relative; min-height: 25mm; }
 .print-layout-region--editable { outline: 1px dashed #9aa2d6; background: rgba(238, 240, 255, .28); }
@@ -464,7 +474,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
   body > #root > .app-shell > .app-main > main > .timetable-page > :not(.print-preview-backdrop) { display: none !important; }
   .print-preview-backdrop { position: static; display: block; padding: 0; background: #fff; }
   .print-preview-dialog { display: block; width: auto; height: 190mm; max-height: none; overflow: visible; border: 0; border-radius: 0; background: #fff; box-shadow: none; }
-  .print-preview-toolbar, .print-editor-toolbar, .pdfme-designer-backdrop { display: none !important; }
+  .print-preview-toolbar, .print-template-picker, .print-editor-toolbar, .pdfme-designer-backdrop { display: none !important; }
   .print-preview-scroll { overflow: visible; padding: 0; }
   .print-layout-region--editable { outline: none; background: transparent; }
   .print-layout-element--selected { outline: none; }

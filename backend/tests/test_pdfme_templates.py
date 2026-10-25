@@ -19,6 +19,8 @@ def test_pdfme_templates_are_multiple_and_institution_scoped():
     updated = client.put(f"/api/v1/academic/institutions/inst-northbridge/print-templates/{second.json()['id']}", json={"name": "Letterhead", "template": template(), "is_default": True})
     assert updated.status_code == 200
     assert updated.json()["is_default"] is True
+    assert updated.json()["template"] == template()
+    assert len(client.get("/api/v1/academic/institutions/inst-northbridge/print-templates").json()) >= 2
     assert client.delete(f"/api/v1/academic/institutions/inst-northbridge/print-templates/{first.json()['id']}").status_code == 200
     assert all(item["id"] != first.json()["id"] for item in client.get("/api/v1/academic/institutions/inst-northbridge/print-templates").json())
 
