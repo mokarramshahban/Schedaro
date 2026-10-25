@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, Index, Integer, JSON, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -19,10 +19,33 @@ class PlatformInstitution(PlatformBase):
     stable_key: Mapped[str] = mapped_column(String(120), nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     short_name: Mapped[str | None] = mapped_column(String(32))
+    institution_type: Mapped[str | None] = mapped_column(String(80))
+    contact_email: Mapped[str | None] = mapped_column(String(180))
+    contact_phone: Mapped[str | None] = mapped_column(String(40))
+    address: Mapped[str | None] = mapped_column(String(240))
+    timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="UTC", server_default="UTC")
+    working_week: Mapped[str] = mapped_column(String(20), nullable=False, default="monday-saturday", server_default="monday-saturday")
+    daily_start_minute: Mapped[int] = mapped_column(Integer, nullable=False, default=540, server_default="540")
+    daily_end_minute: Mapped[int] = mapped_column(Integer, nullable=False, default=1020, server_default="1020")
     database_name: Mapped[str] = mapped_column(String(63), nullable=False)
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="ready", server_default="ready")
     schema_version: Mapped[str | None] = mapped_column(String(64))
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class PlatformProvisioningOperation(PlatformBase):
+    __tablename__ = "platform_provisioning_operations"
+    __table_args__ = (UniqueConstraint("idempotency_key", name="uq_platform_provisioning_idempotency"), Index("ix_platform_provisioning_institution", "institution_id"))
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    institution_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="provisioning", server_default="provisioning")
+    error_message: Mapped[str | None] = mapped_column(String(500))
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    requested_departments: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

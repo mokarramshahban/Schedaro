@@ -168,5 +168,24 @@ Every future implementation must be built and made live before completion. Valid
 - Frontend: PASS — responsive Admina-inspired universal Schedaro login layout, show/hide password control, safe error/loading states, authenticated shell, Platform Overview, role-aware existing institution selector, cookie credentials, logout control, TypeScript/build, and 66-test suite.
 - Docker/live: PASS — Compose configuration, backend/frontend refresh, `http://localhost:5174`, `/health/live`, and `/health/ready` returned successfully. Browser click-through and screenshot capture: NOT TESTED because Harness has no browser automation.
 
+## Stage 7B verification record
+
+- Git base: PASS — `main` contained merged Stage 7A at `bb61953` before `feature/stage-7b-college-onboarding` was created.
+- Frontend Vitest: PASS — 66 tests.
+- Backend pytest: PASS — 33 passed, 3 persisted-fixture skips.
+- Frontend TypeScript/production build: PASS.
+- Docker Compose validation and live refresh: PASS.
+- Frontend `http://localhost:5174`: PASS — HTTP 200.
+- Backend liveness/readiness: PASS — HTTP 200.
+- Live onboarding API: PASS with a scoped test-owner dependency override. Registry record, generated tenant database, Alembic schema, tenant institution and two departments were verified.
+- Registry/tenant read-only database checks: PASS.
+- Idempotency: PASS — repeated operation key returned the existing operation without duplication.
+- Duplicate institution: PASS — HTTP 409.
+- Invalid schedule: PASS — HTTP 422.
+- Unauthenticated provisioning: PASS — HTTP 401.
+- Credentialed Platform Owner provisioning: BLOCKED — the current local password was unavailable; no password reset or account modification was performed.
+- Browser click-through/screenshots: NOT TESTED — browser automation is unavailable. Manual acceptance remains required for 375px, 768px and 1440px wizard flow, institution switching, details and workspace opening.
+- Existing demo data/volume: preserved; no destructive Docker or database command was used.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.
