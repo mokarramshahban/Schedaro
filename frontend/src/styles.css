@@ -368,8 +368,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .pdfme-canvas-element { position:absolute; z-index:3; display:flex; align-items:center; overflow:hidden; box-sizing:border-box; padding:2px; border:1px solid transparent; color:#172033; line-height:1.15; white-space:pre-wrap; overflow-wrap:anywhere; cursor:move; }
 .pdfme-canvas-element--image { padding:0; }
 .pdfme-canvas-element--image img { width:100%; height:100%; object-fit:contain; pointer-events:none; }
-.pdfme-canvas-element--line { padding:0; }
-.pdfme-canvas-line { width:100%; border-top:1px solid currentColor; }
+.pdfme-canvas-element--line { min-height:3px; padding:0; overflow:visible; }
+.pdfme-canvas-line { display:block; width:100%; height:0; border-top:2px solid #4b5563; }
 .pdfme-canvas-element--selected { border:1px solid #6366f1; outline:2px solid rgba(99,102,241,.2); }
 .pdfme-resize-handle { position:absolute; right:-1px; bottom:-1px; width:9px; height:9px; border:1px solid #fff; border-radius:2px; background:#6366f1; cursor:nwse-resize; }
 .pdfme-canvas-caption { position:absolute; right:8px; bottom:5px; z-index:5; color:#667085; font-size:9px; opacity:.8; }
