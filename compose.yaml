@@ -30,6 +30,9 @@ services:
       AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-schedaro_session}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       ALLOWED_CORS_ORIGINS: ${ALLOWED_CORS_ORIGINS}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:5174}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-local}
+      INVITATION_EXPIRY_HOURS: ${INVITATION_EXPIRY_HOURS:-72}
     ports:
       - "${BACKEND_HOST_PORT}:8000"
     volumes:

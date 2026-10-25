@@ -30,15 +30,83 @@ class PlatformUserRead(BaseModel):
 class PlatformMembershipRead(BaseModel):
     institution_id: str
     institution_name: str
+    portal_slug: str | None = None
     working_week: str = "monday-saturday"
     role: str
     active: bool
+
+
+class PortalPublicRead(BaseModel):
+    name: str
+    portal_slug: str
+    status: str
+    available: bool
+
+
+class InvitationCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=180)
+    role: str = Field(default="institution_admin", pattern="^institution_admin$")
+
+    @field_validator("email")
+    @classmethod
+    def normalize_invitation_email(cls, value: str) -> str:
+        value = value.strip().lower()
+        if "@" not in value:
+            raise ValueError("A valid email address is required.")
+        return value
+
+
+class InvitationRead(BaseModel):
+    id: str
+    recipient_email: str
+    institution_id: str
+    institution_name: str
+    portal_slug: str | None = None
+    role: str
+    status: str
+    delivery_status: str
+    expires_at: datetime
+    created_at: datetime | None = None
+
+
+class InvitationInspectRead(BaseModel):
+    invitation_id: str
+    recipient_email: str
+    institution_name: str
+    portal_slug: str | None = None
+    role: str
+    expires_at: datetime
+
+
+class InvitationTokenRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+
+
+class InvitationAccept(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+    email: str = Field(min_length=3, max_length=180)
+    password: str = Field(min_length=12, max_length=256)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_accept_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class PasswordForgotRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=180)
+
+
+class PasswordResetRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+    password: str = Field(min_length=12, max_length=256)
 
 
 class PlatformInstitutionRead(BaseModel):
     id: str
     name: str
     short_name: str | None = None
+    portal_slug: str | None = None
     institution_type: str | None = None
     contact_email: str | None = None
     contact_phone: str | None = None

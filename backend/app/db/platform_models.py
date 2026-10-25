@@ -10,15 +10,13 @@ class PlatformBase(DeclarativeBase):
 
 class PlatformInstitution(PlatformBase):
     __tablename__ = "platform_institutions"
-    __table_args__ = (
-        UniqueConstraint("stable_key", name="uq_platform_institution_stable_key"),
-        Index("ix_platform_institution_status", "status"),
-    )
+    __table_args__ = (UniqueConstraint("stable_key", name="uq_platform_institution_stable_key"), Index("ix_platform_institution_status", "status"))
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     stable_key: Mapped[str] = mapped_column(String(120), nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     short_name: Mapped[str | None] = mapped_column(String(32))
+    portal_slug: Mapped[str | None] = mapped_column(String(80), unique=True, index=True)
     institution_type: Mapped[str | None] = mapped_column(String(80))
     contact_email: Mapped[str | None] = mapped_column(String(180))
     contact_phone: Mapped[str | None] = mapped_column(String(40))
@@ -72,6 +70,47 @@ class PlatformMembership(PlatformBase):
     institution_id: Mapped[str] = mapped_column(String(36), nullable=False)
     role: Mapped[str] = mapped_column(String(32), nullable=False, default="institution_viewer", server_default="institution_viewer")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class PlatformInvitation(PlatformBase):
+    __tablename__ = "platform_invitations"
+    __table_args__ = (Index("ix_platform_invitation_email", "recipient_email"), Index("ix_platform_invitation_institution", "institution_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    recipient_email: Mapped[str] = mapped_column(String(180), nullable=False)
+    institution_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    role: Mapped[str] = mapped_column(String(32), nullable=False, default="institution_admin", server_default="institution_admin")
+    inviter_user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending", server_default="pending")
+    delivery_status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending", server_default="pending")
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PlatformPasswordRecovery(PlatformBase):
+    __tablename__ = "platform_password_recoveries"
+    __table_args__ = (Index("ix_platform_recovery_user", "user_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class PlatformEmailDelivery(PlatformBase):
+    __tablename__ = "platform_email_deliveries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    recipient_email: Mapped[str] = mapped_column(String(180), nullable=False)
+    subject: Mapped[str] = mapped_column(String(240), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    delivery_status: Mapped[str] = mapped_column(String(24), nullable=False, default="captured", server_default="captured")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

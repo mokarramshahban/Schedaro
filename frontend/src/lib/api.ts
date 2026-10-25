@@ -3,7 +3,7 @@ import type { DayOfWeek, SessionType, TimetableSession } from './timetable'
 export const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
 export type WorkingWeek = 'monday-friday' | 'monday-saturday'
-export type Institution = { id: string; name: string; shortName?: string; institutionType?: string; address?: string; workingWeek?: WorkingWeek; active: boolean }
+export type Institution = { id: string; name: string; shortName?: string; portalSlug?: string; institutionType?: string; address?: string; workingWeek?: WorkingWeek; active: boolean }
 export type WorkingWeekSettings = { institutionId: string; workingWeek: WorkingWeek; workingDays: DayOfWeek[]; saturdayExceptionCount: number; warning?: string | null }
 export type Department = { id: string; institutionId: string; code?: string; name: string; active: boolean }
 export type AcademicTerm = { id: string; institutionId: string; academicYear: string; term: string; startDate?: string; endDate?: string; active: boolean }
@@ -46,8 +46,8 @@ async function request<T>(path: string, init: RequestInit = {}, signal?: AbortSi
   return body as T
 }
 
-function mapInstitution(value: { id: string; name: string; short_name?: string; institution_type?: string; address?: string; working_week?: WorkingWeek; active?: boolean }): Institution {
-  return { id: value.id, name: value.name, shortName: value.short_name ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active ?? true }
+function mapInstitution(value: { id: string; name: string; short_name?: string; portal_slug?: string; institution_type?: string; address?: string; working_week?: WorkingWeek; active?: boolean }): Institution {
+  return { id: value.id, name: value.name, shortName: value.short_name ?? '', portalSlug: value.portal_slug ?? '', institutionType: value.institution_type ?? '', address: value.address ?? '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active ?? true }
 }
 
 function mapDepartment(value: { id: string; institution_id: string; code?: string; name: string; active?: boolean }): Department {
@@ -80,8 +80,8 @@ export async function getInstitutions(signal?: AbortSignal, includeInactive = tr
 }
 
 export async function getAuthorizedInstitutions(signal?: AbortSignal): Promise<Institution[]> {
-  const values = await request<Array<{ institution_id: string; institution_name: string; working_week?: WorkingWeek; role: string; active: boolean }>>('/api/v1/auth/me/institutions', {}, signal)
-  return values.map((value) => ({ id: value.institution_id, name: value.institution_name, shortName: '', institutionType: '', address: '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active }))
+  const values = await request<Array<{ institution_id: string; institution_name: string; portal_slug?: string; working_week?: WorkingWeek; role: string; active: boolean }>>('/api/v1/auth/me/institutions', {}, signal)
+  return values.map((value) => ({ id: value.institution_id, name: value.institution_name, shortName: '', portalSlug: value.portal_slug ?? '', institutionType: '', address: '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active }))
 }
 
 export async function getDepartments(institutionId: string, signal?: AbortSignal, includeInactive = true): Promise<Department[]> {
