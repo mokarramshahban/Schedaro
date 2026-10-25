@@ -99,6 +99,7 @@ def issue_manual_password_reset(user_id: str, payload: ManualPasswordResetCreate
     else:
         institution = db.scalar(select(PlatformInstitution).join(PlatformMembership, PlatformMembership.institution_id == PlatformInstitution.id).where(PlatformMembership.user_id == target.id, PlatformMembership.active.is_(True), PlatformInstitution.active.is_(True)).order_by(PlatformInstitution.name))
     now = datetime.now(timezone.utc)
+    previous = db.scalar(select(PlatformManualPasswordReset).where(PlatformManualPasswordReset.user_id == target.id, PlatformManualPasswordReset.consumed_at.is_(None), PlatformManualPasswordReset.revoked_at.is_(None), PlatformManualPasswordReset.expires_at > now)) is not None
     db.execute(update(PlatformManualPasswordReset).where(PlatformManualPasswordReset.user_id == target.id, PlatformManualPasswordReset.consumed_at.is_(None), PlatformManualPasswordReset.revoked_at.is_(None)).values(revoked_at=now))
     raw_key = token_hex(32)
     record = PlatformManualPasswordReset(id=str(uuid4()), user_id=target.id, key_hash=token_hash(raw_key), created_by=user.id, expires_at=now + timedelta(minutes=payload.expiration_minutes))
@@ -106,7 +107,7 @@ def issue_manual_password_reset(user_id: str, payload: ManualPasswordResetCreate
     audit(db, "platform.manual_password_reset.issued", user.id, institution.id if institution else None, {"reset_id": record.id, "target_user_id": target.id})
     portal = institution.portal_slug if institution and institution.portal_slug else None
     reset_url = f"{settings.public_app_url.rstrip('/')}{f'/c/{portal}' if portal else ''}/reset-password"
-    return ManualPasswordResetCreated(reset_id=record.id, user_id=target.id, email=target.email, reset_url=reset_url, reset_key=raw_key, expires_at=record.expires_at)
+    return ManualPasswordResetCreated(reset_id=record.id, user_id=target.id, email=target.email, reset_url=reset_url, reset_key=raw_key, expires_at=record.expires_at, replaced_previous=previous)
 
 
 @router.post("/api/v1/platform/manual-password-resets/{reset_id}/revoke", status_code=204)

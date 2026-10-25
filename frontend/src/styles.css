@@ -554,3 +554,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .session-detail-popover__edit { display:flex; align-items:center; gap:7px; margin-top:15px; padding:8px 11px; color:#fff; border:0; border-radius:7px; background:#4f46e5; cursor:pointer; font:inherit; font-size:12px; font-weight:700; }
 .session-detail-popover__edit:hover { background:#4338ca; }
 @media (max-width: 720px) { .session-detail-popover { max-width:calc(100vw - 24px); padding:14px; } .session-detail-popover__grid { grid-template-columns:1fr; gap:3px; } .session-detail-popover__grid dd { margin-bottom:7px; } }
+
+.access-assignment__actions { display:flex; align-items:center; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+.manual-reset-confirmation, .manual-reset-result { display:grid; gap:13px; margin-top:22px; color:#475467; font-size:12px; line-height:1.55; }
+.manual-reset-confirmation > svg { color:#4f46e5; }
+.manual-reset-confirmation p, .manual-reset-result p { margin:0; }
+.manual-reset-result .field { gap:7px; }
+.copy-field { display:flex; align-items:center; gap:8px; }
+.copy-field input { min-width:0; flex:1; }
+.copy-field .button { flex:0 0 auto; white-space:nowrap; }
+.reset-security-warning, .reset-replaced-warning { display:flex; align-items:flex-start; gap:9px; padding:12px; color:#8a5b00; border:1px solid #f2d59a; border-radius:10px; background:#fffaf0; font-size:11px; line-height:1.45; }
+.reset-security-warning svg { flex:0 0 auto; margin-top:1px; }
+.reset-replaced-warning { color:#4f46e5; border-color:#dcdcff; background:#f7f7ff; }
+@media (max-width: 720px) { .copy-field { align-items:stretch; flex-direction:column; } .copy-field .button { width:100%; } .platform-modal { padding:22px; } }

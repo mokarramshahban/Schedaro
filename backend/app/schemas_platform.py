@@ -206,6 +206,7 @@ class ManualPasswordResetCreated(BaseModel):
     reset_url: str
     reset_key: str
     expires_at: datetime
+    replaced_previous: bool = False
 
 
 class PlatformInstitutionRead(BaseModel):
