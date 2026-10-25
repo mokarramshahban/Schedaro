@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from app.api.auth import current_user
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -40,7 +42,7 @@ from app.schemas import (
 from app.seed import seed_demo_data
 from app.services.working_week import working_days_for_week
 
-router = APIRouter(prefix="/api/v1/academic", tags=["academic"])
+router = APIRouter(prefix="/api/v1/academic", tags=["academic"], dependencies=[Depends(current_user)])
 
 
 def _require(db: Session, model, record_id: str, label: str):

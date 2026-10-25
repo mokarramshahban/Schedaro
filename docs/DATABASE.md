@@ -30,6 +30,18 @@ The frontend stores only the last selected institution ID as a convenience prefe
 
 Sessions store weekday names and integer minutes from midnight. PostgreSQL check constraints enforce valid days, session types, and positive intervals. Sessions may be locked; locked records cannot be edited or removed through the timetable API. Scheduling requirements store per-class-group subject teaching counts, exact durations, assigned teachers, session types and room types. Teacher availability stores permitted or unavailable half-open windows for a term. Proposal JSON is an audit-safe staging record and is never treated as a live session until the approval transaction succeeds. `btree_gist` exclusion constraints enforce half-open overlap protection for class groups, teachers, and rooms within the same academic term and weekday. Adjacent intervals such as 09:00–10:00 and 10:00–11:00 are allowed.
 
+## Stage 7A platform and tenant databases
+
+Stage 7A preserves `schedaro_db` as the existing academic tenant and creates the separate `schedaro_platform` database on the same PostgreSQL server. The platform database contains only the trusted institution registry, Platform Owner identities, session hashes, audit events, and platform schema versions; it does not duplicate academic subjects, teachers or timetable rows. Database names are resolved server-side from registry records and validated identifiers, never from browser-supplied URLs.
+
+The idempotent platform initializer runs at application startup and attempts to create the configured central database only in environments where the database user is authorized to create databases; production operators should provision it explicitly. A validated development-only provisioning command creates a new logical tenant database, applies the academic SQLAlchemy schema, inserts its institution record, and registers its database name:
+
+```bash
+docker compose -p schedaro exec backend python -m app.provision_tenant --database schedaro_tenant_a --institution-id test-inst-a --name "Stage 7A Test College A"
+```
+
+Production provisioning and complete per-institution migration orchestration are intentionally deferred until the owner reviews backup/recovery, membership authorization, and tenant routing. Never drop or truncate `schedaro_db` or `schedaro_pgdata`.
+
 ## Migrations and development data
 
 Run migrations only against verified Schedaro resources:

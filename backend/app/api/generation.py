@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.api.auth import current_user
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -16,7 +18,7 @@ from app.services.generator import DAYS, GenerationConfig, GeneratorUnavailable,
 from app.services.scheduling import SchedulingEngineUnavailable, validate_candidate
 from app.services.working_week import working_days_for_week
 
-router = APIRouter(prefix="/api/v1/scheduling", tags=["scheduling"])
+router = APIRouter(prefix="/api/v1/scheduling", tags=["scheduling"], dependencies=[Depends(current_user)])
 
 
 def _availability_read(value: TeacherAvailability) -> TeacherAvailabilityRead:

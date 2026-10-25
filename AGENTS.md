@@ -1,7 +1,7 @@
 # Schedaro Agent Guide
 
 ## Project and current stage
-Schedaro is the Smart Academic Timetable Builder. **Stage 4 — Academic Resource Management — is implemented pending owner browser verification and release review.** Do not implement Stage 5 or later-stage functionality without explicit authorization.
+Schedaro is the Smart Academic Timetable Builder. **Stage 7A — Platform Foundation — is implemented on a feature branch pending owner review.** Do not begin Stage 7B or later.
 
 ## Product scope
 Keep the product focused on institution settings, classes, subjects, teachers, rooms, weekly timetables, validation, persistence, accessibility, and printing. Do not expand it into an unrelated institutional ERP.
@@ -10,7 +10,7 @@ Keep the product focused on institution settings, classes, subjects, teachers, r
 React + TypeScript + Vite frontend, FastAPI + Pydantic + SQLAlchemy + Alembic backend, PostgreSQL 18, and Docker Compose. Local development is Docker-first.
 
 ## Public development workflow
-The owner has initialized the replacement repository and authorized safe pull and local commits. Never run `git push` or configure/change remotes.
+For Stage 7A and every later Stage 7 phase, Harness may inspect Git, fetch, safely pull `main`, and create the owner-requested feature branch. Harness must never run `git add`, `git commit`, `git push`, `git merge`, `git rebase`, `git reset --hard`, `git clean`, or `git stash`. The owner performs staging, commits, publication, merging, and release review.
 
 Before implementation:
 
