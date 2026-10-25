@@ -31,8 +31,10 @@ describe('pdfme timetable template POC', () => {
     expect(timetableGeometry(context.workingDays).dayWidth).toBe(49.8)
     expect(timetableGeometry(context.workingDays).startMinutes).toBe(540)
     expect(timetableGeometry(context.workingDays).endMinutes).toBe(1020)
-    expect(timetableGeometry(context.workingDays, true).top).toBe(66)
+    expect(timetableGeometry(context.workingDays, true).top).toBe(71)
     expect(timetableGeometry(context.workingDays, true).gridBottom).toBe(159)
+    expect(timetableGeometry(context.workingDays, true, 'compact').top).toBe(68)
+    expect(timetableGeometry(context.workingDays, true, 'spacious').top).toBe(74)
     expect(timetableGeometry([...context.workingDays, 'saturday']).dayWidth).toBe(41.5)
     expect(fiveDay.some((item) => item.name === 'timetable_grid_hour-1')).toBe(true)
     const gridLine = createPdfmeTemplate(context, 0).template.schemas[0].find((item) => item.name === 'timetable_grid_outer-top') as Record<string, unknown>
@@ -41,7 +43,7 @@ describe('pdfme timetable template POC', () => {
     expect(gridLine.height).toBe(0.7)
     const leftBorder = createPdfmeTemplate(context, 0).template.schemas[0].find((item) => item.name === 'timetable_grid_outer-left') as any
     expect(leftBorder.rotate).toBe(90)
-    expect(leftBorder.position.y).toBeCloseTo(104.25, 2)
+    expect(leftBorder.position.y).toBeCloseTo(104.75, 2)
     const letterhead = createPdfmeTemplate(context, 7, 'data:image/png;base64,iVBORw0KGgo=')
     const letterheadGeometry = timetableGeometry(context.workingDays, true)
     const letterheadSchemas = letterhead.template.schemas[0] as any[]

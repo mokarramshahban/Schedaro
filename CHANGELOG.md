@@ -36,3 +36,4 @@
 - Restored vector timetable borders in pdfme exports: outer frame, time gutter, weekday separators, header rule, and hourly grid lines now share the protected five/six-day geometry used by the editor.
 - Corrected invisible pdfme line elements: user dividers and signature lines now have visible dark stroke defaults, full-opacity editor rendering, supported color/thickness/opacity controls, and matching PDF line properties.
 - Polished academic PDF presentation: shared five/six-day geometry now reserves letterhead space, session cards use duration-aware typography and lecture/laboratory/tutorial accents, time labels use the real 09:00–17:00 workspace, and signature blocks have bounded handwritten signing space.
+- Added content-aware compact/standard/spacious header spacing, persisted with the selected pdfme template, plus picker search and explicit Save Changes versus Save As New behavior to prevent accidental duplicate creation.
