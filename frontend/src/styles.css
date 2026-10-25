@@ -485,6 +485,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(79, 70, 229,
 .requirement-inline-editor .section-kicker { color:#4f46e5; }
 .requirement-editor .generator-grid { margin-top:.65rem; }
 .requirement-success { margin:1rem 0; padding:.7rem .85rem; border:1px solid #b9d8cf; border-radius:10px; background:#effaf6; color:#123b34; font-size:.86rem; }
+.dialog__header-actions { display:flex; align-items:center; gap:.6rem; }
+.requirement-create-view { padding-top:.75rem; }
+.requirement-empty { display:grid; justify-items:center; gap:.75rem; padding:1.5rem; text-align:center; }
 .requirements-dialog { max-height:90vh; overflow:auto; }
 @media (max-width: 720px) { .requirement-list__summary { flex-direction:column; } .requirement-row-actions { width:100%; } .requirement-inline-editor .generator-grid { grid-template-columns:1fr; } }
 .timetable-session--proposal { outline:2px dashed #d88b42; background:#fff8ed; }

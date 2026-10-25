@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Separated Manage Requirements creation into a dedicated Add Requirement view with a clean list default, safe back navigation, correct validation, and duplicate-safe subject labels shared across management and generation views.
 - Clarified Manage Requirements editing with one inline, visibly highlighted editor per saved record, full subject/type/teacher identity, stable-ID updates, safe unsaved-change switching, clear save/cancel actions, and deactivate/reactivate controls.
 
 - Completed Stage 1 UI Design Foundation with a responsive timetable-first shell.
