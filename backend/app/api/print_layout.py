@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.api.auth import current_user
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,7 +8,7 @@ from app.db.models import Institution, PdfmePrintTemplate, PrintLayoutTemplate
 from app.db.session import get_db
 from app.schemas import PdfmeTemplatePayload, PdfmeTemplateRead, PrintLayoutPayload, PrintLayoutTemplateRead
 
-router = APIRouter(prefix="/api/v1/academic", tags=["print-layout"])
+router = APIRouter(prefix="/api/v1/academic", tags=["print-layout"], dependencies=[Depends(current_user)])
 
 
 def _institution(db: Session, institution_id: str) -> Institution:

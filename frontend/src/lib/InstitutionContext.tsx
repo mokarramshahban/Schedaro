@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { getInstitutions, type Institution } from './api'
+import { getAuthorizedInstitutions, type Institution } from './api'
 
 const ACTIVE_INSTITUTION_KEY = 'schedaro.activeInstitutionId'
 
@@ -46,7 +46,7 @@ export function InstitutionProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     setError(null)
     try {
-      const values = await getInstitutions(undefined, true)
+      const values = await getAuthorizedInstitutions()
       if (sequence !== requestSequence.current) return
       setInstitutions(values)
       setActiveInstitutionIdState((currentId) => {

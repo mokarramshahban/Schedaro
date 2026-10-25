@@ -35,7 +35,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, { ...init, signal, headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) } })
+  const response = await fetch(`${apiUrl}${path}`, { ...init, signal, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) } })
   if (response.status === 204) return undefined as T
   const body = await response.json().catch(() => null)
   if (!response.ok) {
@@ -77,6 +77,11 @@ function mapRequirement(value: { id: string; class_group_id: string; subject_id:
 export async function getInstitutions(signal?: AbortSignal, includeInactive = true): Promise<Institution[]> {
   const values = await request<Parameters<typeof mapInstitution>[0][]>(`/api/v1/academic/institutions?include_inactive=${includeInactive}`, {}, signal)
   return values.map(mapInstitution)
+}
+
+export async function getAuthorizedInstitutions(signal?: AbortSignal): Promise<Institution[]> {
+  const values = await request<Array<{ institution_id: string; institution_name: string; working_week?: WorkingWeek; role: string; active: boolean }>>('/api/v1/auth/me/institutions', {}, signal)
+  return values.map((value) => ({ id: value.institution_id, name: value.institution_name, shortName: '', institutionType: '', address: '', workingWeek: value.working_week ?? 'monday-saturday', active: value.active }))
 }
 
 export async function getDepartments(institutionId: string, signal?: AbortSignal, includeInactive = true): Promise<Department[]> {

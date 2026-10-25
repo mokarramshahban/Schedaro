@@ -26,6 +26,9 @@ services:
     environment:
       APP_ENV: ${APP_ENV}
       DATABASE_URL: ${DATABASE_URL}
+      PLATFORM_DATABASE_NAME: ${PLATFORM_DATABASE_NAME:-schedaro_platform}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-schedaro_session}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       ALLOWED_CORS_ORIGINS: ${ALLOWED_CORS_ORIGINS}
     ports:
       - "${BACKEND_HOST_PORT}:8000"

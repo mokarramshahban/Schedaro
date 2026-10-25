@@ -7,6 +7,9 @@ from app.api.academic import router as academic_router
 from app.api.timetable import router as timetable_router
 from app.api.generation import router as generation_router
 from app.api.print_layout import router as print_layout_router
+from app.api.auth import router as auth_router
+from app.api.platform import router as platform_router
+from app.db.platform import ensure_platform_database, ensure_platform_schema
 from app.db.session import check_database_connection
 from app.services.scheduling import engine_available
 
@@ -16,7 +19,7 @@ app = FastAPI(title="Schedaro API", version="0.1.0", description="Smart Academic
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
@@ -25,6 +28,14 @@ app.include_router(academic_router)
 app.include_router(timetable_router)
 app.include_router(generation_router)
 app.include_router(print_layout_router)
+app.include_router(auth_router)
+app.include_router(platform_router)
+
+
+@app.on_event("startup")
+def initialize_platform_schema() -> None:
+    if ensure_platform_database():
+        ensure_platform_schema()
 
 
 @app.get("/health/live")

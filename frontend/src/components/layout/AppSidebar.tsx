@@ -13,9 +13,9 @@ const navItems: NavItem[] = [
   { label: 'Classes', icon: GraduationCap, view: 'classes' },
 ]
 
-type AppSidebarProps = { open: boolean; onClose: () => void; connected: boolean; currentView: WorkspaceView; onNavigate: (view: WorkspaceView) => void }
+type AppSidebarProps = { open: boolean; onClose: () => void; connected: boolean; currentView: WorkspaceView; onNavigate: (view: WorkspaceView) => void; platformOverview?: boolean }
 
-export function AppSidebar({ open, onClose, connected, currentView, onNavigate }: AppSidebarProps) {
+export function AppSidebar({ open, onClose, connected, currentView, onNavigate, platformOverview = false }: AppSidebarProps) {
   return <>
     <div className={`sidebar-backdrop ${open ? 'sidebar-backdrop--visible' : ''}`} onClick={onClose} aria-hidden="true" />
     <aside className={`app-sidebar ${open ? 'app-sidebar--open' : ''}`} aria-label="Primary navigation">
@@ -26,12 +26,11 @@ export function AppSidebar({ open, onClose, connected, currentView, onNavigate }
       </div>
       <div className="sidebar-panel">
         <div className="sidebar-brand"><div><p className="brand-name">Schedaro</p><p className="brand-subtitle">Smart Academic Timetable Builder</p></div><span className="brand-version">v0.2</span></div>
-        <div className="sidebar-section-label">Workspace</div>
+        <div className="sidebar-section-label">{platformOverview ? 'Platform administration' : 'Workspace'}</div>
         <nav className="primary-nav">
-          {navItems.map(({ label, icon: Icon, view }) => { const active = currentView === view; return <button key={label} className={`nav-item ${active ? 'nav-item--active' : ''}`} type="button" onClick={() => { onNavigate(view); onClose() }} aria-current={active ? 'page' : undefined}><Icon size={18} strokeWidth={active ? 2.2 : 1.8} /><span>{label}</span>{active ? <ChevronRight className="nav-chevron" size={15} /> : null}</button> })}
+          {platformOverview ? <div className="nav-item nav-item--active" aria-current="page"><LayoutGrid size={18} /><span>Overview</span><ChevronRight className="nav-chevron" size={15} /></div> : navItems.map(({ label, icon: Icon, view }) => { const active = currentView === view; return <button key={label} className={`nav-item ${active ? 'nav-item--active' : ''}`} type="button" onClick={() => { onNavigate(view); onClose() }} aria-current={active ? 'page' : undefined}><Icon size={18} strokeWidth={active ? 2.2 : 1.8} /><span>{label}</span>{active ? <ChevronRight className="nav-chevron" size={15} /> : null}</button> })}
         </nav>
-        <div className="sidebar-section-label sidebar-section-label--lower">System</div>
-        <button className={`nav-item ${currentView === 'settings' ? 'nav-item--active' : ''}`} type="button" onClick={() => { onNavigate('settings'); onClose() }} aria-current={currentView === 'settings' ? 'page' : undefined}><Settings2 size={18} strokeWidth={currentView === 'settings' ? 2.2 : 1.8} /><span>Settings</span>{currentView === 'settings' ? <ChevronRight className="nav-chevron" size={15} /> : null}</button>
+        {!platformOverview && <><div className="sidebar-section-label sidebar-section-label--lower">System</div><button className={`nav-item ${currentView === 'settings' ? 'nav-item--active' : ''}`} type="button" onClick={() => { onNavigate('settings'); onClose() }} aria-current={currentView === 'settings' ? 'page' : undefined}><Settings2 size={18} strokeWidth={currentView === 'settings' ? 2.2 : 1.8} /><span>Settings</span>{currentView === 'settings' ? <ChevronRight className="nav-chevron" size={15} /> : null}</button></>}
         <div className="sidebar-spacer" />
         <div className="sidebar-status"><div className="sidebar-status__top"><span className="sidebar-status__label">Development API</span><StatusDot label={connected ? 'Live' : 'Offline'} state={connected ? 'success' : 'error'} /></div><p>Connection status reflects the running Schedaro API.</p></div>
         <div className="sidebar-footer"><span className="avatar">S</span><div><strong>Schedaro workspace</strong><span>Local development</span></div></div>
