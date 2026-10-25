@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the permanent architecture decision index, ADR template and verified ADRs for tenant isolation, central authentication, portals, invitation onboarding, manual activation approval, provisioning, proposal review and owner-controlled Git publication.
+- Added the contributor guide and living documentation policy, including documentation-impact review and read-only consistency checks.
+
 - Corrected balanced generation's noon bias by preferring configured early periods when feasible, softly reducing internal gaps, and exposing daily quality diagnostics. The Generate modal now shows the institution working week as read-only Settings context without navigation; Settings → Academic Schedule remains authoritative.
 - Improved balanced weekly generation with soft penalties for repeated subject-days and adjacent identical-subject sessions, added quality diagnostics, and unified adaptive subject-first cards/popovers across all session types without changing print layouts or hard conflict validation.
 - Separated Manage Requirements creation into a dedicated Add Requirement view with a clean list default, safe back navigation, correct validation, and duplicate-safe subject labels shared across management and generation views.

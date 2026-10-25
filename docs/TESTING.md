@@ -223,5 +223,9 @@ Every future implementation must be built and made live before completion. Valid
 - Existing email invitation regression: not re-run after manual additions; local email path remains unchanged.
 - Existing academic data and PostgreSQL volume: preserved.
 
+## Documentation validation
+
+Run `python scripts/check_docs.py` after documentation changes. The checker is read-only and validates relative Markdown links, indexed ADR files and obvious credential patterns.
+
 ## Later planned tests
 Add authenticated write-API tests, deployment smoke tests, and direct PDF-rendering automation when a supported browser runner is available.
