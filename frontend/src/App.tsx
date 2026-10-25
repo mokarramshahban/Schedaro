@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './lib/AuthContext'
 import { InstitutionProvider, useInstitution } from './lib/InstitutionContext'
 import { LoginPage } from './pages/LoginPage'
 import { PortalLoginPage } from './pages/PortalLoginPage'
+import { ManualActivationPage } from './pages/ManualActivationPage'
 import { PlatformOverviewPage } from './pages/PlatformOverviewPage'
 import { InstitutionSetupPage } from './pages/InstitutionSetupPage'
 import { ResourceManagementPage } from './pages/ResourceManagementPage'
@@ -17,7 +18,7 @@ type Status = { application: string; environment: string; service: string; datab
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 const pageTitles: Record<WorkspaceView, string> = { timetable: 'Timetable', subjects: 'Subjects', teachers: 'Teachers', rooms: 'Rooms & labs', classes: 'Classes', settings: 'Institution settings' }
 
-function App() { return <AuthProvider><AuthenticatedRoot /></AuthProvider> }
+function App() { const activation = window.location.pathname.match(/^\/c\/([^/]+)\/activate\/([^/]+)/); if (activation) return <ManualActivationPage slug={activation[1]} invitationId={activation[2]} />; return <AuthProvider><AuthenticatedRoot /></AuthProvider> }
 
 function AuthenticatedRoot() {
   const { user, loading } = useAuth()

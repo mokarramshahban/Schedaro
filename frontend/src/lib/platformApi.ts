@@ -5,7 +5,8 @@ export type PlatformOverview = { institution_count: number; active_institution_c
 export type Provisioning = { id: string; institution_id: string; status: string; error_message?: string | null; attempts: number; created_at?: string | null; updated_at?: string | null }
 export type CreateInstitutionInput = { name: string; short_name?: string; institution_type?: string; contact_email?: string; contact_phone?: string; address?: string; timezone: string; working_week: 'monday-friday' | 'monday-saturday'; daily_start_time: string; daily_end_time: string; initial_departments: string[]; idempotency_key: string }
 export type CreateInstitutionResponse = { institution: PlatformInstitution; provisioning: Provisioning }
-export type Invitation = { id: string; recipient_email: string; institution_id: string; institution_name: string; portal_slug?: string | null; role: string; status: string; delivery_status: string; expires_at: string; created_at?: string | null }
+export type Invitation = { id: string; recipient_email: string; institution_id: string; institution_name: string; portal_slug?: string | null; role: string; method: 'email' | 'manual'; approval_status: string; status: string; delivery_status: string; expires_at: string; created_at?: string | null }
+export type ManualInvitationCreated = { invitation: Invitation; activation_url: string; activation_key: string; expires_at: string }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) } })
@@ -19,3 +20,5 @@ export function createInstitution(payload: CreateInstitutionInput) { return requ
 export function listInvitations(institutionId: string) { return request<Invitation[]>(`/api/v1/platform/institutions/${institutionId}/invitations`) }
 export function inviteAdministrator(institutionId: string, email: string) { return request<Invitation>(`/api/v1/platform/institutions/${institutionId}/invitations`, { method: 'POST', body: JSON.stringify({ email, role: 'institution_admin' }) }) }
 export function getPortalUrl(slug: string) { return `${window.location.origin}/c/${slug}` }
+export function createManualInvitation(institutionId: string, email: string) { return request<ManualInvitationCreated>(`/api/v1/platform/institutions/${institutionId}/manual-invitations`, { method: 'POST', body: JSON.stringify({ email, expiration_hours: 168 }) }) }
+export function approveInvitation(invitationId: string, decision: 'approve' | 'reject') { return request<Invitation>(`/api/v1/platform/invitations/${invitationId}/approval`, { method: 'POST', body: JSON.stringify({ decision }) }) }
