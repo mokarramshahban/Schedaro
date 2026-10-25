@@ -40,3 +40,4 @@
 - Corrected A4 timetable endpoint time labels: 09:00 is inset below the header rule, 17:00 is inset above the bottom rule, intermediate labels retain their timeline coordinates, and editor/PDF use the same physical label helper.
 - Added a print-only shared 1mm PDF/editor inner-card inset so first-row session surfaces clear grid boundaries while outer session intervals and durations remain exact; the main timetable website CSS is unchanged.
 - Added print-only header-row breathing space: Time/day header schemas are inset 1mm inside the top row while the grid, first time row, and session timeline remain unchanged.
+- Added website-only accessible session hover details: portal-mounted cards show complete loaded subject, type, schedule, teacher, room, and academic scope information without changing timetable geometry or PDF output; persisted editing remains available through an explicit Edit session action.
